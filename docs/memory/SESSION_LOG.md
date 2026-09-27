@@ -12,3 +12,6 @@
 - Pending operator: set env secrets, `bun run db:push`, fund Avalanche wallet, run live deposit, fill WIN_CHECKLIST.
 - Added `docs/memory/OPERATOR_SETUP.md` with linked step-by-step setup.
 - Captured public page screenshots under `docs/memory/screenshots/` (home, vaults, how-it-works, login, product, security, docs).
+- Wired local `.env.local` (gitignored): OpenServ, AgentRouter, TinyFish, Tavily. AgentRouter Tor smoke = `smoke_llm_tor_ok` (deepseek-v4-flash). Mandate evaluate = allow via agentrouter.
+- Neon project `aged-flower-56535737` needs `DATABASE_URL` or `NEON_API_KEY` (browser OAuth timed out in cloud VM).
+- Still blocked for live deposit: CDP Avalanche `AGENT_PRIVATE_KEY` + funded USDC (see CDP_AGENTKIT_FLOW.md).

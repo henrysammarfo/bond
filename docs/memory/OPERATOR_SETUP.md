@@ -12,9 +12,9 @@ Docs: [IXS Vault API](https://api-v2.ixs.finance/docs) · [IXS agent skills](htt
 | Need | Link | What to do |
 | --- | --- | --- |
 | OpenServ + SERV | [openserv.ai/hackathon](https://www.openserv.ai/hackathon) · [console.openserv.ai](https://console.openserv.ai) | Enable org data collection; get **OPENSERV_API_KEY** (~$5 starter credit on signup) |
-| Coinbase CDP / AgentKit wallet | [portal.cdp.coinbase.com](https://portal.cdp.coinbase.com) | Create API keys + Avalanche wallet; export **AGENT_PRIVATE_KEY** / note address |
-| Neon Postgres | [console.neon.tech](https://console.neon.tech) | Create project → copy **DATABASE_URL** |
-| AgentRouter (no OpenAI key) | [agentrouter.org](https://agentrouter.org) · token console | Create key → **AGENTROUTER_API_KEY** · base `https://agentrouter.org/v1` |
+| Coinbase CDP / AgentKit wallet | [portal.cdp.coinbase.com](https://portal.cdp.coinbase.com) · **[exact flow](./CDP_AGENTKIT_FLOW.md)** | Avalanche wallet → export **AGENT_PRIVATE_KEY** → fund ≥100 USDC + AVAX |
+| Neon Postgres | [console.neon.tech](https://console.neon.tech) · project `aged-flower-56535737` | Paste **DATABASE_URL** (or API key) — see Neon section below |
+| AgentRouter (no OpenAI key) | [agentrouter.org](https://agentrouter.org) · **[Tor setup](./AGENTROUTER_SETUP.md)** | Key + `bun run tor:start` + `bun run smoke:llm` (`deepseek-v4-flash`) |
 | TinyFish (fact-check ops) | [agent.tinyfish.ai](https://agent.tinyfish.ai) · **[Pay $10 wallet](https://agent.tinyfish.ai/wallet?utm_source=api&utm_medium=insufficient_funds&utm_campaign=automation)** | Top up, then set **TINYFISH_API_KEY** |
 | Tavily | [app.tavily.com](https://app.tavily.com) | Refresh quota / new key → **TAVILY_API_KEY** |
 | IXS live vault list | [api-v2.ixs.finance/vaults](https://api-v2.ixs.finance/vaults) | Confirm Avalanche vault still listed |
@@ -28,7 +28,39 @@ Docs: [IXS Vault API](https://api-v2.ixs.finance/docs) · [IXS agent skills](htt
 
 ---
 
-## 2. Wire secrets (hosting / Lovable / local)
+## Neon (this project)
+
+Project id: **`aged-flower-56535737`** · branch: **production**
+
+Cloud agent cannot complete interactive `neon auth` in a headless VM. Do either:
+
+### Option A — paste connection string (fastest)
+
+1. Open [console.neon.tech](https://console.neon.tech) → project **aged-flower-56535737** → **production**.
+2. **Connection details** → copy the pooled `DATABASE_URL` (starts with `postgresql://…`).
+3. Put it in `.env.local` / hosting secrets as `DATABASE_URL=...` (never commit).
+4. Then locally / in agent:
+
+```bash
+bun run db:push
+```
+
+### Option B — Neon CLI with API key (non-interactive)
+
+1. Neon console → Account → [API keys](https://console.neon.tech/app/settings/api-keys) → create key.
+2. Run:
+
+```bash
+export NEON_API_KEY=napi_...
+bunx neon@latest connection-string aged-flower-56535737 --branch production --prisma
+# or:
+bunx neon@latest connection-string --project-id aged-flower-56535737 --branch production
+```
+
+3. Save output as `DATABASE_URL`, then `bun run db:push`.
+
+Skip the Neon Functions `neon.ts` / `hello.ts` scaffold for BOND — we use Drizzle + TanStack serverFns, not Neon Functions preview.
+
 
 Copy [`.env.example`](../.env.example) into Lovable/Vercel/Cloudflare secrets **and** local `.env.local`:
 

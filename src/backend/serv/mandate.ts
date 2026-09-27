@@ -1,4 +1,4 @@
-import OpenAI from "openai";
+import { agentRouterChat } from "../llm/agentrouter";
 
 export type MandateDecision = {
   allow: boolean;
@@ -70,6 +70,7 @@ async function openservDecide(input: MandateInput): Promise<MandateDecision | nu
   });
   if (!res.ok) {
     const text = await res.text().catch(() => "");
+    if (res.status === 404 || res.status === 501) return null;
     throw new Error(`OpenServ SERV gate failed (${res.status}): ${text || res.statusText}`);
   }
   const data = (await res.json()) as { allow?: boolean; reason?: string; result?: MandateDecision };
@@ -83,21 +84,13 @@ async function openservDecide(input: MandateInput): Promise<MandateDecision | nu
 }
 
 async function agentRouterDecide(input: MandateInput): Promise<MandateDecision> {
-  const key = process.env.AGENTROUTER_API_KEY;
-  if (!key) {
+  if (!process.env.AGENTROUTER_API_KEY) {
     throw new Error(
       "AGENTROUTER_API_KEY (or working OPENSERV_API_KEY) required for SERV mandate reasoning.",
     );
   }
-  const client = new OpenAI({
-    apiKey: key,
-    baseURL: "https://agentrouter.org/v1",
-  });
-  const completion = await client.chat.completions.create({
-    model: process.env.AGENTROUTER_MODEL ?? "gpt-4o-mini",
-    temperature: 0,
-    response_format: { type: "json_object" },
-    messages: [
+  const text = await agentRouterChat(
+    [
       {
         role: "system",
         content:
@@ -108,18 +101,18 @@ async function agentRouterDecide(input: MandateInput): Promise<MandateDecision> 
         content: JSON.stringify(input),
       },
     ],
-  });
-  const text = completion.choices[0]?.message?.content;
-  if (!text) throw new Error("AgentRouter returned empty mandate decision.");
+    { temperature: 0, responseFormat: "json_object" },
+  );
   const parsed = JSON.parse(text) as { allow: boolean; reason: string };
-  if (typeof parsed.allow !== "boolean")
+  if (typeof parsed.allow !== "boolean") {
     throw new Error("AgentRouter mandate decision missing allow.");
+  }
   return { allow: parsed.allow, reason: parsed.reason ?? "", source: "agentrouter" };
 }
 
 /**
  * Hard gate: policy failures deny immediately.
- * Then SERV (OpenServ) if configured; else AgentRouter reasoning.
+ * Then SERV (OpenServ) if configured; else AgentRouter reasoning (Tor on cloud).
  * Deny never soft-passes.
  */
 export async function evaluateMandate(input: MandateInput): Promise<MandateDecision> {
@@ -128,12 +121,9 @@ export async function evaluateMandate(input: MandateInput): Promise<MandateDecis
 
   try {
     const serv = await openservDecide(input);
-    if (serv) {
-      if (!serv.allow) return serv;
-      return serv;
-    }
+    if (serv) return serv;
   } catch (err) {
-    if (process.env.OPENSERV_API_KEY) throw err;
+    console.warn("[mandate] OpenServ gate error, trying AgentRouter:", err);
   }
 
   return agentRouterDecide(input);
