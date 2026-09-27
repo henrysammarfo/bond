@@ -95,12 +95,17 @@ export async function getWalletAddress(orgId?: string): Promise<`0x${string}`> {
   return (await resolveSigner(orgId)).address;
 }
 
+function usdcDecimals(chainId: DepositChain): number {
+  return chainId === "bsc" ? 18 : 6;
+}
+
 export async function getWalletBalances(
   address: `0x${string}`,
   chainId: DepositChain = "avalanche",
 ) {
   const client = publicClient(chainId);
   const usdc = usdcFor(chainId);
+  const decimals = usdcDecimals(chainId);
   const [nativeWei, usdcRaw] = await Promise.all([
     client.getBalance({ address }),
     client.readContract({
@@ -117,11 +122,12 @@ export async function getWalletBalances(
     avax: chainId === "avalanche" ? formatEther(nativeWei) : "0",
     bnb: chainId === "bsc" ? formatEther(nativeWei) : "0",
     native: formatEther(nativeWei),
-    usdc: formatUnits(usdcRaw, 6),
+    usdc: formatUnits(usdcRaw, decimals),
     usdcRaw,
     nativeWei,
     avaxWei: chainId === "avalanche" ? nativeWei : 0n,
     usdcAddress: usdc,
+    usdcDecimals: decimals,
   };
 }
 
@@ -138,7 +144,7 @@ export async function assertDepositFunding(
   chainId: DepositChain = "avalanche",
 ): Promise<void> {
   const bal = await getWalletBalances(address, chainId);
-  const needUsdc = BigInt(Math.round(amountDollars * 1e6));
+  const needUsdc = BigInt(Math.round(amountDollars * 10 ** bal.usdcDecimals));
   const gasName = chainId === "bsc" ? "BNB" : "AVAX";
   if (bal.usdcRaw < needUsdc) {
     throw new Error(

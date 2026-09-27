@@ -33,6 +33,11 @@ import {
   saveIntegrationsFn,
   rotateAgentWalletFn,
 } from "@/backend/fns/integrations";
+import {
+  scanVaultsFn,
+  simulateVaultDepositFn,
+  preflightVaultFn,
+} from "@/backend/fns/allocate";
 import { Button, ButtonLink } from "./Button";
 import { PageTitle, Panel, Status } from "./DashboardUI";
 
@@ -339,7 +344,7 @@ export function DashboardVaultsPage() {
 export function VaultDetailPage({ vaultId }: { vaultId: string }) {
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
-  const [amount, setAmount] = useState("100");
+  const [amount, setAmount] = useState("104");
   const vaultQ = useQuery({
     queryKey: ["vault", vaultId],
     queryFn: () => getLiveVaultFn({ data: { vaultId } }),
@@ -445,8 +450,10 @@ export function VaultDetailPage({ vaultId }: { vaultId: string }) {
                   className="mt-2 h-12 w-full rounded-md border border-dashboard-border bg-dashboard px-3 text-lg text-dashboard-foreground"
                 />
               </label>
-              {Number(amount) < 100 && (
-                <p className="mt-2 text-xs text-danger">Minimum subscription is $100 USDC.</p>
+              {Number(amount) < 104 && (
+                <p className="mt-2 text-xs text-danger">
+                  Live minimum is $104 USDC (redeemable after 0.5% fee + NAV buffer).
+                </p>
               )}
               <div className="mt-5 rounded-md bg-dashboard-accent/60 p-4 text-xs leading-5 text-dashboard-muted">
                 Mandate:{" "}
@@ -455,7 +462,7 @@ export function VaultDetailPage({ vaultId }: { vaultId: string }) {
                   : "No active mandate"}
               </div>
               <Button
-                disabled={Number(amount) < 100 || !activeMandate}
+                disabled={Number(amount) < 104 || !activeMandate}
                 className="mt-5 w-full"
                 onClick={() => setStep(1)}
               >
@@ -486,9 +493,9 @@ export function VaultDetailPage({ vaultId }: { vaultId: string }) {
                 the mandate first. Until IXS shares exist, status stays Pending — not owned, not
                 earning. Fund USDC + {isBnb ? "BNB" : "AVAX"} gas on this chain.
               </div>
-              {Number(amount) < 100 && (
+              {Number(amount) < 104 && (
                 <p className="mt-3 text-xs text-danger">
-                  SERV will deny: minimum deposit is $100 USDC.
+                  SERV / preflight will deny: live redeemable minimum is $104 USDC.
                 </p>
               )}
               {!activeMandate && (
@@ -880,6 +887,173 @@ export function WalletPage() {
           </Panel>
         </div>
       )}
+    </>
+  );
+}
+
+
+export function ScanPage() {
+  const scan = useMutation({ mutationFn: () => scanVaultsFn({}) });
+  const [simVault, setSimVault] = useState(PRIMARY_VAULT_ID);
+  const [simAmt, setSimAmt] = useState("104");
+  const simulate = useMutation({
+    mutationFn: () =>
+      simulateVaultDepositFn({ data: { vaultId: simVault, amountUsd: Number(simAmt) } }),
+  });
+  const preflight = useMutation({
+    mutationFn: () =>
+      preflightVaultFn({ data: { vaultId: simVault, amountUsd: Number(simAmt), live: true } }),
+  });
+
+  return (
+    <>
+      <PageTitle
+        eyebrow="SERV · Guardrails"
+        title="Scan vaults"
+        action={
+          <Button disabled={scan.isPending} onClick={() => scan.mutate()}>
+            {scan.isPending ? "Scanning…" : "Run analysis"}
+          </Button>
+        }
+      />
+      <Panel className="mb-6">
+        <p className="text-sm leading-7 text-dashboard-muted">
+          Deterministic preflight on every live IXS vault (status, whitelist, NAV / deposit limit,
+          MCP build, redeemable floor ≥$104, ≤25% TVL). SERV returns ALLOCATE / DEFER / REJECT with
+          reasons. Evidence is published to{" "}
+          <Link to="/evidence" className="text-primary underline">
+            /evidence
+          </Link>
+          .
+        </p>
+      </Panel>
+      {scan.error && <Panel className="mb-6 text-danger">{errMessage(scan.error)}</Panel>}
+      {scan.data && (
+        <div className="mb-8 space-y-5">
+          <Panel>
+            <p className="text-xs font-semibold uppercase text-dashboard-muted">
+              Source · {scan.data.source}
+            </p>
+            <p className="mt-3 text-sm leading-7">{scan.data.memo}</p>
+            <p className="mt-2 text-xs text-dashboard-muted">
+              Wallet {scan.data.wallet} · {new Date(scan.data.checkedAt).toLocaleString()}
+            </p>
+          </Panel>
+          <div className="grid gap-5 lg:grid-cols-2">
+            {scan.data.verdicts.map((v) => (
+              <Panel key={v.vaultId}>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-bold uppercase text-primary">{v.network}</p>
+                    <h2 className="mt-2 text-lg font-semibold">{v.name}</h2>
+                  </div>
+                  <span
+                    className={`text-xs font-bold ${
+                      v.verdict === "ALLOCATE"
+                        ? "text-success"
+                        : v.verdict === "DEFER"
+                          ? "text-warning"
+                          : "text-danger"
+                    }`}
+                  >
+                    {v.verdict}
+                  </span>
+                </div>
+                <p className="mt-4 text-sm leading-6 text-dashboard-muted">{v.reason}</p>
+                {v.amountUsd != null && (
+                  <p className="mt-3 text-sm font-semibold">{v.amountUsd} USDC suggested</p>
+                )}
+                <details className="mt-4">
+                  <summary className="cursor-pointer text-xs text-dashboard-muted">
+                    Preflight checks ({v.preflight.checks.length}) · block{" "}
+                    {v.preflight.blockNumber ?? "?"}
+                  </summary>
+                  <ul className="mt-3 space-y-2 text-xs leading-5 text-dashboard-muted">
+                    {v.preflight.checks.map((c) => (
+                      <li key={c.key}>
+                        <span className={c.ok ? "text-success" : "text-danger"}>
+                          {c.ok ? "✓" : "✗"}
+                        </span>{" "}
+                        <strong>{c.label}</strong> — {c.value}. {c.detail}
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+                {v.verdict === "ALLOCATE" && (
+                  <ButtonLink
+                    to="/dashboard/vaults/$vaultId"
+                    params={{ vaultId: v.vaultId }}
+                    className="mt-5"
+                  >
+                    Subscribe <ArrowRight size={15} />
+                  </ButtonLink>
+                )}
+              </Panel>
+            ))}
+          </div>
+        </div>
+      )}
+      <Panel>
+        <h2 className="font-semibold">Simulate deposit (eth_call · no broadcast)</h2>
+        <div className="mt-4 grid gap-4 sm:grid-cols-3">
+          <label className="text-xs text-dashboard-muted">
+            Vault
+            <select
+              value={simVault}
+              onChange={(e) => setSimVault(e.target.value)}
+              className="mt-2 h-10 w-full rounded-md border border-dashboard-border bg-dashboard px-3 text-dashboard-foreground"
+            >
+              <option value={PRIMARY_VAULT_ID}>Avalanche primary</option>
+              <option value={BNB_VAULT_ID}>BNB companion</option>
+            </select>
+          </label>
+          <label className="text-xs text-dashboard-muted">
+            Amount USDC
+            <input
+              value={simAmt}
+              onChange={(e) => setSimAmt(e.target.value)}
+              className="mt-2 h-10 w-full rounded-md border border-dashboard-border bg-dashboard px-3 text-dashboard-foreground"
+            />
+          </label>
+          <div className="flex items-end gap-2">
+            <Button
+              variant="secondary"
+              disabled={preflight.isPending}
+              onClick={() => preflight.mutate()}
+            >
+              Preflight
+            </Button>
+            <Button disabled={simulate.isPending} onClick={() => simulate.mutate()}>
+              eth_call
+            </Button>
+          </div>
+        </div>
+        {preflight.data && (
+          <pre className="mt-4 max-h-48 overflow-auto rounded-md bg-dashboard p-3 text-[11px]">
+            {JSON.stringify(
+              {
+                verdict: preflight.data.verdict,
+                tvlCapUsd: preflight.data.tvlCapUsd,
+                depositLimitUsd: preflight.data.depositLimitUsd,
+                navAgeHours: preflight.data.navAgeHours,
+                blockNumber: preflight.data.blockNumber,
+              },
+              null,
+              2,
+            )}
+          </pre>
+        )}
+        {simulate.data && (
+          <pre className="mt-4 max-h-48 overflow-auto rounded-md bg-dashboard p-3 text-[11px]">
+            {JSON.stringify(simulate.data, null, 2)}
+          </pre>
+        )}
+        {(simulate.error || preflight.error) && (
+          <p className="mt-3 text-xs text-danger">
+            {errMessage(simulate.error || preflight.error)}
+          </p>
+        )}
+      </Panel>
     </>
   );
 }

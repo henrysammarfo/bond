@@ -90,6 +90,7 @@ function Index() {
                 ["Product", "/product"],
                 ["Vaults", "/vaults"],
                 ["How it works", "/how-it-works"],
+                ["Evidence", "/evidence"],
                 ["Security", "/security"],
                 ["Docs", "/docs"],
               ].map(([label, to]) => (

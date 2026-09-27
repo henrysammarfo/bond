@@ -16,6 +16,7 @@ import { Route as ComplianceRouteImport } from './routes/compliance'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as DocsRouteImport } from './routes/docs'
+import { Route as EvidenceRouteImport } from './routes/evidence'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as PricingRouteImport } from './routes/pricing'
@@ -29,6 +30,7 @@ import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
 import { Route as DashboardActivityRouteImport } from './routes/dashboard.activity'
 import { Route as DashboardMandatesRouteImport } from './routes/dashboard.mandates'
+import { Route as DashboardScanRouteImport } from './routes/dashboard.scan'
 import { Route as DashboardSettingsRouteImport } from './routes/dashboard.settings'
 import { Route as DashboardSubscriptionsRouteImport } from './routes/dashboard.subscriptions'
 import { Route as DashboardVaultsRouteImport } from './routes/dashboard.vaults'
@@ -69,6 +71,11 @@ const DashboardRoute = DashboardRouteImport.update({
 const DocsRoute = DocsRouteImport.update({
   id: '/docs',
   path: '/docs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EvidenceRoute = EvidenceRouteImport.update({
+  id: '/evidence',
+  path: '/evidence',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HowItWorksRoute = HowItWorksRouteImport.update({
@@ -136,6 +143,11 @@ const DashboardMandatesRoute = DashboardMandatesRouteImport.update({
   path: '/mandates',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardScanRoute = DashboardScanRouteImport.update({
+  id: '/scan',
+  path: '/scan',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardSettingsRoute = DashboardSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -176,6 +188,7 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/docs': typeof DocsRoute
+  '/evidence': typeof EvidenceRoute
   '/how-it-works': typeof HowItWorksRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
@@ -188,6 +201,7 @@ export interface FileRoutesByFullPath {
   '/blog/$slug': typeof BlogSlugRoute
   '/dashboard/activity': typeof DashboardActivityRoute
   '/dashboard/mandates': typeof DashboardMandatesRoute
+  '/dashboard/scan': typeof DashboardScanRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
   '/dashboard/subscriptions': typeof DashboardSubscriptionsRouteWithChildren
   '/dashboard/vaults': typeof DashboardVaultsRouteWithChildren
@@ -203,6 +217,7 @@ export interface FileRoutesByTo {
   '/compliance': typeof ComplianceRoute
   '/contact': typeof ContactRoute
   '/docs': typeof DocsRoute
+  '/evidence': typeof EvidenceRoute
   '/how-it-works': typeof HowItWorksRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
@@ -215,6 +230,7 @@ export interface FileRoutesByTo {
   '/blog/$slug': typeof BlogSlugRoute
   '/dashboard/activity': typeof DashboardActivityRoute
   '/dashboard/mandates': typeof DashboardMandatesRoute
+  '/dashboard/scan': typeof DashboardScanRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
   '/dashboard/subscriptions': typeof DashboardSubscriptionsRouteWithChildren
   '/dashboard/vaults': typeof DashboardVaultsRouteWithChildren
@@ -232,6 +248,7 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/docs': typeof DocsRoute
+  '/evidence': typeof EvidenceRoute
   '/how-it-works': typeof HowItWorksRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
@@ -244,6 +261,7 @@ export interface FileRoutesById {
   '/blog/$slug': typeof BlogSlugRoute
   '/dashboard/activity': typeof DashboardActivityRoute
   '/dashboard/mandates': typeof DashboardMandatesRoute
+  '/dashboard/scan': typeof DashboardScanRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
   '/dashboard/subscriptions': typeof DashboardSubscriptionsRouteWithChildren
   '/dashboard/vaults': typeof DashboardVaultsRouteWithChildren
@@ -262,6 +280,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/dashboard'
     | '/docs'
+    | '/evidence'
     | '/how-it-works'
     | '/login'
     | '/pricing'
@@ -274,6 +293,7 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/dashboard/activity'
     | '/dashboard/mandates'
+    | '/dashboard/scan'
     | '/dashboard/settings'
     | '/dashboard/subscriptions'
     | '/dashboard/vaults'
@@ -289,6 +309,7 @@ export interface FileRouteTypes {
     | '/compliance'
     | '/contact'
     | '/docs'
+    | '/evidence'
     | '/how-it-works'
     | '/login'
     | '/pricing'
@@ -301,6 +322,7 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/dashboard/activity'
     | '/dashboard/mandates'
+    | '/dashboard/scan'
     | '/dashboard/settings'
     | '/dashboard/subscriptions'
     | '/dashboard/vaults'
@@ -317,6 +339,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/dashboard'
     | '/docs'
+    | '/evidence'
     | '/how-it-works'
     | '/login'
     | '/pricing'
@@ -329,6 +352,7 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/dashboard/activity'
     | '/dashboard/mandates'
+    | '/dashboard/scan'
     | '/dashboard/settings'
     | '/dashboard/subscriptions'
     | '/dashboard/vaults'
@@ -346,6 +370,7 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   DashboardRoute: typeof DashboardRouteWithChildren
   DocsRoute: typeof DocsRoute
+  EvidenceRoute: typeof EvidenceRoute
   HowItWorksRoute: typeof HowItWorksRoute
   LoginRoute: typeof LoginRoute
   PricingRoute: typeof PricingRoute
@@ -406,6 +431,13 @@ declare module '@tanstack/react-router' {
       path: '/docs'
       fullPath: '/docs'
       preLoaderRoute: typeof DocsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/evidence': {
+      id: '/evidence'
+      path: '/evidence'
+      fullPath: '/evidence'
+      preLoaderRoute: typeof EvidenceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/how-it-works': {
@@ -499,6 +531,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardMandatesRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/scan': {
+      id: '/dashboard/scan'
+      path: '/scan'
+      fullPath: '/dashboard/scan'
+      preLoaderRoute: typeof DashboardScanRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/settings': {
       id: '/dashboard/settings'
       path: '/settings'
@@ -584,6 +623,7 @@ const DashboardVaultsRouteWithChildren = DashboardVaultsRoute._addFileChildren(
 interface DashboardRouteChildren {
   DashboardActivityRoute: typeof DashboardActivityRoute
   DashboardMandatesRoute: typeof DashboardMandatesRoute
+  DashboardScanRoute: typeof DashboardScanRoute
   DashboardSettingsRoute: typeof DashboardSettingsRoute
   DashboardSubscriptionsRoute: typeof DashboardSubscriptionsRouteWithChildren
   DashboardVaultsRoute: typeof DashboardVaultsRouteWithChildren
@@ -594,6 +634,7 @@ interface DashboardRouteChildren {
 const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardActivityRoute: DashboardActivityRoute,
   DashboardMandatesRoute: DashboardMandatesRoute,
+  DashboardScanRoute: DashboardScanRoute,
   DashboardSettingsRoute: DashboardSettingsRoute,
   DashboardSubscriptionsRoute: DashboardSubscriptionsRouteWithChildren,
   DashboardVaultsRoute: DashboardVaultsRouteWithChildren,
@@ -613,6 +654,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   DashboardRoute: DashboardRouteWithChildren,
   DocsRoute: DocsRoute,
+  EvidenceRoute: EvidenceRoute,
   HowItWorksRoute: HowItWorksRoute,
   LoginRoute: LoginRoute,
   PricingRoute: PricingRoute,

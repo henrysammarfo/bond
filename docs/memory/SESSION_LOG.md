@@ -1,6 +1,20 @@
 # Session log
 
 
+## 2026-09-27 — Preflight + evidence (beat simulated-only allocators)
+
+### Shipped
+- Deterministic IXS preflight: status, whitelist, NAV/`maxDeposit`, MCP build, **$104** redeemable floor, **25% TVL** cap
+- SERV multi-vault ALLOCATE/DEFER/REJECT scan (`/dashboard/scan`) + public `/evidence`
+- eth_call deposit simulation (no broadcast)
+- Live subscribe hard-requires preflight ALLOCATE + redeemable floor
+- BSC USDC 18-decimal fix for balances / deposits
+
+### Differentiation (product, not name-calling)
+BOND still does **live AgentKit deposits** with Pending honesty. Simulated-only desks stop at eth_call — we publish the same class of facts and then sign when funded.
+
+
+
 ## 2026-09-27 — Launch scrub · dual-chain · folio README
 
 ### Shipped

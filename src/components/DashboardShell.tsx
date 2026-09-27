@@ -5,6 +5,7 @@ import {
   Building2,
   LayoutDashboard,
   Menu,
+  Radar,
   Settings,
   ShieldCheck,
   WalletCards,
@@ -19,6 +20,7 @@ import { Button } from "./Button";
 
 const nav = [
   ["Overview", "/dashboard", LayoutDashboard],
+  ["Scan", "/dashboard/scan", Radar],
   ["Mandates", "/dashboard/mandates", ShieldCheck],
   ["Vaults", "/dashboard/vaults", Building2],
   ["Subscriptions", "/dashboard/subscriptions", BookOpenCheck],

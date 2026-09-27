@@ -22,8 +22,12 @@ describe("status machine", () => {
     expect(displayShares("Finalized", "99.14")).toBe("99.14");
   });
 
-  test("USDC base units use 6 decimals", () => {
+  test("USDC base units use 6 decimals by default", () => {
     expect(usdcToBaseUnits(100)).toBe(100_000_000n);
     expect(dollarsToCents(100)).toBe(10000);
+  });
+
+  test("USDC base units honor BSC 18 decimals", () => {
+    expect(usdcToBaseUnits(100, 18)).toBe(100_000_000_000_000_000_000n);
   });
 });

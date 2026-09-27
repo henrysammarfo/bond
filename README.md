@@ -94,6 +94,22 @@ sequenceDiagram
 
 ---
 
+
+## Preflight · SERV · Evidence
+
+Before any live AgentKit deposit, BOND runs deterministic checks on the real IXS vaults:
+
+| Check | Fail → |
+| :--- | :--- |
+| Vault status / paused | REJECT |
+| Whitelist (KYC vaults) | REJECT |
+| NAV age / `maxDeposit` = 0 | DEFER |
+| IXS MCP deposit build | REJECT when otherwise open |
+| Live redeemable floor **$104** | REJECT (100 USDC can trap under redeem min after 0.5% fee) |
+| ≤ **25%** of vault TVL | Cap / DEFER for capacity |
+
+SERV returns **ALLOCATE / DEFER / REJECT** with reasons. Results publish to [`/evidence`](./src/routes/evidence.tsx) (public call log). Dashboard → **Scan** runs the analysis; **eth_call** simulates without broadcasting.
+
 ## What we built that is unusual
 
 | Piece | Why it matters |
@@ -103,6 +119,7 @@ sequenceDiagram
 | Tor + stainless AgentRouter | Cloud IPs hit WAF captchas; Tor SOCKS returns real JSON |
 | Funding preflight | Insufficient USDC/gas fails **before** signing, with the fund address |
 | Pending honesty | Owned $ stays zero until live share proof |
+| Preflight + evidence | NAV / whitelist / TVL / redeem-floor before sign; public `/evidence` |
 
 Deep technical ledger (bugs, workarounds, safety): [`docs/memory/TECHNICAL_DEEP_DIVE.md`](docs/memory/TECHNICAL_DEEP_DIVE.md)
 

@@ -25,6 +25,7 @@ function policyCheck(input: MandateInput): MandateDecision | null {
   if (input.amountDollars < 100) {
     return { allow: false, reason: "Minimum deposit is $100 USDC.", source: "policy" };
   }
+  // Live redeemable floor is enforced in preflight (104); mandate policy keeps IXS $100 floor here.
   if (
     input.network.toLowerCase() !== "avalanche" &&
     !input.network.toLowerCase().includes("avalanche") &&
@@ -142,7 +143,7 @@ async function agentRouterDecide(
       {
         role: "system",
         content:
-          'You are SERV mandate reasoning for BOND. Decide allow/deny for an RWA vault subscription. Return JSON only: {"allow":boolean,"reason":string}. Deny if amount < 100, not Avalanche, not USDC, mandate inactive, or over remaining limit. Never invent extra capacity.',
+          'You are SERV mandate reasoning for BOND. Decide allow/deny for an RWA vault subscription. Return JSON only: {"allow":boolean,"reason":string}. Deny if amount < 104 (live redeemable floor), not Avalanche/BNB, not USDC, mandate inactive, or over remaining limit. Never invent extra capacity.',
       },
       {
         role: "user",

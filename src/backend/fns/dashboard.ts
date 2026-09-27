@@ -24,6 +24,12 @@ import {
   usdcToBaseUnits,
   type SubscriptionStatus,
 } from "../../lib/status";
+import {
+  assertLiveDepositAmount,
+  runVaultPreflight,
+  LIVE_REDEEMABLE_MIN_USD,
+} from "../ixs/preflight";
+import { recordEvidence } from "../evidence/store";
 
 export const getDashboardOverviewFn = createServerFn({ method: "GET" }).handler(async () => {
   const auth = await requireAuth();
@@ -228,7 +234,7 @@ export const subscribeVaultFn = createServerFn({ method: "POST" })
   .validator(
     z.object({
       vaultId: z.string().min(8),
-      amountDollars: z.number().min(100),
+      amountDollars: z.number().min(LIVE_REDEEMABLE_MIN_USD),
       mandateId: z.string().uuid(),
     }),
   )
@@ -243,7 +249,6 @@ export const subscribeVaultFn = createServerFn({ method: "POST" })
     const vault = await getVault(data.vaultId);
     const depositChain = chainFromVaultChainId(vault.chainId);
     const networkLabel = depositChain === "bsc" ? "BNB Chain" : "Avalanche";
-    // Mandate network field is Avalanche by default — allow BNB when vault is BNB.
     const networkForGate =
       depositChain === "bsc"
         ? mandate.network.toLowerCase().includes("bnb") ||
@@ -251,6 +256,27 @@ export const subscribeVaultFn = createServerFn({ method: "POST" })
           ? mandate.network
           : "BNB Chain"
         : mandate.network;
+
+    await ensureOrgAgentWallet(auth.orgId);
+    const ownerAddress = await getWalletAddress(auth.orgId);
+
+    const preflight = await runVaultPreflight({
+      vaultId: data.vaultId,
+      wallet: ownerAddress,
+      amountUsd: data.amountDollars,
+      live: true,
+    });
+    recordEvidence({
+      kind: "preflight",
+      label: `Live subscribe preflight · ${vault.name}`,
+      chainId: vault.chainId,
+      blockNumber: preflight.blockNumber,
+      request: { vaultId: data.vaultId, amount: data.amountDollars, wallet: ownerAddress },
+      response: { verdict: preflight.verdict, checks: preflight.checks },
+      ok: preflight.ok,
+    });
+    assertLiveDepositAmount(data.amountDollars, preflight);
+
     const decision = await evaluateMandate({
       amountDollars: data.amountDollars,
       network: networkForGate,
@@ -264,13 +290,19 @@ export const subscribeVaultFn = createServerFn({ method: "POST" })
     if (!decision.allow) {
       throw new Error(`SERV mandate denied: ${decision.reason}`);
     }
+    recordEvidence({
+      kind: "serv",
+      label: `Mandate gate · ${decision.source}`,
+      request: { amount: data.amountDollars, network: networkForGate, vaultId: data.vaultId },
+      response: decision,
+      ok: decision.allow,
+    });
 
     const mcpMeta = await vaultGetMcp(data.vaultId);
     const settlement = String(mcpMeta.settlement ?? "async-erc7540");
-    await ensureOrgAgentWallet(auth.orgId);
-    const ownerAddress = await getWalletAddress(auth.orgId);
     await assertDepositFunding(ownerAddress, data.amountDollars, depositChain);
-    const assetAmount = usdcToBaseUnits(data.amountDollars).toString();
+    const decimals = vault.underlyingAsset.decimals ?? (depositChain === "bsc" ? 18 : 6);
+    const assetAmount = usdcToBaseUnits(data.amountDollars, decimals).toString();
 
     const built = await buildRequestDeposit({
       vaultId: data.vaultId,
@@ -297,7 +329,12 @@ export const subscribeVaultFn = createServerFn({ method: "POST" })
         approveTxHash,
         requestTxHash,
         settlement: built.settlement || settlement,
-        metadata: { serv: decision, mcp: { settlement: built.settlement || settlement } },
+        metadata: {
+          serv: decision,
+          preflight,
+          mcp: { settlement: built.settlement || settlement },
+          networkLabel,
+        },
       })
       .returning();
 
@@ -310,7 +347,7 @@ export const subscribeVaultFn = createServerFn({ method: "POST" })
       orgId: auth.orgId,
       subscriptionId: sub.id,
       event: "Deposit submitted",
-      detail: `$${data.amountDollars} USDC · ${vault.chainName} · Pending (not earning) · ${decision.source}`,
+      detail: `$${data.amountDollars} USDC · ${vault.chainName} · Pending (not earning) · ${decision.source} · preflight ${preflight.verdict}`,
       tone: "pending",
     });
 
@@ -320,6 +357,7 @@ export const subscribeVaultFn = createServerFn({ method: "POST" })
       approveTxHash,
       requestTxHash,
       serv: decision,
+      preflight,
       message:
         "Deposit submitted. Status is Pending — not owned and not earning until shares exist.",
     };

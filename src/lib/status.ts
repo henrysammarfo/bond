@@ -32,7 +32,8 @@ export function centsToDollars(cents: number): string {
   return (cents / 100).toFixed(2);
 }
 
-/** USDC on Avalanche uses 6 decimals. */
-export function usdcToBaseUnits(dollars: number): bigint {
-  return BigInt(Math.round(dollars * 1_000_000));
+/** USDC base units — Avalanche USDC is 6 decimals; BSC peg USDC is 18. */
+export function usdcToBaseUnits(dollars: number, decimals = 6): bigint {
+  const factor = 10 ** decimals;
+  return BigInt(Math.round(dollars * factor));
 }

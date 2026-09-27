@@ -24,6 +24,7 @@ const groups = [
     "Resources",
     [
       ["Documentation", "/docs"],
+      ["Evidence", "/evidence"],
       ["Compliance", "/compliance"],
       ["Risk disclosure", "/risk-disclosure"],
       ["Privacy", "/privacy"],
