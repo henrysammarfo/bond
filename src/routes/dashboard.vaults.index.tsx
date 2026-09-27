@@ -1,0 +1,16 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { DashboardVaultsPage } from "@/components/DashboardPages";
+
+export const Route = createFileRoute("/dashboard/vaults/")({
+  head: () => ({
+    meta: [
+      { title: "Vaults — BOND Demo" },
+      { name: "description", content: "Browse supported RWA vaults in the BOND demo." },
+      { property: "og:title", content: "BOND Demo Vaults" },
+      { property: "og:description", content: "Browse supported RWA vaults in the BOND demo." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
+  component: DashboardVaultsPage,
+});
