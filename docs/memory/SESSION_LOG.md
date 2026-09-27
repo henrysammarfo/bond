@@ -123,3 +123,13 @@ BOND still does **live AgentKit deposits** with Pending honesty. Simulated-only 
 - Live: https://bond-pi.vercel.app
 - GitHub: https://github.com/henrysammarfo/bond
 - Post X with video + tag @openservai before 28 Sep 2026 00:00 UTC
+- Demo password rotated after live record (offline artifact only)
+
+
+## 2026-09-27 — Live record + vault route fix
+
+### Shipped
+- Fixed `/dashboard/vaults/$vaultId` (and subscriptions detail) — parents lacked `<Outlet />`; detail never mounted. Deployed to production.
+- Live capture: login (masked) → Wallet 105 USDC → mandate → Scan ALLOCATE (BNB) → Avalanche subscribe attempt → **preflight REJECT** (concentration / NAV) — fail-closed money shot.
+- Hyperframes V2 ledger video SHIP; artifacts under `/opt/cursor/artifacts/`.
+- `demo@bond.app` password rotated; provisioner requires `DEMO_PASSWORD` env (no hardcoded secret).

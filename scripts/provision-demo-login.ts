@@ -7,12 +7,13 @@ import { hashPassword } from "../src/backend/auth/password.ts";
 import { ensureOrgAgentWallet } from "../src/backend/org/integrations.ts";
 
 const email = process.env.DEMO_EMAIL || "demo@bond.app";
-const password = process.env.DEMO_PASSWORD || "BondLive104!";
+const password = process.env.DEMO_PASSWORD;
 const displayName = process.env.DEMO_DISPLAY_NAME || "OpenServ Judge";
 const orgName = process.env.DEMO_ORG_NAME || "OpenServ Demo Treasury";
 
-if (!process.env.DEMO_PASSWORD) {
-  console.warn("DEMO_PASSWORD unset — using legacy default (rotate after demos).");
+if (!password || password.length < 10) {
+  console.error("Set DEMO_PASSWORD (≥10 chars). Refusing to use a hardcoded demo secret.");
+  process.exit(1);
 }
 
 

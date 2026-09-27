@@ -10,9 +10,9 @@ BOND is a live RWA vault demo for OpenServ Edition 01. Target: treasuries and ag
 
 **Idea:** Path A honesty — SERV decides if a mandate is allowed, AgentKit signs a real USDC deposit on Avalanche (BNB companion lane), and IXS ERC-7540 stays **Pending** until shares prove. No invented balances. No localStorage cosplay.
 
-**Utility:** Mandate limits + vault scan (ALLOCATE / DEFER / REJECT) + live subscribe + public Evidence receipts on Neon (SERV I/O, MCP probes, on-chain reads with block numbers).
+**Utility:** Mandate limits + vault scan (ALLOCATE / DEFER / REJECT) + live subscribe + public Evidence receipts on Neon (SERV I/O, MCP probes, on-chain reads with block numbers). Fail-closed preflight (redeemable floor, ≤25% TVL, NAV freshness) blocks unsafe legs before gas is spent.
 
-**How it works:** Sign in → funded AgentKit wallet → create mandate → Scan → Subscribe (≥$104 USDC floor) → UI shows Pending (not earning) → Evidence page for judges.
+**How it works:** Sign in → funded AgentKit wallet → create mandate → Scan → Subscribe (≥$104 USDC floor) → UI shows Pending (not earning) when the chain accepts — or a clear REJECT when guardrails fire → Evidence page for judges.
 
 ### Link to your project
 - Live demo: https://bond-pi.vercel.app
@@ -79,6 +79,12 @@ Settlement you can prove.
 - Live screen capture: `/opt/cursor/artifacts/bond-live-path-a-demo.mp4` (after record)
 - Stills: `/opt/cursor/artifacts/dash-*.png`, `bond-home-hero.png`
 
-## Demo login (operators only — rotate after recording)
-- Email: demo@bond.app
-- Password: rotated after live record (see SESSION_LOG). Never post password publicly.
+## Demo login (operators only — rotated after recording)
+- Email: `demo@bond.app`
+- Password: **rotated** — see `/opt/cursor/artifacts/DEMO_LOGIN_ROTATED.txt` on the agent machine (never post publicly).
+- Live capture showed Path A through Scan + Subscribe attempt; Avalanche primary currently **preflight REJECT** (NAV/TVL concentration + maxDeposit 0). BNB lane preflight clears at $104 when BSC USDC is funded. Fail-closed is the demo.
+
+## Videos for X
+- Ledger sizzle: `/opt/cursor/artifacts/bond-openserv-v2-x.mp4` (~4MB)
+- Live product: `/opt/cursor/artifacts/bond-live-path-a-demo-x.mp4` + `/opt/cursor/artifacts/bond-live-subscribe-attempt-x.mp4`
+- Prefer attaching the V2 ledger video + 1–2 stills (`demo-scan-allocate.png`, `demo-preflight-reject.png`, `demo-evidence-final.png`)
