@@ -65,6 +65,9 @@ export const registerFn = createServerFn({ method: "POST" })
       })
       .returning();
     await db.insert(memberships).values({ orgId: org.id, userId: user.id, role: "owner" });
+    // Provision per-org AgentKit signer (encrypted) so each treasury has its own address.
+    const { ensureOrgAgentWallet } = await import("../org/integrations");
+    await ensureOrgAgentWallet(org.id);
     await createSession(user.id, org.id);
     return { ok: true as const, orgId: org.id, userId: user.id };
   });

@@ -10,13 +10,15 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "test": "bun test src/lib/status.test.ts src/backend/ixs/client.test.ts",
+    "test": "bun test src/lib/status.test.ts src/backend/ixs/client.test.ts src/backend/org/integrations.test.ts",
+    "test:all": "bun test src/lib/status.test.ts src/backend/ixs/client.test.ts src/backend/org/integrations.test.ts && bun run smoke:llm",
     "db:push": "bun run scripts/db-push.ts",
     "db:generate": "drizzle-kit generate",
     "e2e:deposit": "bun run scripts/live-deposit-e2e.ts",
     "tor:start": "bash scripts/tor-start.sh",
     "smoke:llm": "bash scripts/tor-start.sh && bun run scripts/smoke-llm-tor.ts",
-    "cdp:export": "bun run scripts/cdp-export-wallet.ts"
+    "cdp:export": "bun run scripts/cdp-export-wallet.ts",
+    "smoke:stack": "bun run test:all && bun run build"
   },
   "overrides": {
     "rolldown": "1.2.1"

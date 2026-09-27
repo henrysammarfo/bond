@@ -1,4 +1,5 @@
 import { agentRouterChat } from "../llm/agentrouter";
+import { resolveOrgSecrets } from "../org/integrations";
 
 export type MandateDecision = {
   allow: boolean;
@@ -14,6 +15,7 @@ type MandateInput = {
   mandateLimitCents: number;
   mandateUsedCents: number;
   mandateStatus: string;
+  orgId?: string;
 };
 
 function policyCheck(input: MandateInput): MandateDecision | null {
@@ -43,19 +45,20 @@ function policyCheck(input: MandateInput): MandateDecision | null {
   return null;
 }
 
-async function openservDecide(input: MandateInput): Promise<MandateDecision | null> {
-  const key = process.env.OPENSERV_API_KEY;
-  // SERV Reasoning API: https://inference-api.openserv.ai (OpenAI-compatible)
+async function openservDecide(
+  input: MandateInput,
+  apiKey: string | null,
+): Promise<MandateDecision | null> {
+  if (!apiKey) return null;
   const base = (
     process.env.OPENSERV_API_BASE_URL ?? "https://inference-api.openserv.ai"
   ).replace(/\/$/, "");
-  if (!key) return null;
 
   const chatBase = base.endsWith("/v1") ? base : `${base}/v1`;
   const res = await fetch(`${chatBase}/chat/completions`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${key}`,
+      Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
       Accept: "application/json",
     },
@@ -118,10 +121,13 @@ async function openservDecide(input: MandateInput): Promise<MandateDecision | nu
   throw new Error("OpenServ SERV gate returned an unusable response.");
 }
 
-async function agentRouterDecide(input: MandateInput): Promise<MandateDecision> {
-  if (!process.env.AGENTROUTER_API_KEY) {
+async function agentRouterDecide(
+  input: MandateInput,
+  apiKey: string | null,
+): Promise<MandateDecision> {
+  if (!apiKey) {
     throw new Error(
-      "AGENTROUTER_API_KEY (or working OPENSERV_API_KEY) required for SERV mandate reasoning.",
+      "Connect your own SERV or AgentRouter key in Settings → Integrations (or enable platform fallback).",
     );
   }
   const text = await agentRouterChat(
@@ -136,7 +142,7 @@ async function agentRouterDecide(input: MandateInput): Promise<MandateDecision> 
         content: JSON.stringify(input),
       },
     ],
-    { temperature: 0, responseFormat: "json_object" },
+    { temperature: 0, responseFormat: "json_object", apiKey },
   );
   const parsed = JSON.parse(text) as { allow: boolean; reason: string };
   if (typeof parsed.allow !== "boolean") {
@@ -147,19 +153,26 @@ async function agentRouterDecide(input: MandateInput): Promise<MandateDecision> 
 
 /**
  * Hard gate: policy failures deny immediately.
- * Then SERV (OpenServ) if configured; else AgentRouter reasoning (Tor on cloud).
- * Deny never soft-passes.
+ * Then org/platform SERV → AgentRouter. Deny never soft-passes.
  */
 export async function evaluateMandate(input: MandateInput): Promise<MandateDecision> {
   const policy = policyCheck(input);
   if (policy && !policy.allow) return policy;
 
+  let openservKey = process.env.OPENSERV_API_KEY ?? null;
+  let agentrouterKey = process.env.AGENTROUTER_API_KEY ?? null;
+  if (input.orgId) {
+    const secrets = await resolveOrgSecrets(input.orgId);
+    openservKey = secrets.openservApiKey;
+    agentrouterKey = secrets.agentrouterApiKey;
+  }
+
   try {
-    const serv = await openservDecide(input);
+    const serv = await openservDecide(input, openservKey);
     if (serv) return serv;
   } catch (err) {
     console.warn("[mandate] OpenServ gate error, trying AgentRouter:", err);
   }
 
-  return agentRouterDecide(input);
+  return agentRouterDecide(input, agentrouterKey);
 }

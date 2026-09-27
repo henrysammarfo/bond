@@ -13,8 +13,8 @@ export function agentRouterModel(): string {
   return process.env.AGENTROUTER_MODEL ?? "deepseek-v4-flash";
 }
 
-function requireKey(): string {
-  const key = process.env.AGENTROUTER_API_KEY;
+function requireKey(override?: string): string {
+  const key = override ?? process.env.AGENTROUTER_API_KEY;
   if (!key) throw new Error("AGENTROUTER_API_KEY is not configured.");
   return key;
 }
@@ -57,8 +57,8 @@ function assertJsonBody(text: string, context: string): unknown {
   }
 }
 
-async function postViaTor(path: string, body: unknown): Promise<unknown> {
-  const apiKey = requireKey();
+async function postViaTor(path: string, body: unknown, apiKeyOverride?: string): Promise<unknown> {
+  const apiKey = requireKey(apiKeyOverride);
   const agent = new SocksProxyAgent(torSocks());
   const payload = JSON.stringify(body);
   const url = new URL(path.startsWith("http") ? path : `${AGENTROUTER_BASE}${path}`);
@@ -99,8 +99,8 @@ async function postViaTor(path: string, body: unknown): Promise<unknown> {
   });
 }
 
-async function postDirect(path: string, body: unknown): Promise<unknown> {
-  const apiKey = requireKey();
+async function postDirect(path: string, body: unknown, apiKeyOverride?: string): Promise<unknown> {
+  const apiKey = requireKey(apiKeyOverride);
   const url = path.startsWith("http") ? path : `${AGENTROUTER_BASE}${path}`;
   const res = await fetch(url, {
     method: "POST",
@@ -112,11 +112,15 @@ async function postDirect(path: string, body: unknown): Promise<unknown> {
   return assertJsonBody(text, "direct");
 }
 
-export async function agentRouterChat(messages: Array<{ role: string; content: string }>, opts?: {
-  model?: string;
-  temperature?: number;
-  responseFormat?: "json_object" | "text";
-}): Promise<string> {
+export async function agentRouterChat(
+  messages: Array<{ role: string; content: string }>,
+  opts?: {
+    model?: string;
+    temperature?: number;
+    responseFormat?: "json_object" | "text";
+    apiKey?: string;
+  },
+): Promise<string> {
   const model = opts?.model ?? agentRouterModel();
   const body: Record<string, unknown> = {
     model,
@@ -126,7 +130,9 @@ export async function agentRouterChat(messages: Array<{ role: string; content: s
   if (opts?.responseFormat === "json_object") {
     body.response_format = { type: "json_object" };
   }
-  const data = (await (useTor() ? postViaTor("/chat/completions", body) : postDirect("/chat/completions", body))) as {
+  const data = (await (useTor()
+    ? postViaTor("/chat/completions", body, opts?.apiKey)
+    : postDirect("/chat/completions", body, opts?.apiKey))) as {
     choices?: Array<{ message?: { content?: string } }>;
   };
   const content = data.choices?.[0]?.message?.content;

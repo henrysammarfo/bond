@@ -7,13 +7,13 @@ Docs: [IXS Vault API](https://api-v2.ixs.finance/docs) · [IXS agent skills](htt
 
 ## Product mode (read first)
 
-BOND is a **multitenant treasury demo** for the RWA Vaults track:
+BOND is a **multitenant all-around RWA treasury app** for the OpenServ track:
 
-- Orgs sign up / log in (email + password, httpOnly sessions, Neon).
-- One **shared** Avalanche AgentKit wallet signs deposits (not user wallet-connect).
-- SERV mandate gate → live IXS subscribe → **Pending until shares**.
+- Orgs **register / login / logout** (httpOnly sessions, Neon).
+- Each org gets its **own AgentKit Avalanche signer** (encrypted). Settings → Integrations: connect **your own SERV / AgentRouter** keys, import or rotate agent key, or use platform fallback for judges.
+- SERV mandate gate → live IXS subscribe → **Pending until shares** + Snowscan proofs.
 
-It is **not** a marketplace where each user connects MetaMask and deposits their own USDC. See [`SECURITY.md`](./SECURITY.md).
+Platform keys cover the fair demo path; BYO keys let judges and treasuries run on their own credentials. See [`SECURITY.md`](./SECURITY.md) · [`TECHNICAL_DEEP_DIVE.md`](./TECHNICAL_DEEP_DIVE.md).
 
 ---
 

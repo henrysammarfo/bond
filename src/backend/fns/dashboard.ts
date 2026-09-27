@@ -8,7 +8,8 @@ import { getMandateForOrg, getSubscriptionForOrg } from "../tenancy";
 import { getVault, getPosition, primaryVaultId } from "../ixs/client";
 import { buildClaimDeposit, buildRequestDeposit, requestStatus, vaultGetMcp } from "../ixs/mcp";
 import { evaluateMandate } from "../serv/mandate";
-import { executeTxSteps, getWalletAddress, getWalletBalances } from "../agentkit/wallet";
+import { executeTxSteps, getWalletAddress, getWalletBalances, assertDepositFunding } from "../agentkit/wallet";
+import { ensureOrgAgentWallet } from "../org/integrations";
 import {
   centsToDollars,
   displayShares,
@@ -46,7 +47,8 @@ export const getDashboardOverviewFn = createServerFn({ method: "GET" }).handler(
 
   let walletUsdc = "—";
   try {
-    const address = await getWalletAddress();
+    await ensureOrgAgentWallet(auth.orgId);
+    const address = await getWalletAddress(auth.orgId);
     const bal = await getWalletBalances(address);
     walletUsdc = bal.usdc;
   } catch {
@@ -164,10 +166,11 @@ export const listActivityFn = createServerFn({ method: "GET" }).handler(async ()
 });
 
 export const getWalletFn = createServerFn({ method: "GET" }).handler(async () => {
-  await requireAuth();
-  const address = await getWalletAddress();
+  const auth = await requireAuth();
+  await ensureOrgAgentWallet(auth.orgId);
+  const address = await getWalletAddress(auth.orgId);
   const balances = await getWalletBalances(address);
-  return balances;
+  return { ...balances, source: "org-agentkit" as const };
 });
 
 export const getSettingsFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -222,6 +225,7 @@ export const subscribeVaultFn = createServerFn({ method: "POST" })
       mandateLimitCents: mandate.monthlyLimitCents,
       mandateUsedCents: mandate.usedCents,
       mandateStatus: mandate.status,
+      orgId: auth.orgId,
     });
     if (!decision.allow) {
       throw new Error(`SERV mandate denied: ${decision.reason}`);
@@ -230,7 +234,9 @@ export const subscribeVaultFn = createServerFn({ method: "POST" })
     const vault = await getVault(data.vaultId);
     const mcpMeta = await vaultGetMcp(data.vaultId);
     const settlement = String(mcpMeta.settlement ?? "async-erc7540");
-    const ownerAddress = await getWalletAddress();
+    await ensureOrgAgentWallet(auth.orgId);
+    const ownerAddress = await getWalletAddress(auth.orgId);
+    await assertDepositFunding(ownerAddress, data.amountDollars);
     const assetAmount = usdcToBaseUnits(data.amountDollars).toString();
 
     const built = await buildRequestDeposit({
@@ -238,7 +244,7 @@ export const subscribeVaultFn = createServerFn({ method: "POST" })
       ownerAddress,
       assetAmount,
     });
-    const hashes = await executeTxSteps(built.steps);
+    const hashes = await executeTxSteps(built.steps, auth.orgId);
     const approveTxHash = hashes[0] ?? null;
     const requestTxHash = hashes[hashes.length - 1] ?? null;
 
@@ -359,7 +365,7 @@ export const claimSubscriptionFn = createServerFn({ method: "POST" })
       ownerAddress: sub.ownerAddress,
       requestId,
     });
-    const hashes = await executeTxSteps(built.steps);
+    const hashes = await executeTxSteps(built.steps, auth.orgId);
     const claimTxHash = hashes[hashes.length - 1] ?? null;
     const position = await getPosition(sub.vaultId, sub.ownerAddress);
     const shareBalance = String(

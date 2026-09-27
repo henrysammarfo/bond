@@ -10,12 +10,12 @@ import {
 import { privateKeyToAccount } from "viem/accounts";
 import { avalanche } from "viem/chains";
 import type { TxStep } from "../ixs/mcp";
+import { resolveOrgSecrets } from "../org/integrations";
 
 /**
  * AgentKit / CDP-backed Avalanche signer.
- * Uses an EVM private key provisioned from Coinbase CDP / AgentKit wallet export
- * (`AGENT_PRIVATE_KEY` or `CDP_WALLET_PRIVATE_KEY`). Avoids bundling the full
- * @coinbase/agentkit graph into Cloudflare Workers.
+ * Prefer org-scoped private key from encrypted integrations vault;
+ * fall back to platform AGENT_PRIVATE_KEY for demo/judges.
  */
 
 const AVALANCHE_USDC = "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E" as const;
@@ -29,16 +29,11 @@ const ERC20_BALANCE_OF = [
   },
 ] as const;
 
-function requirePrivateKey(): Hex {
-  const raw = process.env.AGENT_PRIVATE_KEY ?? process.env.CDP_WALLET_PRIVATE_KEY;
-  if (!raw) {
-    throw new Error(
-      "AGENT_PRIVATE_KEY (or CDP_WALLET_PRIVATE_KEY) must be set — export the AgentKit/CDP Avalanche wallet key into secrets.",
-    );
-  }
-  const key = raw.startsWith("0x") ? raw : `0x${raw}`;
-  return key as Hex;
-}
+export type SignerContext = {
+  privateKey: Hex;
+  address: `0x${string}`;
+  source: "org" | "platform";
+};
 
 function rpcUrl() {
   return process.env.AVALANCHE_RPC_URL ?? "https://api.avax.network/ext/bc/C/rpc";
@@ -51,20 +46,36 @@ function publicClient() {
   });
 }
 
-function walletClient() {
-  const account = privateKeyToAccount(requirePrivateKey());
-  return createWalletClient({
-    account,
-    chain: avalanche,
-    transport: http(rpcUrl()),
-  });
+function platformPrivateKey(): Hex {
+  const raw = process.env.AGENT_PRIVATE_KEY ?? process.env.CDP_WALLET_PRIVATE_KEY;
+  if (!raw) {
+    throw new Error(
+      "No AgentKit signer. Connect your own agent key in Settings → Integrations, or set platform AGENT_PRIVATE_KEY.",
+    );
+  }
+  return (raw.startsWith("0x") ? raw : `0x${raw}`) as Hex;
 }
 
-export async function getWalletAddress(): Promise<`0x${string}`> {
-  if (process.env.CDP_WALLET_ADDRESS?.startsWith("0x")) {
-    return process.env.CDP_WALLET_ADDRESS as `0x${string}`;
+export async function resolveSigner(orgId?: string): Promise<SignerContext> {
+  if (orgId) {
+    const secrets = await resolveOrgSecrets(orgId);
+    if (secrets.agentPrivateKey && secrets.agentWalletAddress) {
+      return {
+        privateKey: secrets.agentPrivateKey,
+        address: secrets.agentWalletAddress,
+        source: secrets.sources.agent === "org" ? "org" : "platform",
+      };
+    }
   }
-  return privateKeyToAccount(requirePrivateKey()).address;
+  const privateKey = platformPrivateKey();
+  const address = process.env.CDP_WALLET_ADDRESS?.startsWith("0x")
+    ? (process.env.CDP_WALLET_ADDRESS as `0x${string}`)
+    : privateKeyToAccount(privateKey).address;
+  return { privateKey, address, source: "platform" };
+}
+
+export async function getWalletAddress(orgId?: string): Promise<`0x${string}`> {
+  return (await resolveSigner(orgId)).address;
 }
 
 export async function getWalletBalances(address: `0x${string}`) {
@@ -84,8 +95,29 @@ export async function getWalletBalances(address: `0x${string}`) {
     chainId: 43114,
     avax: formatEther(avaxWei),
     usdc: formatUnits(usdcRaw, 6),
+    usdcRaw,
+    avaxWei,
     usdcAddress: AVALANCHE_USDC,
   };
+}
+
+/** Preflight before live deposit — fail closed with actionable errors. */
+export async function assertDepositFunding(
+  address: `0x${string}`,
+  amountDollars: number,
+): Promise<void> {
+  const bal = await getWalletBalances(address);
+  const needUsdc = BigInt(Math.round(amountDollars * 1e6));
+  if (bal.usdcRaw < needUsdc) {
+    throw new Error(
+      `Insufficient USDC: wallet has ${bal.usdc} USDC, need ≥ ${amountDollars}. Fund ${address} on Avalanche (USDC ${AVALANCHE_USDC}) before deposit.`,
+    );
+  }
+  if (bal.avaxWei === 0n) {
+    throw new Error(
+      `Insufficient AVAX for gas: balance is 0. Fund ${address} with Avalanche C-Chain AVAX before deposit.`,
+    );
+  }
 }
 
 function stepToTx(step: TxStep): TransactionRequest {
@@ -101,8 +133,14 @@ function stepToTx(step: TxStep): TransactionRequest {
   };
 }
 
-export async function executeTxSteps(steps: TxStep[]): Promise<string[]> {
-  const wallet = walletClient();
+export async function executeTxSteps(steps: TxStep[], orgId?: string): Promise<string[]> {
+  const signer = await resolveSigner(orgId);
+  const account = privateKeyToAccount(signer.privateKey);
+  const wallet = createWalletClient({
+    account,
+    chain: avalanche,
+    transport: http(rpcUrl()),
+  });
   const public_ = publicClient();
   const hashes: string[] = [];
   for (const step of steps) {

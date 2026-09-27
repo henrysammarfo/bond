@@ -28,6 +28,11 @@ import {
   refreshSubscriptionFn,
   claimSubscriptionFn,
 } from "@/backend/fns/dashboard";
+import {
+  getIntegrationsFn,
+  saveIntegrationsFn,
+  rotateAgentWalletFn,
+} from "@/backend/fns/integrations";
 import { Button, ButtonLink } from "./Button";
 import { PageTitle, Panel, Status } from "./DashboardUI";
 
@@ -825,17 +830,51 @@ export function WalletPage() {
 export function SettingsPage() {
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ["settings"], queryFn: () => getSettingsFn() });
+  const integ = useQuery({ queryKey: ["integrations"], queryFn: () => getIntegrationsFn() });
   const [orgName, setOrgName] = useState("");
   const [notifications, setNotifications] = useState(true);
+  const [openserv, setOpenserv] = useState("");
+  const [agentrouter, setAgentrouter] = useState("");
+  const [agentPk, setAgentPk] = useState("");
+  const [platformFallback, setPlatformFallback] = useState(true);
   useEffect(() => {
     if (q.data) {
       setOrgName(q.data.orgName);
       setNotifications(q.data.notificationsEnabled);
     }
   }, [q.data]);
+  useEffect(() => {
+    if (integ.data) setPlatformFallback(integ.data.usePlatformFallback);
+  }, [integ.data]);
   const save = useMutation({
     mutationFn: () => updateSettingsFn({ data: { orgName, notificationsEnabled: notifications } }),
     onSuccess: () => void qc.invalidateQueries({ queryKey: ["settings"] }),
+  });
+  const saveInteg = useMutation({
+    mutationFn: () =>
+      saveIntegrationsFn({
+        data: {
+          openservApiKey: openserv || null,
+          agentrouterApiKey: agentrouter || null,
+          agentPrivateKey: agentPk || null,
+          usePlatformFallback: platformFallback,
+        },
+      }),
+    onSuccess: () => {
+      setOpenserv("");
+      setAgentrouter("");
+      setAgentPk("");
+      void qc.invalidateQueries({ queryKey: ["integrations"] });
+      void qc.invalidateQueries({ queryKey: ["wallet"] });
+      void qc.invalidateQueries({ queryKey: ["overview"] });
+    },
+  });
+  const rotate = useMutation({
+    mutationFn: () => rotateAgentWalletFn(),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["integrations"] });
+      void qc.invalidateQueries({ queryKey: ["wallet"] });
+    },
   });
   return (
     <>
@@ -844,6 +883,9 @@ export function SettingsPage() {
       <div className="space-y-6">
         <Panel>
           <h2 className="font-semibold">Treasury profile</h2>
+          <p className="mt-1 text-xs text-dashboard-muted">
+            {q.data?.email ? `Signed in as ${q.data.displayName} · ${q.data.email}` : "Session"}
+          </p>
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
             <label className="text-xs text-dashboard-muted">
               Workspace
@@ -866,6 +908,108 @@ export function SettingsPage() {
             Save changes
           </Button>
         </Panel>
+
+        <Panel>
+          <h2 className="font-semibold">Integrations — bring your own keys</h2>
+          <p className="mt-2 text-xs leading-5 text-dashboard-muted">
+            Each org gets its own AgentKit Avalanche signer (encrypted at rest). Connect your own
+            SERV / AgentRouter keys for mandate reasoning, or keep platform fallback for judges.
+            Secrets never leave the server or appear in the client bundle.
+          </p>
+          {integ.error && <p className="mt-3 text-xs text-danger">{errMessage(integ.error)}</p>}
+          {integ.data && (
+            <div className="mt-5 space-y-4 text-sm">
+              <div className="rounded-md bg-dashboard p-4">
+                <p className="text-xs text-dashboard-muted">Your AgentKit address (Avalanche)</p>
+                <p className="mt-2 break-all font-mono text-xs">{integ.data.agentWalletAddress}</p>
+                <a
+                  className="mt-2 inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                  href={`https://snowscan.xyz/address/${integ.data.agentWalletAddress}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Snowscan <ExternalLink size={12} />
+                </a>
+                {integ.data.balances && (
+                  <p className="mt-3 text-xs text-dashboard-muted">
+                    Live · {integ.data.balances.usdc} USDC · {integ.data.balances.avax} AVAX · signer
+                    source {integ.data.sources.agent}
+                  </p>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2 text-[11px] text-dashboard-muted">
+                <span>SERV: {integ.data.sources.openserv}</span>
+                <span>·</span>
+                <span>AgentRouter: {integ.data.sources.agentrouter}</span>
+                <span>·</span>
+                <span>{integ.data.hasOpenserv ? `stored ${integ.data.openservMasked}` : "no BYO SERV"}</span>
+              </div>
+              <label className="block text-xs text-dashboard-muted">
+                OpenServ SERV API key
+                <input
+                  type="password"
+                  value={openserv}
+                  placeholder="serv_… (leave blank to keep)"
+                  onChange={(e) => setOpenserv(e.target.value)}
+                  className="mt-2 h-10 w-full rounded-md border border-dashboard-border bg-dashboard px-3 text-dashboard-foreground"
+                />
+              </label>
+              <label className="block text-xs text-dashboard-muted">
+                AgentRouter API key
+                <input
+                  type="password"
+                  value={agentrouter}
+                  placeholder="sk-… (leave blank to keep)"
+                  onChange={(e) => setAgentrouter(e.target.value)}
+                  className="mt-2 h-10 w-full rounded-md border border-dashboard-border bg-dashboard px-3 text-dashboard-foreground"
+                />
+              </label>
+              <label className="block text-xs text-dashboard-muted">
+                Import AgentKit private key (optional)
+                <input
+                  type="password"
+                  value={agentPk}
+                  placeholder="0x… replaces generated signer"
+                  onChange={(e) => setAgentPk(e.target.value)}
+                  className="mt-2 h-10 w-full rounded-md border border-dashboard-border bg-dashboard px-3 text-dashboard-foreground"
+                />
+              </label>
+              <label className="flex items-center gap-3 text-xs text-dashboard-muted">
+                <input
+                  type="checkbox"
+                  checked={platformFallback}
+                  onChange={(e) => setPlatformFallback(e.target.checked)}
+                />
+                Allow platform fallback keys when BYO not set (demo / judges)
+              </label>
+              {saveInteg.error && (
+                <p className="text-xs text-danger">{errMessage(saveInteg.error)}</p>
+              )}
+              <div className="flex flex-wrap gap-2">
+                <Button disabled={saveInteg.isPending} onClick={() => saveInteg.mutate()}>
+                  {saveInteg.isPending ? "Saving…" : "Save integrations"}
+                </Button>
+                <Button
+                  variant="ghost"
+                  disabled={rotate.isPending}
+                  onClick={() => {
+                    if (
+                      typeof window !== "undefined" &&
+                      window.confirm(
+                        "Rotate AgentKit wallet? The old address keeps any funds — back up first.",
+                      )
+                    ) {
+                      rotate.mutate();
+                    }
+                  }}
+                >
+                  Rotate agent wallet
+                </Button>
+              </div>
+            </div>
+          )}
+        </Panel>
+
         <Panel>
           <div className="flex items-center justify-between gap-4">
             <div>

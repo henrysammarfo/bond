@@ -1,5 +1,7 @@
 # Security & fund recovery (operator)
 
+See also: [`TECHNICAL_DEEP_DIVE.md`](./TECHNICAL_DEEP_DIVE.md) (bugs, WAF/Tor, CDP scopes, Bun `&` env quirk, SERV `approved` vs `allow`).
+
 ## Secrets status
 
 | Item | Status |
@@ -18,16 +20,18 @@
 
 ## What BOND is (honest product mode)
 
-**Hackathon / treasury-agent demo — not a self-custody marketplace.**
+**Multitenant RWA treasury app — per-org AgentKit, BYO integrations.**
 
 | Users can | Users cannot (yet) |
 | --- | --- |
-| Register org, login (httpOnly session) | Connect MetaMask / their own wallet |
-| Create mandates, browse live IXS vaults | Deposit **their** USDC from a personal wallet |
-| Trigger AgentKit deposit (shared treasury key) | Per-tenant AgentKit wallets |
-| See Pending / shares / Snowscan proofs | Instant refund; redeem UI is deposit-first (MCP redeem exists on IXS) |
+| Register org, login, logout (httpOnly) | Browser MetaMask “connect wallet” UX |
+| Own AgentKit Avalanche address (generated or imported) | Instant refund (redeem is async IXS) |
+| Connect own SERV / AgentRouter keys in Settings | |
+| Use platform fallback keys for demo | |
+| Create mandates, live vault browse, deposit with funding check | |
+| See Pending / shares / Snowscan proofs | |
 
-All orgs share one Avalanche AgentKit signer. That is correct for OpenServ RWA + AgentKit proof; it is **not** “sign up and bring your own funds.”
+Platform covers fair judge demo. BYO keys = run on your credentials. See `TECHNICAL_DEEP_DIVE.md`.
 
 ## After the demo deposit
 

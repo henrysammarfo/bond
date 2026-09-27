@@ -104,3 +104,23 @@ export const auditEvents = pgTable("audit_events", {
   tone: text("tone").notNull().default("good"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+/**
+ * Per-org integration vault. Ciphertext columns are AES-256-GCM blobs
+ * (`iv.tag.ciphertext` base64) encrypted with INTEGRATIONS_ENCRYPTION_KEY / SESSION_SECRET.
+ * Plain `agentWalletAddress` is public on-chain identity for the org AgentKit signer.
+ */
+export const orgIntegrations = pgTable("org_integrations", {
+  orgId: uuid("org_id")
+    .primaryKey()
+    .references(() => orgs.id, { onDelete: "cascade" }),
+  agentWalletAddress: text("agent_wallet_address"),
+  agentPrivateKeyEnc: text("agent_private_key_enc"),
+  openservApiKeyEnc: text("openserv_api_key_enc"),
+  agentrouterApiKeyEnc: text("agentrouter_api_key_enc"),
+  tavilyApiKeyEnc: text("tavily_api_key_enc"),
+  tinyfishApiKeyEnc: text("tinyfish_api_key_enc"),
+  usePlatformFallback: boolean("use_platform_fallback").notNull().default(true),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
