@@ -14,7 +14,7 @@
 
 | Field | Value |
 | --- | --- |
-| Wallet | `0x1eFBb041E94aCc18D50C578eD34c265075d3b14e` (interim; fund this — CDP Wallet Secret still pending) |
+| Wallet | `0x1eFBb041E94aCc18D50C578eD34c265075d3b14e` (AgentKit signer — fund + keep `AGENT_PRIVATE_KEY` backed up) |
 | Vault ID | `6a952729732c2b84b55ce89d` |
 | Approve tx | |
 | RequestDeposit tx | |

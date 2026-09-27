@@ -5,6 +5,16 @@ Deadline: **28 Sep 2026, 00:00 UTC** · Track: [OpenServ RWA Vaults (IXS)](https
 Primary vault (live): Avalanche `0xaD01573b459805E3954398796203d830B57A8bD9` · vaultId `6a952729732c2b84b55ce89d`  
 Docs: [IXS Vault API](https://api-v2.ixs.finance/docs) · [IXS agent skills](https://github.com/IXS-Finance/ixs-rwa-agent-skills)
 
+## Product mode (read first)
+
+BOND is a **multitenant treasury demo** for the RWA Vaults track:
+
+- Orgs sign up / log in (email + password, httpOnly sessions, Neon).
+- One **shared** Avalanche AgentKit wallet signs deposits (not user wallet-connect).
+- SERV mandate gate → live IXS subscribe → **Pending until shares**.
+
+It is **not** a marketplace where each user connects MetaMask and deposits their own USDC. See [`SECURITY.md`](./SECURITY.md).
+
 ---
 
 ## 1. Accounts & links (open these)

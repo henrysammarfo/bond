@@ -1,26 +1,19 @@
 # Session log
 
-## 2026-09-27 — Wallet Secret + Judr gaps
+## 2026-09-27 — Security clarity + market readiness
 
-### CDP
-- `CDP_WALLET_SECRET` wired (gitignored).
-- Named account created: `bond-avalanche-primary` → `0x906a7ddC43671ef4a887553Da5A219996848Db6E`
-- Interim key **imported** as `bond-avalanche-funded` → **`0x1eFBb041E94aCc18D50C578eD34c265075d3b14e`** (signer for deposits)
-- `accounts#export` scope missing on Secret API key — keep local `AGENT_PRIVATE_KEY`; re-enable Export in portal if needed.
-- **Balances still 0** on both addresses at last check. Fund the **funded** address:
-  https://snowscan.xyz/address/0x1eFBb041E94aCc18D50C578eD34c265075d3b14e
-  (≥100 Avalanche USDC + AVAX)
+### Keys
+- Secrets remain in gitignored `.env.local` only (verified not tracked).
+- Added `SECURITY.md`: backup `AGENT_PRIVATE_KEY` to reclaim USDC; rotate chat-pasted keys after hack.
+- CDP Wallet Secret wired; signer `0x1eFBb041E94aCc18D50C578eD34c265075d3b14e` still **unfunded** on-chain last check.
 
-### Product (vs Judr)
-- Subscription detail: Snowscan approve/requestDeposit links, SERV source/reason, Pending banner
-- Wallet meta: removed “simulated”; live fund CTA
-- Mandate/vault copy: SERV deny messaging
-- Docs: `COMPETITORS.md` win posture table
+### Ready vs not ready for “market”
+- **Ready:** public marketing pages, org register/login, mandates, live vault browse, Pending honesty UI, Snowscan proof surface, Neon DB.
+- **Not ready as self-serve DeFi:** per-user wallet connect, per-user deposits, full redeem UX in dashboard, public hosting env with all secrets, live deposit evidence.
 
-### Neon
-- Schema pushed earlier; auth smoke org exists.
-
-### Next
-1. On-chain funding lands → Confirm live deposit → fill WIN_CHECKLIST hashes
-2. Public demo URL + X/@openservai
-3. Optional: enable Export scope on CDP API key
+### Next (win path)
+1. Fund signer ≥100 USDC + AVAX  
+2. Demo: register → mandate → Confirm live deposit → Pending + Snowscan  
+3. Deploy public URL with secrets  
+4. Fill WIN_CHECKLIST + X/@openservai  
+5. Later: redeem same key → USDC back (async IXS)
