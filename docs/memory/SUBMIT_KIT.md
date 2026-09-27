@@ -126,6 +126,24 @@ Settlement you can prove.
 
 ---
 
+## Form Q5 — SERV fill-in-the-blank (pick one)
+
+**Paste this (recommended):**
+
+The moment SERV clicked was when it rejected a live Avalanche deposit that would have blown the concentration cap — before AgentKit spent a wei — then cleared ALLOCATE on BNB so we could sign 104 USDC for real and keep the UI on Pending until shares prove.
+
+**Alts if you want a different stem:**
+
+I'm not building another agent without SERV because an agent wallet without a brain that can say no is just a hot key with a UI.
+
+Before SERV my agent could look smart and still move money dumb. With SERV it has to earn ALLOCATE before anything signs.
+
+If you're building agents without SERV you're shipping vibes with a private key attached.
+
+Without SERV my agent would still be cosplaying settlement — green checks, no proof, no receipts.
+
+---
+
 ## Operator notes
 
 Demo login rotated after recording — see agent artifact `DEMO_LOGIN_ROTATED.txt` (never post).
