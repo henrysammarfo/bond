@@ -1,0 +1,33 @@
+Most RWA demos flash a green check, invent a balance, and call it settled.
+Cute. Wrong.
+
+This is BOND. OpenServ Edition One. Live Path A.
+Settlement you can prove — not cosplay yield.
+
+Avalanche is the primary lane. BNB is the companion.
+Same AgentKit key on both chains. Live IXS listings. Not a testnet costume.
+
+Here’s the funded signer.
+We moved USDC onto BNB so the companion lane could clear the one-oh-four floor.
+No MetaMask theater. httpOnly session. Real balances.
+
+Mandate first — how much this treasury is allowed to put on chain.
+Then scan every live vault.
+SERV returns ALLOCATE, DEFER, or REJECT.
+Fail closed. No soft pass.
+
+One hundred four USDC. Live deposit on BNB.
+Watch the status. Pending. Not earning. Not owned.
+Async ERC-7540. Shares come later. Honesty now.
+
+And here’s the hash — on BscScan.
+Approve, then request deposit. Refresh it yourself. It’s real.
+
+Want receipts? Evidence on Neon.
+SERV inputs and outputs. MCP probes. On-chain reads with block numbers.
+Redacted. Public. Judges can refresh this page.
+
+BOND.
+Settlement you can prove.
+bond-pi.vercel.app
+Built for OpenServ.
