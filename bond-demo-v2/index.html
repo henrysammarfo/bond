@@ -1,0 +1,594 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>BOND — RECEIPT LEDGER</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face {
+        font-family: "OswaldLedger";
+        src: url("public/fonts/Oswald-Bold.ttf") format("truetype");
+        font-weight: 700;
+      }
+      @font-face {
+        font-family: "PlexMono";
+        src: url("public/fonts/IBMPlexMono-Medium.woff2") format("woff2");
+        font-weight: 500;
+      }
+      @font-face {
+        font-family: "PlexMono";
+        src: url("public/fonts/IBMPlexMono-Bold.woff2") format("woff2");
+        font-weight: 700;
+      }
+      @font-face {
+        font-family: "MontserratBond";
+        src: url("public/fonts/Montserrat-Black.woff2") format("woff2");
+        font-weight: 900;
+      }
+      :root {
+        --paper: #e8e4db;
+        --ink: #141210;
+        --rule: rgba(26, 26, 26, 0.12);
+        --cyan: #076f87;
+        --allocate: #1f7a4c;
+        --pending: #8a5a12;
+        --deny: #c4322a;
+        --ink-soft: #5a564e;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: var(--paper);
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: var(--paper);
+        color: var(--ink);
+        font-family: "PlexMono", ui-monospace, monospace;
+      }
+      .paper-bg {
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(var(--rule) 1px, transparent 1px) 0 0 / 48px 48px,
+          linear-gradient(90deg, var(--rule) 1px, transparent 1px) 0 0 / 48px 48px,
+          var(--paper);
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+      .rail {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 52px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 36px 0 56px;
+        border-bottom: 1px solid var(--rule);
+        background: rgba(232, 228, 219, 0.92);
+        z-index: 20;
+        font-size: 15px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--ink-soft);
+      }
+      .rail .live {
+        color: var(--cyan);
+        font-weight: 700;
+      }
+      .left-rule {
+        position: absolute;
+        left: 28px;
+        top: 52px;
+        width: 3px;
+        height: 0;
+        background: var(--ink);
+        z-index: 21;
+        transform-origin: top;
+      }
+      .cyan-sweep {
+        position: absolute;
+        top: 0;
+        left: -20%;
+        width: 18%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(11, 180, 217, 0.35), transparent);
+        opacity: 0;
+        z-index: 30;
+        pointer-events: none;
+      }
+      .shot {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: top center;
+        transform-origin: center center;
+      }
+      .shot-veil {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          105deg,
+          rgba(232, 228, 219, 0.55) 0%,
+          rgba(232, 228, 219, 0.08) 42%,
+          rgba(20, 18, 16, 0.18) 100%
+        );
+      }
+      .display {
+        font-family: "OswaldLedger", sans-serif;
+        letter-spacing: -0.02em;
+        line-height: 0.92;
+        text-transform: uppercase;
+      }
+      .brand {
+        font-family: "MontserratBond", sans-serif;
+        font-weight: 900;
+        letter-spacing: -0.04em;
+      }
+      .open-line {
+        position: absolute;
+        left: 96px;
+        top: 340px;
+        font-size: 110px;
+        max-width: 1500px;
+      }
+      .bond-slam {
+        position: absolute;
+        left: 96px;
+        top: 480px;
+        font-size: 180px;
+        line-height: 0.85;
+      }
+      .open-sub {
+        position: absolute;
+        left: 96px;
+        top: 700px;
+        font-size: 22px;
+        color: var(--ink-soft);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .kinetic {
+        position: absolute;
+        left: 50%;
+        top: 42%;
+        transform: translate(-50%, -50%);
+        font-size: 168px;
+        white-space: nowrap;
+        z-index: 15;
+        text-shadow: 0 0 0 transparent;
+      }
+      .kinetic.deny {
+        color: var(--deny);
+      }
+      .kinetic.ok {
+        color: var(--allocate);
+      }
+      .kinetic.wait {
+        color: var(--pending);
+      }
+      .kinetic-sub {
+        position: absolute;
+        left: 50%;
+        top: 58%;
+        transform: translateX(-50%);
+        font-size: 22px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--ink-soft);
+        z-index: 15;
+      }
+      .flash {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 25;
+      }
+      .flash.red {
+        background: #f2d6d3;
+      }
+      .flash.green {
+        background: #d5e8dc;
+      }
+      .flash.amber {
+        background: #f0e4c8;
+      }
+      .caption {
+        position: absolute;
+        left: 96px;
+        bottom: 72px;
+        font-size: 20px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink);
+        background: rgba(232, 228, 219, 0.88);
+        padding: 14px 18px;
+        border-left: 4px solid var(--cyan);
+        max-width: 720px;
+        z-index: 12;
+      }
+      .path-strip {
+        position: absolute;
+        left: 96px;
+        top: 260px;
+        display: flex;
+        flex-direction: column;
+        gap: 28px;
+        width: 1600px;
+      }
+      .path-row {
+        display: flex;
+        align-items: baseline;
+        gap: 36px;
+        border-bottom: 1px solid var(--rule);
+        padding-bottom: 18px;
+      }
+      .path-row .n {
+        font-size: 18px;
+        color: var(--cyan);
+        letter-spacing: 0.12em;
+        min-width: 72px;
+      }
+      .path-row .t {
+        font-family: "OswaldLedger", sans-serif;
+        font-size: 64px;
+        letter-spacing: -0.02em;
+        text-transform: uppercase;
+        min-width: 320px;
+      }
+      .path-row .d {
+        font-size: 22px;
+        color: var(--ink-soft);
+      }
+      .end {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        text-align: center;
+      }
+      .end .brand {
+        font-size: 160px;
+        line-height: 0.85;
+      }
+      .end .tag {
+        font-size: 28px;
+        color: var(--ink-soft);
+        letter-spacing: 0.04em;
+      }
+      .end .urls {
+        margin-top: 28px;
+        font-size: 20px;
+        line-height: 1.7;
+        color: var(--ink);
+        letter-spacing: 0.04em;
+      }
+      .status-pill {
+        position: absolute;
+        right: 48px;
+        top: 68px;
+        padding: 10px 16px;
+        border: 1.5px solid var(--ink);
+        font-size: 16px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        background: var(--paper);
+        z-index: 18;
+        opacity: 0;
+      }
+      .ink-snap {
+        position: absolute;
+        inset: 0;
+        background: #000;
+        opacity: 0;
+        z-index: 40;
+        pointer-events: none;
+      }
+      .hook-line {
+        position: absolute;
+        left: 96px;
+        top: 300px;
+        font-size: 96px;
+        max-width: 1500px;
+      }
+      .hook-sub {
+        position: absolute;
+        left: 96px;
+        top: 560px;
+        font-size: 28px;
+        color: var(--ink-soft);
+        max-width: 900px;
+        line-height: 1.35;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="110"
+      data-width="1920"
+      data-height="1080"
+    >
+      <audio
+        id="vo"
+        src="public/audio/narration.wav"
+        data-start="0"
+        data-duration="104.95"
+        data-track-index="9"
+      ></audio>
+
+      <div class="paper-bg" data-start="0" data-duration="110" data-track-index="0"></div>
+      <div class="rail" data-start="0" data-duration="110" data-track-index="1">
+        <span><span class="live">● LIVE LEDGER</span> · BOND · OPENSERV EDITION 01</span>
+        <span id="rail-clock">00:00.00 · AVALANCHE · PATH A · FAIL-CLOSED</span>
+      </div>
+      <div id="left-rule" class="left-rule" data-start="0" data-duration="110" data-track-index="1"></div>
+      <div id="cyan-sweep" class="cyan-sweep" data-start="0" data-duration="110" data-track-index="2"></div>
+
+      <!-- 0–8 OPEN -->
+      <section id="s-open" class="clip" data-start="0" data-duration="8" data-track-index="3">
+        <h1 id="open-line" class="display open-line">Agents got wallets.</h1>
+        <h2 id="bond-slam" class="brand bond-slam">BOND</h2>
+        <p id="open-sub" class="open-sub">Settlement you can prove</p>
+      </section>
+
+      <!-- 8–22 HOOK -->
+      <section id="s-hook" class="clip" data-start="8" data-duration="14" data-track-index="3" data-layout-allow-overlap>
+        <h2 id="hook-h" class="display hook-line">Most RWA demos lie.</h2>
+        <p id="hook-s" class="hook-sub">Green checks. Invented balances. Fake “settled.”</p>
+        <div id="deny-word" class="display kinetic deny">NO</div>
+        <div id="deny-sub" class="kinetic-sub">cute. wrong.</div>
+      </section>
+
+      <!-- 22–38 PATH -->
+      <section id="s-path" class="clip" data-start="22" data-duration="16" data-track-index="3">
+        <div class="path-strip">
+          <div id="row1" class="path-row">
+            <span class="n">01</span><span class="t">SERV</span
+            ><span class="d">Mandate allow / deny · fail closed</span>
+          </div>
+          <div id="row2" class="path-row">
+            <span class="n">02</span><span class="t">AgentKit</span
+            ><span class="d">Live USDC on Avalanche · BNB lane</span>
+          </div>
+          <div id="row3" class="path-row">
+            <span class="n">03</span><span class="t">Pending</span
+            ><span class="d">ERC-7540 async · shares later · honesty now</span>
+          </div>
+        </div>
+        <div id="path-cap" class="caption">path a · the brake</div>
+      </section>
+
+      <!-- 38–52 HOME -->
+      <section id="s-home" class="clip" data-start="38" data-duration="14" data-track-index="3" data-layout-allow-overflow>
+        <img id="home-shot" class="shot" src="public/shots/bond-home-hero.png" alt="" />
+        <div class="shot-veil"></div>
+        <div id="home-cap" class="caption">homepage · the brake</div>
+      </section>
+
+      <!-- 52–68 SCAN / ALLOCATE -->
+      <section id="s-scan" class="clip" data-start="52" data-duration="16" data-track-index="3" data-layout-allow-overflow data-layout-allow-overlap>
+        <img id="scan-shot" class="shot" src="public/shots/dash-scan.png" alt="" />
+        <div class="shot-veil"></div>
+        <div id="alloc-word" class="display kinetic ok">ALLOCATE</div>
+        <div id="alloc-sub" class="kinetic-sub">serv · preflight · fail-closed</div>
+        <div id="alloc-pill" class="status-pill" style="border-color: var(--allocate); color: var(--allocate)">
+          status · allocate
+        </div>
+        <div id="scan-cap" class="caption">scan → allocate / defer / reject</div>
+      </section>
+
+      <!-- 68–88 PENDING -->
+      <section id="s-pend" class="clip" data-start="68" data-duration="20" data-track-index="3" data-layout-allow-overflow data-layout-allow-overlap>
+        <img id="wallet-shot" class="shot" src="public/shots/dash-wallet.png" alt="" />
+        <div class="shot-veil"></div>
+        <div id="pend-word" class="display kinetic wait">PENDING</div>
+        <div id="pend-sub" class="kinetic-sub">not earning · not owned</div>
+        <div id="pend-pill" class="status-pill" style="border-color: var(--pending); color: var(--pending)">
+          live tx · avalanche · agentkit
+        </div>
+        <div id="pend-cap" class="caption">subscribe · pending until proof</div>
+      </section>
+
+      <!-- 88–102 EVIDENCE -->
+      <section id="s-ev" class="clip" data-start="88" data-duration="14" data-track-index="3" data-layout-allow-overflow>
+        <img id="ev-shot" class="shot" src="public/shots/dash-overview.png" alt="" />
+        <div class="shot-veil"></div>
+        <div id="ev-cap" class="caption">/evidence · neon receipts</div>
+        <div id="ev-pill" class="status-pill">serv i/o · mcp · on-chain</div>
+      </section>
+
+      <!-- 102–110 CLOSE -->
+      <section id="s-end" class="clip" data-start="102" data-duration="8" data-track-index="3">
+        <div class="end">
+          <h1 id="end-h" class="brand">BOND</h1>
+          <p id="end-t" class="tag">Policy proof before money moves.</p>
+          <div id="end-u" class="urls">
+            bond-pi.vercel.app<br />
+            github.com/henrysammarfo/bond<br />
+            @openservai · AgentKit · Avalanche · Pending until proof
+          </div>
+        </div>
+      </section>
+
+      <div id="flash" class="flash"></div>
+      <div id="ink-snap" class="ink-snap"></div>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      const clock = document.getElementById("rail-clock");
+
+      function tickClock(t) {
+        const m = Math.floor(t / 60);
+        const s = (t % 60).toFixed(2).padStart(5, "0");
+        clock.textContent = `${String(m).padStart(2, "0")}:${s} · AVALANCHE · PATH A · FAIL-CLOSED`;
+      }
+      // Approximate clock via timeline progress sampling in motion
+      for (let i = 0; i <= 110; i += 0.25) {
+        tl.call(() => tickClock(i), null, i);
+      }
+
+      // Left rule grows across film
+      tl.fromTo("#left-rule", { height: 0 }, { height: 980, duration: 100, ease: "none" }, 0);
+
+      function seam(t) {
+        tl.fromTo(
+          "#cyan-sweep",
+          { x: "-20%", opacity: 0 },
+          { x: "140%", opacity: 1, duration: 0.28, ease: "power1.inOut", immediateRender: false },
+          t,
+        );
+        tl.to("#cyan-sweep", { opacity: 0, duration: 0.05, immediateRender: false }, t + 0.28);
+      }
+      [8, 22, 38, 52, 68, 88, 102].forEach(seam);
+
+      function paperFlash(cls, t) {
+        tl.set("#flash", { className: `flash ${cls}`, opacity: 0 }, t);
+        tl.to("#flash", { opacity: 0.92, duration: 0.05, immediateRender: false }, t);
+        tl.to("#flash", { opacity: 0, duration: 0.18, immediateRender: false }, t + 0.12);
+      }
+
+      // OPEN
+      tl.fromTo("#open-line", { x: 80, opacity: 0 }, { x: 0, opacity: 1, duration: 0.55, ease: "power3.out" }, 0.2);
+      tl.fromTo(
+        "#bond-slam",
+        { x: 420, opacity: 0, scale: 1.15 },
+        { x: 0, opacity: 1, scale: 1, duration: 0.55, ease: "back.out(1.7)", immediateRender: false },
+        2.2,
+      );
+      tl.fromTo("#open-sub", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 3.0);
+
+      // HOOK + NO slam
+      tl.fromTo("#hook-h", { y: 36, opacity: 0 }, { y: 0, opacity: 1, duration: 0.55, ease: "power3.out" }, 8.15);
+      tl.fromTo("#hook-s", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 8.7);
+      paperFlash("red", 12.0);
+      tl.fromTo(
+        "#deny-word",
+        { x: 900, opacity: 0, scale: 1.25 },
+        { x: 0, opacity: 1, scale: 1, duration: 0.42, ease: "back.out(2.2)", immediateRender: false },
+        12.05,
+      );
+      // RGB offset slam on decision word
+      tl.fromTo(
+        "#deny-word",
+        { textShadow: "0 0 0 transparent" },
+        {
+          textShadow: "-6px 0 #c4322a, 6px 0 #0bb4d9",
+          duration: 0.06,
+          yoyo: true,
+          repeat: 3,
+          immediateRender: false,
+        },
+        12.05,
+      );
+      tl.fromTo("#deny-sub", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 12.5);
+      tl.to("#deny-word", { scale: 0.22, x: 620, y: -380, duration: 0.45, ease: "power2.inOut", immediateRender: false }, 14.2);
+
+      // PATH rows (paper-push feel via staggered rise)
+      tl.fromTo("#row1", { y: 80, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" }, 22.2);
+      tl.fromTo("#row2", { y: 80, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" }, 22.55);
+      tl.fromTo("#row3", { y: 80, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" }, 22.9);
+      tl.fromTo("#path-cap", { x: -24, opacity: 0 }, { x: 0, opacity: 1, duration: 0.35 }, 23.4);
+
+      // HOME punch-cut pair (wide → crop) — NO Ken Burns continuous; hard scale jump
+      tl.set("#home-shot", { scale: 1 }, 38);
+      tl.fromTo("#home-cap", { x: -20, opacity: 0 }, { x: 0, opacity: 1, duration: 0.35 }, 38.25);
+      tl.to("#home-shot", { scale: 1.18, duration: 0.01, ease: "none", immediateRender: false }, 44.0);
+      tl.to("#home-shot", { scale: 1.18, duration: 1.2, ease: "none", immediateRender: false }, 44.01);
+
+      // SCAN / ALLOCATE
+      tl.set("#scan-shot", { scale: 1 }, 52);
+      tl.fromTo("#scan-cap", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 52.3);
+      tl.to("#scan-shot", { scale: 1.18, duration: 0.01, ease: "none", immediateRender: false }, 56.0);
+      paperFlash("green", 58.0);
+      tl.fromTo(
+        "#alloc-word",
+        { x: 1100, opacity: 0, scale: 1.2 },
+        { x: 0, opacity: 1, scale: 1, duration: 0.45, ease: "back.out(2)", immediateRender: false },
+        58.05,
+      );
+      tl.fromTo("#alloc-sub", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 58.5);
+      tl.to(
+        "#alloc-word",
+        { scale: 0.18, x: 520, y: -380, duration: 0.4, ease: "power2.inOut", immediateRender: false },
+        61.5,
+      );
+      tl.to("#alloc-sub", { opacity: 0, duration: 0.2, immediateRender: false }, 61.5);
+      tl.to("#alloc-pill", { opacity: 1, duration: 0.25, immediateRender: false }, 61.9);
+
+      // PENDING
+      tl.set("#wallet-shot", { scale: 1 }, 68);
+      tl.fromTo("#pend-cap", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 68.3);
+      tl.to("#wallet-shot", { scale: 1.16, duration: 0.01, ease: "none", immediateRender: false }, 72.0);
+      paperFlash("amber", 74.0);
+      tl.fromTo(
+        "#pend-word",
+        { x: 1000, opacity: 0, scale: 1.22 },
+        { x: 0, opacity: 1, scale: 1, duration: 0.45, ease: "back.out(2.1)", immediateRender: false },
+        74.05,
+      );
+      tl.fromTo(
+        "#pend-word",
+        { textShadow: "0 0 0 transparent" },
+        {
+          textShadow: "-5px 0 #c9892e, 5px 0 #0bb4d9",
+          duration: 0.05,
+          yoyo: true,
+          repeat: 3,
+          immediateRender: false,
+        },
+        74.05,
+      );
+      tl.fromTo("#pend-sub", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 74.55);
+      // Linger — the wow
+      tl.to(
+        "#pend-word",
+        { scale: 0.2, x: 480, y: -380, duration: 0.4, ease: "power2.inOut", immediateRender: false },
+        80.5,
+      );
+      tl.to("#pend-sub", { opacity: 0, duration: 0.2, immediateRender: false }, 80.5);
+      tl.to("#pend-pill", { opacity: 1, duration: 0.25, immediateRender: false }, 80.9);
+
+      // EVIDENCE
+      tl.set("#ev-shot", { scale: 1 }, 88);
+      tl.fromTo("#ev-cap", { x: -16, opacity: 0 }, { x: 0, opacity: 1, duration: 0.35 }, 88.25);
+      tl.to("#ev-shot", { scale: 1.14, duration: 0.01, ease: "none", immediateRender: false }, 92.0);
+      tl.to("#ev-pill", { opacity: 1, duration: 0.3, immediateRender: false }, 92.2);
+
+      // CLOSE
+      tl.fromTo("#end-h", { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" }, 102.15);
+      tl.fromTo("#end-t", { opacity: 0 }, { opacity: 1, duration: 0.35 }, 102.55);
+      tl.fromTo("#end-u", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 102.9);
+      tl.to("#ink-snap", { opacity: 1, duration: 0.35, ease: "power2.in", immediateRender: false }, 109.55);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>

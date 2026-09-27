@@ -1,0 +1,51 @@
+Alright — quick truth check.
+
+Most RWA demos flash a green check, invent a balance, and call it settled.
+Cute. Wrong.
+
+This is BOND.
+OpenServ Edition One. Live Path A.
+
+SERV decides if the mandate is allowed.
+AgentKit signs the deposit — for real.
+IXS vaults on Avalanche, with BNB as the companion lane.
+
+And until the shares actually exist… we say Pending.
+Not earning. Not owned.
+
+Why that matters: async ERC-7540.
+The USDC lands first. The shares come later.
+If your UI lies early, your treasury lies forever.
+
+Watch the ledger.
+Homepage — settlement you can prove.
+Vaults — live IXS listings.
+Live minimum is one hundred four USDC, so the position stays redeemable after fees.
+
+Dashboard — mandate first.
+Scan the vaults.
+SERV returns ALLOCATE, DEFER, or REJECT.
+Fail closed. No soft pass.
+
+Hit subscribe? AgentKit broadcasts on mainnet.
+The screen stays honest: Pending.
+
+Want receipts? Open Evidence.
+Every SERV input and output.
+Every MCP probe.
+Every on-chain read with a block number —
+durable on Neon. Redacted. Public.
+
+No localStorage balances.
+No invented TVL.
+No “unhackable” cosplay.
+
+Judges — this is the live deposit lane with the guardrails on.
+Fund the AgentKit wallet.
+Run the scan.
+Subscribe.
+Capture the Pending proof.
+
+BOND.
+Settlement you can prove.
+bond-pi.vercel.app

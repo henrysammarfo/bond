@@ -108,3 +108,18 @@ BOND still does **live AgentKit deposits** with Pending honesty. Simulated-only 
 2. Confirm live deposit → Pending + Snowscan  
 3. Public host env (DB + encryption + LLM path) 24/7  
 4. WIN_CHECKLIST + X/@openservai
+
+
+## 2026-09-27 — Demo V2 + OpenServ submission kit
+
+### Shipped
+- `bond-demo-v2/` Hyperframes RECEIPT LEDGER redo (paper rail, kinetic ALLOCATE/PENDING/NO, punch-cuts — not v1 dark grain)
+- Liam ElevenLabs VO regenerated; delivery + X encode in `/opt/cursor/artifacts/bond-openserv-v2-*.mp4`
+- `docs/memory/SUBMIT_KIT.md` — form answers + Blue Tick X post with @openservai
+- Live Path A screen capture in progress (password masked); rotate `demo@bond.app` after record
+- AgentKit funded ≈105 USDC + AVAX on `0x1eFBb041…3b14e`
+
+### Submit
+- Live: https://bond-pi.vercel.app
+- GitHub: https://github.com/henrysammarfo/bond
+- Post X with video + tag @openservai before 28 Sep 2026 00:00 UTC
