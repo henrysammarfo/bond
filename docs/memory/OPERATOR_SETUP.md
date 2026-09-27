@@ -12,8 +12,9 @@ Docs: [IXS Vault API](https://api-v2.ixs.finance/docs) · [IXS agent skills](htt
 | Need | Link | What to do |
 | --- | --- | --- |
 | OpenServ + SERV | [openserv.ai/hackathon](https://www.openserv.ai/hackathon) · [console.openserv.ai](https://console.openserv.ai) | Enable org data collection; get **OPENSERV_API_KEY** (~$5 starter credit on signup) |
-| Coinbase CDP / AgentKit wallet | [portal.cdp.coinbase.com](https://portal.cdp.coinbase.com) · **[exact click-path](./CDP_AGENTKIT_FLOW.md)** | 1) Secret API key + **Export** scope 2) Wallet Secret 3) `bun run cdp:export` → `AGENT_PRIVATE_KEY` 4) fund ≥100 USDC + AVAX on Avalanche |
-| Neon Postgres | [console.neon.tech](https://console.neon.tech) · project `aged-flower-56535737` | Paste **DATABASE_URL** (or API key) — see Neon section below |
+| Coinbase CDP / AgentKit wallet | [portal.cdp.coinbase.com](https://portal.cdp.coinbase.com) · **[exact click-path](./CDP_AGENTKIT_FLOW.md)** | API key JSON ≠ Wallet Secret. Still need **[Generate Wallet Secret](https://portal.cdp.coinbase.com/wallets/non-custodial/security)**. Interim signer address ready to fund (see SESSION_LOG). |
+| Neon Postgres | [console.neon.tech](https://console.neon.tech) · project `aged-flower-56535737` | `NEON_API_KEY` wired → schema **pushed** |
+| Competitor Judr | [tryjudr.vercel.app](https://tryjudr.vercel.app/) · **[notes](./COMPETITORS.md)** | Arbitration + standing IXS 100 USDC — BOND must show mandate→Pending→shares on-chain |
 | AgentRouter (no OpenAI key) | [agentrouter.org](https://agentrouter.org) · **[Tor setup](./AGENTROUTER_SETUP.md)** | Key + `bun run tor:start` + `bun run smoke:llm` (`deepseek-v4-flash`) |
 | TinyFish (fact-check ops) | [agent.tinyfish.ai](https://agent.tinyfish.ai) · **[Pay $10 wallet](https://agent.tinyfish.ai/wallet?utm_source=api&utm_medium=insufficient_funds&utm_campaign=automation)** | Top up, then set **TINYFISH_API_KEY** |
 | Tavily | [app.tavily.com](https://app.tavily.com) | Refresh quota / new key → **TAVILY_API_KEY** |

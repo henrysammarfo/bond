@@ -1,14 +1,17 @@
 # Session log
 
-## 2026-09-27 — plan → implement → wire keys
+## 2026-09-27 — Neon + CDP + Judr intel
 
-- Confirmed Path A (live RWA product).
-- Verified Avalanche primary vault via live IXS API (`6a952729732c2b84b55ce89d` active).
-- Wired gitignored `.env.local`: OpenServ, AgentRouter, TinyFish, Tavily, Neon project id.
-- AgentRouter Tor: `smoke_llm_tor_ok` (deepseek-v4-flash, egress via SOCKS).
-- SERV: live at `https://inference-api.openserv.ai` — mandate path prefers SERV chat completions, failover AgentRouter.
-- Mandate smoke: allow via `serv` or `agentrouter`.
-- Tavily search OK with new key. TinyFish Search API OK (`api.search.tinyfish.ai` + `X-API-Key`).
-- Neon `aged-flower-56535737`: still need `DATABASE_URL` or `NEON_API_KEY` (headless `neon auth` cannot complete). Skip Neon Functions scaffold.
-- CDP: exact flow in `CDP_AGENTKIT_FLOW.md` + `bun run cdp:export` (needs portal Secret API key + Wallet Secret + Export scope). Still blocked for live deposit until operator runs export + funds ≥100 USDC + AVAX.
-- Screenshots: public pages under `docs/memory/screenshots/`. Dashboard auth shots need DB.
+### Live wiring
+- Neon `aged-flower-56535737`: `NEON_API_KEY` → pooled `DATABASE_URL` → **`bun run db:push` OK** (quote URL; unquoted `&` breaks Bun env parse).
+- CDP API key JSON loaded (`CDP_API_KEY_ID` / `CDP_API_KEY_SECRET`). **`CDP_WALLET_SECRET` still missing** — generate at [portal non-custodial security](https://portal.cdp.coinbase.com/wallets/non-custodial/security), then `bun run cdp:export` (or import interim key).
+- Interim Avalanche signer (gitignored `.env.local`): **`0x1eFBb041E94aCc18D50C578eD34c265075d3b14e`** — balances **0 AVAX / 0 USDC**. Fund ≥100 USDC + AVAX: https://snowscan.xyz/address/0x1eFBb041E94aCc18D50C578eD34c265075d3b14e
+- AgentRouter Tor + SERV mandate previously green; TinyFish/Tavily/IXS OK.
+
+### Competitor
+- **Judr** ([tryjudr.vercel.app](https://tryjudr.vercel.app/)) — arbitration + live Base payout + standing Avalanche 100 USDC IXS position. Notes in `COMPETITORS.md`. BOND must not copy UX; must beat on RWA Vaults mandate→Pending→shares proof.
+
+### Blockers to win
+1. Fund wallet `0x1eFBb041…b14e` with ≥100 USDC + AVAX.
+2. Optional: paste `CDP_WALLET_SECRET` and re-export/import so portal matches funded address.
+3. Live `requestDeposit` + Pending screenshot + public demo URL + X/@openservai before **28 Sep 2026 00:00 UTC**.

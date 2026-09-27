@@ -37,19 +37,26 @@ Optional: download the JSON key file offline; do not commit it.
 
 ---
 
-## Step 3 — Generate a Wallet Secret
+## Step 3 — Generate a Wallet Secret (required — not inside the API key JSON)
 
-Wallet Secret authenticates sensitive `POST`/`DELETE` wallet ops (create + export).
+The downloaded `cdp_api_key.json` only has `id` + `privateKey`. **Wallet Secret is a separate file.**
 
-1. In the same API Keys / Server Wallet area of the portal, open **Wallet Secret** (or **Generate Wallet Secret**).
-2. Generate once → copy the value (shown once).
+1. Open **[portal.cdp.coinbase.com/wallets/non-custodial/security](https://portal.cdp.coinbase.com/wallets/non-custodial/security)**  
+   (or Portal → Non-custodial Wallet → **Security** → **Generate Wallet Secret**).
+2. Download / copy the secret (shown once).
 3. Put in `.env.local`:
 
 ```bash
 CDP_WALLET_SECRET=<wallet secret>
 ```
 
-Docs call this out in the [Server Wallet quickstart](https://docs.cdp.coinbase.com/server-wallets/v2/introduction/quickstart) prerequisites.
+Without this, `bun run cdp:export` fails with: `Wallet Secret not configured`.
+
+Docs: [Server Wallet quickstart](https://docs.cdp.coinbase.com/server-wallets/v2/introduction/quickstart) · [CDP CLI agents](https://docs.cdp.coinbase.com/get-started/build-with-ai/cdp-for-agents)
+
+### Interim (if Wallet Secret is delayed)
+
+A local EVM key can sign Avalanche deposits (`AGENT_PRIVATE_KEY`) so funding can start. Prefer importing that key into CDP later via `cdp.evm.importAccount` once `CDP_WALLET_SECRET` exists, so the portal address matches the funded address.
 
 ---
 
