@@ -14,6 +14,7 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as BlogRouteImport } from './routes/blog'
 import { Route as ComplianceRouteImport } from './routes/compliance'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as DocsRouteImport } from './routes/docs'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
 import { Route as PricingRouteImport } from './routes/pricing'
@@ -24,6 +25,15 @@ import { Route as SecurityRouteImport } from './routes/security'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as VaultsRouteImport } from './routes/vaults'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
+import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
+import { Route as DashboardActivityRouteImport } from './routes/dashboard.activity'
+import { Route as DashboardMandatesRouteImport } from './routes/dashboard.mandates'
+import { Route as DashboardSettingsRouteImport } from './routes/dashboard.settings'
+import { Route as DashboardSubscriptionsRouteImport } from './routes/dashboard.subscriptions'
+import { Route as DashboardVaultsRouteImport } from './routes/dashboard.vaults'
+import { Route as DashboardWalletRouteImport } from './routes/dashboard.wallet'
+import { Route as DashboardSubscriptionsSubscriptionIdRouteImport } from './routes/dashboard.subscriptions.$subscriptionId'
+import { Route as DashboardVaultsVaultIdRouteImport } from './routes/dashboard.vaults.$vaultId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -48,6 +58,11 @@ const ComplianceRoute = ComplianceRouteImport.update({
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DocsRoute = DocsRouteImport.update({
@@ -100,6 +115,52 @@ const BlogSlugRoute = BlogSlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => BlogRoute,
 } as any)
+const DashboardIndexRoute = DashboardIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardActivityRoute = DashboardActivityRouteImport.update({
+  id: '/activity',
+  path: '/activity',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardMandatesRoute = DashboardMandatesRouteImport.update({
+  id: '/mandates',
+  path: '/mandates',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardSettingsRoute = DashboardSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardSubscriptionsRoute = DashboardSubscriptionsRouteImport.update({
+  id: '/subscriptions',
+  path: '/subscriptions',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardVaultsRoute = DashboardVaultsRouteImport.update({
+  id: '/vaults',
+  path: '/vaults',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardWalletRoute = DashboardWalletRouteImport.update({
+  id: '/wallet',
+  path: '/wallet',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardSubscriptionsSubscriptionIdRoute =
+  DashboardSubscriptionsSubscriptionIdRouteImport.update({
+    id: '/$subscriptionId',
+    path: '/$subscriptionId',
+    getParentRoute: () => DashboardSubscriptionsRoute,
+  } as any)
+const DashboardVaultsVaultIdRoute = DashboardVaultsVaultIdRouteImport.update({
+  id: '/$vaultId',
+  path: '/$vaultId',
+  getParentRoute: () => DashboardVaultsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -107,6 +168,7 @@ export interface FileRoutesByFullPath {
   '/blog': typeof BlogRouteWithChildren
   '/compliance': typeof ComplianceRoute
   '/contact': typeof ContactRoute
+  '/dashboard': typeof DashboardRouteWithChildren
   '/docs': typeof DocsRoute
   '/how-it-works': typeof HowItWorksRoute
   '/pricing': typeof PricingRoute
@@ -117,6 +179,15 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/vaults': typeof VaultsRoute
   '/blog/$slug': typeof BlogSlugRoute
+  '/dashboard/activity': typeof DashboardActivityRoute
+  '/dashboard/mandates': typeof DashboardMandatesRoute
+  '/dashboard/settings': typeof DashboardSettingsRoute
+  '/dashboard/subscriptions': typeof DashboardSubscriptionsRouteWithChildren
+  '/dashboard/vaults': typeof DashboardVaultsRouteWithChildren
+  '/dashboard/wallet': typeof DashboardWalletRoute
+  '/dashboard/': typeof DashboardIndexRoute
+  '/dashboard/subscriptions/$subscriptionId': typeof DashboardSubscriptionsSubscriptionIdRoute
+  '/dashboard/vaults/$vaultId': typeof DashboardVaultsVaultIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -134,6 +205,15 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/vaults': typeof VaultsRoute
   '/blog/$slug': typeof BlogSlugRoute
+  '/dashboard/activity': typeof DashboardActivityRoute
+  '/dashboard/mandates': typeof DashboardMandatesRoute
+  '/dashboard/settings': typeof DashboardSettingsRoute
+  '/dashboard/subscriptions': typeof DashboardSubscriptionsRouteWithChildren
+  '/dashboard/vaults': typeof DashboardVaultsRouteWithChildren
+  '/dashboard/wallet': typeof DashboardWalletRoute
+  '/dashboard': typeof DashboardIndexRoute
+  '/dashboard/subscriptions/$subscriptionId': typeof DashboardSubscriptionsSubscriptionIdRoute
+  '/dashboard/vaults/$vaultId': typeof DashboardVaultsVaultIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -142,6 +222,7 @@ export interface FileRoutesById {
   '/blog': typeof BlogRouteWithChildren
   '/compliance': typeof ComplianceRoute
   '/contact': typeof ContactRoute
+  '/dashboard': typeof DashboardRouteWithChildren
   '/docs': typeof DocsRoute
   '/how-it-works': typeof HowItWorksRoute
   '/pricing': typeof PricingRoute
@@ -152,6 +233,15 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/vaults': typeof VaultsRoute
   '/blog/$slug': typeof BlogSlugRoute
+  '/dashboard/activity': typeof DashboardActivityRoute
+  '/dashboard/mandates': typeof DashboardMandatesRoute
+  '/dashboard/settings': typeof DashboardSettingsRoute
+  '/dashboard/subscriptions': typeof DashboardSubscriptionsRouteWithChildren
+  '/dashboard/vaults': typeof DashboardVaultsRouteWithChildren
+  '/dashboard/wallet': typeof DashboardWalletRoute
+  '/dashboard/': typeof DashboardIndexRoute
+  '/dashboard/subscriptions/$subscriptionId': typeof DashboardSubscriptionsSubscriptionIdRoute
+  '/dashboard/vaults/$vaultId': typeof DashboardVaultsVaultIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -161,6 +251,7 @@ export interface FileRouteTypes {
     | '/blog'
     | '/compliance'
     | '/contact'
+    | '/dashboard'
     | '/docs'
     | '/how-it-works'
     | '/pricing'
@@ -171,6 +262,15 @@ export interface FileRouteTypes {
     | '/terms'
     | '/vaults'
     | '/blog/$slug'
+    | '/dashboard/activity'
+    | '/dashboard/mandates'
+    | '/dashboard/settings'
+    | '/dashboard/subscriptions'
+    | '/dashboard/vaults'
+    | '/dashboard/wallet'
+    | '/dashboard/'
+    | '/dashboard/subscriptions/$subscriptionId'
+    | '/dashboard/vaults/$vaultId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -188,6 +288,15 @@ export interface FileRouteTypes {
     | '/terms'
     | '/vaults'
     | '/blog/$slug'
+    | '/dashboard/activity'
+    | '/dashboard/mandates'
+    | '/dashboard/settings'
+    | '/dashboard/subscriptions'
+    | '/dashboard/vaults'
+    | '/dashboard/wallet'
+    | '/dashboard'
+    | '/dashboard/subscriptions/$subscriptionId'
+    | '/dashboard/vaults/$vaultId'
   id:
     | '__root__'
     | '/'
@@ -195,6 +304,7 @@ export interface FileRouteTypes {
     | '/blog'
     | '/compliance'
     | '/contact'
+    | '/dashboard'
     | '/docs'
     | '/how-it-works'
     | '/pricing'
@@ -205,6 +315,15 @@ export interface FileRouteTypes {
     | '/terms'
     | '/vaults'
     | '/blog/$slug'
+    | '/dashboard/activity'
+    | '/dashboard/mandates'
+    | '/dashboard/settings'
+    | '/dashboard/subscriptions'
+    | '/dashboard/vaults'
+    | '/dashboard/wallet'
+    | '/dashboard/'
+    | '/dashboard/subscriptions/$subscriptionId'
+    | '/dashboard/vaults/$vaultId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -213,6 +332,7 @@ export interface RootRouteChildren {
   BlogRoute: typeof BlogRouteWithChildren
   ComplianceRoute: typeof ComplianceRoute
   ContactRoute: typeof ContactRoute
+  DashboardRoute: typeof DashboardRouteWithChildren
   DocsRoute: typeof DocsRoute
   HowItWorksRoute: typeof HowItWorksRoute
   PricingRoute: typeof PricingRoute
@@ -259,6 +379,13 @@ declare module '@tanstack/react-router' {
       path: '/contact'
       fullPath: '/contact'
       preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/docs': {
@@ -331,6 +458,69 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BlogSlugRouteImport
       parentRoute: typeof BlogRoute
     }
+    '/dashboard/': {
+      id: '/dashboard/'
+      path: '/'
+      fullPath: '/dashboard/'
+      preLoaderRoute: typeof DashboardIndexRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/activity': {
+      id: '/dashboard/activity'
+      path: '/activity'
+      fullPath: '/dashboard/activity'
+      preLoaderRoute: typeof DashboardActivityRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/mandates': {
+      id: '/dashboard/mandates'
+      path: '/mandates'
+      fullPath: '/dashboard/mandates'
+      preLoaderRoute: typeof DashboardMandatesRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/settings': {
+      id: '/dashboard/settings'
+      path: '/settings'
+      fullPath: '/dashboard/settings'
+      preLoaderRoute: typeof DashboardSettingsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/subscriptions': {
+      id: '/dashboard/subscriptions'
+      path: '/subscriptions'
+      fullPath: '/dashboard/subscriptions'
+      preLoaderRoute: typeof DashboardSubscriptionsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/vaults': {
+      id: '/dashboard/vaults'
+      path: '/vaults'
+      fullPath: '/dashboard/vaults'
+      preLoaderRoute: typeof DashboardVaultsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/wallet': {
+      id: '/dashboard/wallet'
+      path: '/wallet'
+      fullPath: '/dashboard/wallet'
+      preLoaderRoute: typeof DashboardWalletRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/subscriptions/$subscriptionId': {
+      id: '/dashboard/subscriptions/$subscriptionId'
+      path: '/$subscriptionId'
+      fullPath: '/dashboard/subscriptions/$subscriptionId'
+      preLoaderRoute: typeof DashboardSubscriptionsSubscriptionIdRouteImport
+      parentRoute: typeof DashboardSubscriptionsRoute
+    }
+    '/dashboard/vaults/$vaultId': {
+      id: '/dashboard/vaults/$vaultId'
+      path: '/$vaultId'
+      fullPath: '/dashboard/vaults/$vaultId'
+      preLoaderRoute: typeof DashboardVaultsVaultIdRouteImport
+      parentRoute: typeof DashboardVaultsRoute
+    }
   }
 }
 
@@ -344,12 +534,64 @@ const BlogRouteChildren: BlogRouteChildren = {
 
 const BlogRouteWithChildren = BlogRoute._addFileChildren(BlogRouteChildren)
 
+interface DashboardSubscriptionsRouteChildren {
+  DashboardSubscriptionsSubscriptionIdRoute: typeof DashboardSubscriptionsSubscriptionIdRoute
+}
+
+const DashboardSubscriptionsRouteChildren: DashboardSubscriptionsRouteChildren =
+  {
+    DashboardSubscriptionsSubscriptionIdRoute:
+      DashboardSubscriptionsSubscriptionIdRoute,
+  }
+
+const DashboardSubscriptionsRouteWithChildren =
+  DashboardSubscriptionsRoute._addFileChildren(
+    DashboardSubscriptionsRouteChildren,
+  )
+
+interface DashboardVaultsRouteChildren {
+  DashboardVaultsVaultIdRoute: typeof DashboardVaultsVaultIdRoute
+}
+
+const DashboardVaultsRouteChildren: DashboardVaultsRouteChildren = {
+  DashboardVaultsVaultIdRoute: DashboardVaultsVaultIdRoute,
+}
+
+const DashboardVaultsRouteWithChildren = DashboardVaultsRoute._addFileChildren(
+  DashboardVaultsRouteChildren,
+)
+
+interface DashboardRouteChildren {
+  DashboardActivityRoute: typeof DashboardActivityRoute
+  DashboardMandatesRoute: typeof DashboardMandatesRoute
+  DashboardSettingsRoute: typeof DashboardSettingsRoute
+  DashboardSubscriptionsRoute: typeof DashboardSubscriptionsRouteWithChildren
+  DashboardVaultsRoute: typeof DashboardVaultsRouteWithChildren
+  DashboardWalletRoute: typeof DashboardWalletRoute
+  DashboardIndexRoute: typeof DashboardIndexRoute
+}
+
+const DashboardRouteChildren: DashboardRouteChildren = {
+  DashboardActivityRoute: DashboardActivityRoute,
+  DashboardMandatesRoute: DashboardMandatesRoute,
+  DashboardSettingsRoute: DashboardSettingsRoute,
+  DashboardSubscriptionsRoute: DashboardSubscriptionsRouteWithChildren,
+  DashboardVaultsRoute: DashboardVaultsRouteWithChildren,
+  DashboardWalletRoute: DashboardWalletRoute,
+  DashboardIndexRoute: DashboardIndexRoute,
+}
+
+const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
+  DashboardRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   BlogRoute: BlogRouteWithChildren,
   ComplianceRoute: ComplianceRoute,
   ContactRoute: ContactRoute,
+  DashboardRoute: DashboardRouteWithChildren,
   DocsRoute: DocsRoute,
   HowItWorksRoute: HowItWorksRoute,
   PricingRoute: PricingRoute,
