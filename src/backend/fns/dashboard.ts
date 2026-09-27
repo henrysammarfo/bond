@@ -61,9 +61,12 @@ export const getDashboardOverviewFn = createServerFn({ method: "GET" }).handler(
   try {
     await ensureOrgAgentWallet(auth.orgId);
     const address = await getWalletAddress(auth.orgId);
-    const bal = await getWalletBalances(address);
-    const n = Number(bal.usdc);
-    walletUsdc = Number.isFinite(n) ? n.toFixed(2) : bal.usdc;
+    const [avaxBal, bscBal] = await Promise.all([
+      getWalletBalances(address, "avalanche"),
+      getWalletBalances(address, "bsc"),
+    ]);
+    const total = Number(avaxBal.usdc) + Number(bscBal.usdc);
+    walletUsdc = Number.isFinite(total) ? total.toFixed(2) : avaxBal.usdc;
   } catch {
     // Wallet credentials may be absent until secrets are wired; overview still returns DB truth.
   }
@@ -241,6 +244,11 @@ export const subscribeVaultFn = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const auth = await requireAuth();
+    if (process.env.LIVE_DEPOSIT !== "1") {
+      throw new Error(
+        "Live deposits are gated. Set LIVE_DEPOSIT=1 on the host to enable AgentKit broadcast.",
+      );
+    }
     if (!depositableVaultIds().has(data.vaultId)) {
       throw new Error(
         "This vault is not open for AgentKit subscribe (whitelist or unsupported). Use Avalanche primary or BNB permissionless vault.",

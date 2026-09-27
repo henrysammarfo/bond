@@ -95,7 +95,7 @@ export function vaultToPublicCard(v: IxsVault) {
     network: chainLabel || v.network,
     chainId: v.chainId,
     asset: v.underlyingAsset.symbol,
-    minimum: "$100",
+    minimum: "$104",
     address: v.contractAddress,
     status: v.status === "active" ? "Open" : v.status,
     ttm: v.ttm ?? null,

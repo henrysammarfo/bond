@@ -12,6 +12,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import { avalanche, bsc } from "viem/chains";
 import type { TxStep } from "../ixs/mcp";
 import { resolveOrgSecrets } from "../org/integrations";
+import { usdcToBaseUnits } from "../../lib/status";
 
 /**
  * AgentKit / CDP EVM signer.
@@ -85,9 +86,15 @@ export async function resolveSigner(orgId?: string): Promise<SignerContext> {
     }
   }
   const privateKey = platformPrivateKey();
+  const derived = privateKeyToAccount(privateKey).address;
   const address = process.env.CDP_WALLET_ADDRESS?.startsWith("0x")
     ? (process.env.CDP_WALLET_ADDRESS as `0x${string}`)
-    : privateKeyToAccount(privateKey).address;
+    : derived;
+  if (address.toLowerCase() !== derived.toLowerCase()) {
+    throw new Error(
+      `CDP_WALLET_ADDRESS (${address}) does not match AGENT_PRIVATE_KEY (${derived}).`,
+    );
+  }
   return { privateKey, address, source: "platform" };
 }
 
@@ -144,7 +151,7 @@ export async function assertDepositFunding(
   chainId: DepositChain = "avalanche",
 ): Promise<void> {
   const bal = await getWalletBalances(address, chainId);
-  const needUsdc = BigInt(Math.round(amountDollars * 10 ** bal.usdcDecimals));
+  const needUsdc = usdcToBaseUnits(amountDollars, bal.usdcDecimals);
   const gasName = chainId === "bsc" ? "BNB" : "AVAX";
   if (bal.usdcRaw < needUsdc) {
     throw new Error(

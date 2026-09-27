@@ -22,10 +22,14 @@ function policyCheck(input: MandateInput): MandateDecision | null {
   if (input.mandateStatus !== "active") {
     return { allow: false, reason: "Mandate is not active.", source: "policy" };
   }
-  if (input.amountDollars < 100) {
-    return { allow: false, reason: "Minimum deposit is $100 USDC.", source: "policy" };
+  if (input.amountDollars < 104) {
+    return {
+      allow: false,
+      reason: "Minimum live deposit is $104 USDC (redeemable floor after IXS fee + buffer).",
+      source: "policy",
+    };
   }
-  // Live redeemable floor is enforced in preflight (104); mandate policy keeps IXS $100 floor here.
+  // Live redeemable floor aligned with preflight LIVE_REDEEMABLE_MIN_USD (104).
   if (
     input.network.toLowerCase() !== "avalanche" &&
     !input.network.toLowerCase().includes("avalanche") &&
@@ -78,7 +82,7 @@ async function openservDecide(
         {
           role: "system",
           content:
-            'You are SERV mandate reasoning for BOND RWA vaults. Reply with exactly this JSON shape and no other keys: {"allow":true,"reason":"..."} or {"allow":false,"reason":"..."}. Use the key "allow" (boolean), never "approved". Allow only if amount ≥ 100 USDC, network is Avalanche or BNB Chain (or BSC), asset USDC, mandate active, and within remaining mandate capacity. Never invent extra capacity.',
+            'You are SERV mandate reasoning for BOND RWA vaults. Reply with exactly this JSON shape and no other keys: {"allow":true,"reason":"..."} or {"allow":false,"reason":"..."}. Use the key "allow" (boolean), never "approved". Allow only if amount ≥ 104 USDC (live redeemable floor), network is Avalanche or BNB Chain (or BSC), asset USDC, mandate active, and within remaining mandate capacity. Never invent extra capacity.',
         },
         {
           role: "user",

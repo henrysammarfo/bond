@@ -27,7 +27,9 @@ describe("status machine", () => {
     expect(dollarsToCents(100)).toBe(10000);
   });
 
-  test("USDC base units honor BSC 18 decimals", () => {
+  test("USDC base units honor BSC 18 decimals without float loss", () => {
     expect(usdcToBaseUnits(100, 18)).toBe(100_000_000_000_000_000_000n);
+    expect(usdcToBaseUnits(999.99, 18)).toBe(99999n * 10n ** 16n);
+    expect(usdcToBaseUnits(104, 6)).toBe(104_000_000n);
   });
 });

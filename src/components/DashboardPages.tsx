@@ -248,7 +248,7 @@ export function MandatesPage() {
             <h2 className="mt-7 text-xl font-semibold">{m.name}</h2>
             <p className="mt-2 text-sm text-dashboard-muted">
               Allows {m.asset} on {m.network} up to ${m.monthlyLimit} monthly. SERV denies deposits
-              under $100, wrong network, inactive mandates, or over remaining limit.
+              under $104, wrong network, inactive mandates, or over remaining limit.
             </p>
             <div className="mt-6 h-2 overflow-hidden rounded-full bg-dashboard-accent">
               <div
@@ -851,9 +851,9 @@ export function ActivityPage() {
 
 export function WalletPage() {
   const q = useQuery({ queryKey: ["wallet"], queryFn: () => getWalletFn() });
-  const avaxFunded = q.data && Number(q.data.usdc) >= 100 && Number(q.data.avax) > 0;
+  const avaxFunded = q.data && Number(q.data.usdc) >= 104 && Number(q.data.avax) > 0;
   const bnbFunded =
-    q.data && Number(q.data.bnbUsdc ?? 0) >= 100 && Number(q.data.bnbNative ?? 0) > 0;
+    q.data && Number(q.data.bnbUsdc ?? 0) >= 104 && Number(q.data.bnbNative ?? 0) > 0;
   return (
     <>
       <PageTitle eyebrow="AgentKit · Avalanche + BNB" title="Wallet" />

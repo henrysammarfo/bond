@@ -195,7 +195,7 @@ export function PricingPage() {
         <div className="grid gap-6 md:grid-cols-3">
           {[
             ["Explore", "$0", "Create a workspace and inspect live vault state."],
-            ["Mainnet deposit", "$100+", "Minimum real USDC on Avalanche or BNB Chain, plus gas."],
+            ["Mainnet deposit", "$104+", "Live redeemable floor on Avalanche or BNB Chain, plus gas."],
             [
               "Enterprise",
               "Custom",
@@ -300,7 +300,7 @@ export function DocsPage() {
   const items = [
     [
       "Quick start",
-      "Register a workspace, create an Avalanche or BNB USDC mandate, open a permissionless vault, and submit a live $100 deposit when funded.",
+      "Register a workspace, create an Avalanche or BNB USDC mandate, open a permissionless vault, and submit a live $104 deposit when funded.",
     ],
     [
       "State model",
@@ -438,7 +438,10 @@ export function ContactPage() {
           </label>
           {status === "err" && <p className="text-xs text-danger">{err}</p>}
           {status === "ok" && (
-            <p className="text-xs text-success">Thanks — we received your note for this demo session.</p>
+            <p className="text-xs text-success">
+              Thanks — your note was validated in-browser. Email delivery is not configured on this
+              demo host; reach the team via the OpenServ submission channel.
+            </p>
           )}
           <button
             type="submit"
@@ -447,7 +450,7 @@ export function ContactPage() {
             Request a walkthrough
           </button>
           <p className="text-xs text-muted-foreground">
-            Validated client-side. Production mail delivery is wired when SMTP secrets are set.
+            Client-side validation + honeypot only. No SMTP on this deployment.
           </p>
         </form>
       </Section>

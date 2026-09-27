@@ -15,7 +15,7 @@ export function EvidencePage() {
     <PublicPage
       eyebrow="Evidence"
       title="Every fact behind a BOND decision."
-      intro="SERV inputs and outputs, IXS MCP probes, and on-chain reads with block numbers. Public. Refreshable. No invented greens."
+      intro="SERV inputs and outputs, IXS MCP probes, and on-chain reads with block numbers. Public, redacted, and ephemeral per server instance — no invented greens."
     >
       <Section>
         <div className="mb-8 flex flex-wrap items-center gap-3">

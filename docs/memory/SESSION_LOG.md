@@ -1,6 +1,23 @@
 # Session log
 
 
+## 2026-09-27 — Pre-merge audit + harden
+
+### Fixed
+- Platform AgentKit preferred on register (fund one wallet for demo); address/key mismatch assert
+- `LIVE_DEPOSIT=1` gate on subscribe; enabled on Vercel
+- $104 messaging aligned (policy/SERV/UI/README/public vault min)
+- BSC USDC `usdcToBaseUnits` via integer cents (no 18-dec float loss)
+- Overview USDC sums Avalanche + BNB; evidence public ring redacts wallets; contact form honest (no fake SMTP)
+- Vercel security headers (`vercel.json`); absolute sitemap; login `next` open-redirect guard; relay `timingSafeEqual`
+- Package name `bond`; `.env.example` relay vars
+
+### Accepted residual (documented)
+- Evidence still in-memory / per-instance on serverless
+- Quick Tunnel relay ephemeral until Cloud Run
+- Mandate usedCents race / subscribe idempotency not fully locked
+
+
 ## 2026-09-27 — AgentRouter Tor on Vercel (HTTPS relay)
 
 ### Shipped

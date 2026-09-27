@@ -1,6 +1,9 @@
 /**
  * Per-org integration vault: encrypt BYO keys + AgentKit signer.
  * Resolve order: org sealed secret → platform env (if usePlatformFallback).
+ *
+ * On register, prefer the platform AgentKit address when fallback is on so
+ * operators can fund one wallet for the demo. Orgs can still import/rotate.
  */
 import { eq } from "drizzle-orm";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
@@ -53,16 +56,66 @@ function tryOpen(enc: string | null | undefined): string | null {
   }
 }
 
-/** Ensure org has an AgentKit-compatible EVM key (generate once). Returns address. */
+function platformSigner(): { key: Hex; address: `0x${string}` } | null {
+  const raw = process.env.AGENT_PRIVATE_KEY ?? process.env.CDP_WALLET_PRIVATE_KEY;
+  if (!raw) return null;
+  const key = (raw.startsWith("0x") ? raw : `0x${raw}`) as Hex;
+  const derived = privateKeyToAccount(key).address;
+  const configured = process.env.CDP_WALLET_ADDRESS?.startsWith("0x")
+    ? (process.env.CDP_WALLET_ADDRESS as `0x${string}`)
+    : derived;
+  if (configured.toLowerCase() !== derived.toLowerCase()) {
+    throw new Error(
+      `CDP_WALLET_ADDRESS (${configured}) does not match AGENT_PRIVATE_KEY (${derived}).`,
+    );
+  }
+  return { key, address: derived };
+}
+
+/**
+ * Ensure org has a displayable AgentKit address.
+ * Prefer platform signer when fallback is on and no org key is sealed yet
+ * (so funding the platform wallet works for new registrations).
+ */
 export async function ensureOrgAgentWallet(orgId: string): Promise<`0x${string}`> {
   const existing = await loadRow(orgId);
   if (existing?.agentWalletAddress?.startsWith("0x") && existing.agentPrivateKeyEnc) {
     return existing.agentWalletAddress as `0x${string}`;
   }
+  if (
+    existing?.agentWalletAddress?.startsWith("0x") &&
+    !existing.agentPrivateKeyEnc &&
+    existing.usePlatformFallback !== false
+  ) {
+    return existing.agentWalletAddress as `0x${string}`;
+  }
+
+  const fallback = existing?.usePlatformFallback !== false;
+  const platform = platformSigner();
+  const db = getDb();
+
+  if (fallback && platform) {
+    if (existing) {
+      await db
+        .update(orgIntegrations)
+        .set({
+          agentWalletAddress: platform.address,
+          agentPrivateKeyEnc: null,
+          updatedAt: new Date(),
+        })
+        .where(eq(orgIntegrations.orgId, orgId));
+    } else {
+      await db.insert(orgIntegrations).values({
+        orgId,
+        agentWalletAddress: platform.address,
+        usePlatformFallback: true,
+      });
+    }
+    return platform.address;
+  }
 
   const pk = generatePrivateKey();
   const account = privateKeyToAccount(pk);
-  const db = getDb();
   const enc = sealSecret(pk);
 
   if (existing) {
@@ -90,7 +143,6 @@ export async function resolveOrgSecrets(orgId: string): Promise<OrgRuntimeSecret
   const fallback = row?.usePlatformFallback !== false;
 
   const orgPk = tryOpen(row?.agentPrivateKeyEnc);
-  const platformPk = process.env.AGENT_PRIVATE_KEY ?? process.env.CDP_WALLET_PRIVATE_KEY ?? null;
   let agentPrivateKey: Hex | null = null;
   let agentWalletAddress: `0x${string}` | null = null;
   let agentSource: OrgRuntimeSecrets["sources"]["agent"] = "none";
@@ -100,13 +152,13 @@ export async function resolveOrgSecrets(orgId: string): Promise<OrgRuntimeSecret
     agentPrivateKey = key;
     agentWalletAddress = (row?.agentWalletAddress as `0x${string}`) ?? privateKeyToAccount(key).address;
     agentSource = "org";
-  } else if (fallback && platformPk) {
-    const key = (platformPk.startsWith("0x") ? platformPk : `0x${platformPk}`) as Hex;
-    agentPrivateKey = key;
-    agentWalletAddress = process.env.CDP_WALLET_ADDRESS?.startsWith("0x")
-      ? (process.env.CDP_WALLET_ADDRESS as `0x${string}`)
-      : privateKeyToAccount(key).address;
-    agentSource = "platform";
+  } else if (fallback) {
+    const platform = platformSigner();
+    if (platform) {
+      agentPrivateKey = platform.key;
+      agentWalletAddress = platform.address;
+      agentSource = "platform";
+    }
   }
 
   const orgServ = tryOpen(row?.openservApiKeyEnc);
@@ -159,6 +211,8 @@ export type SaveIntegrationsInput = {
   tinyfishApiKey?: string | null;
   agentPrivateKey?: string | null;
   usePlatformFallback?: boolean;
+  /** Clear org key and bind display address to platform AgentKit. */
+  usePlatformAgent?: boolean;
   clearOpenserv?: boolean;
   clearAgentrouter?: boolean;
   clearAgentKey?: boolean;
@@ -186,8 +240,13 @@ export async function saveOrgIntegrations(orgId: string, input: SaveIntegrations
   if (input.tavilyApiKey?.trim()) patch.tavilyApiKeyEnc = sealSecret(input.tavilyApiKey.trim());
   if (input.tinyfishApiKey?.trim()) patch.tinyfishApiKeyEnc = sealSecret(input.tinyfishApiKey.trim());
 
-  if (input.clearAgentKey) {
-    // regenerate fresh wallet rather than leave org without signer
+  if (input.usePlatformAgent) {
+    const platform = platformSigner();
+    if (!platform) throw new Error("Platform AGENT_PRIVATE_KEY is not configured.");
+    patch.agentPrivateKeyEnc = null;
+    patch.agentWalletAddress = platform.address;
+    patch.usePlatformFallback = true;
+  } else if (input.clearAgentKey) {
     const pk = generatePrivateKey();
     const account = privateKeyToAccount(pk);
     patch.agentPrivateKeyEnc = sealSecret(pk);

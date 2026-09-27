@@ -28,10 +28,10 @@ describe("secretBox AES-256-GCM", () => {
 });
 
 describe("mandate policy (no network)", () => {
-  test("denies under 100 before LLM", async () => {
+  test("denies under 104 live floor before LLM", async () => {
     const { evaluateMandate } = await import("../serv/mandate");
     const d = await evaluateMandate({
-      amountDollars: 50,
+      amountDollars: 100,
       network: "avalanche-mainnet",
       asset: "USDC",
       vaultId: "6a952729732c2b84b55ce89d",
@@ -41,6 +41,7 @@ describe("mandate policy (no network)", () => {
     });
     expect(d.allow).toBe(false);
     expect(d.source).toBe("policy");
+    expect(d.reason).toContain("104");
   });
 });
 

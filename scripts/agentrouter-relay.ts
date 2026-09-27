@@ -13,6 +13,7 @@
  */
 import * as http from "node:http";
 import * as https from "node:https";
+import { timingSafeEqual } from "node:crypto";
 import { SocksProxyAgent } from "socks-proxy-agent";
 
 const PORT = Number(process.env.PORT ?? process.env.AGENTROUTER_RELAY_PORT ?? 8787);
@@ -117,7 +118,9 @@ const server = http.createServer(async (req, res) => {
   }
 
   const got = String(req.headers["x-bond-relay-secret"] ?? "");
-  if (got !== SECRET) {
+  const a = Buffer.from(got);
+  const b = Buffer.from(SECRET);
+  if (a.length !== b.length || !timingSafeEqual(a, b)) {
     unauthorized(res);
     return;
   }

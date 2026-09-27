@@ -32,7 +32,13 @@ function LoginPage() {
 
   const login = useMutation({
     mutationFn: () => loginFn({ data: { email, password } }),
-    onSuccess: () => void navigate({ to: next || "/dashboard" }),
+    onSuccess: () => {
+      const dest =
+        next && next.startsWith("/") && !next.startsWith("//") && !next.includes("://")
+          ? next
+          : "/dashboard";
+      void navigate({ to: dest });
+    },
   });
   const register = useMutation({
     mutationFn: () =>

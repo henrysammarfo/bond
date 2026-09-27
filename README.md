@@ -27,7 +27,7 @@ Imagine a school club treasurer. They may only spend up to a monthly limit. They
 
 **BOND is that notebook — for on-chain RWA vaults.**
 
-You open a workspace. You get your own AgentKit address (or import one). You can plug in your own SERV / AgentRouter keys — or use the demo keys. You create a mandate (“up to $X USDC on Avalanche or BNB”). You subscribe to a live IXS vault (≥ $100). The screen says **Pending — not earning** until IXS shares show up.
+You open a workspace. You get your own AgentKit address (or import one). You can plug in your own SERV / AgentRouter keys — or use the demo keys. You create a mandate (“up to $X USDC on Avalanche or BNB”). You subscribe to a live IXS vault (≥ $104). The screen says **Pending — not earning** until IXS shares show up.
 
 > Soft pitch we use everywhere: BOND lets a treasury allow a subscription, send real USDC into IXS RWA vaults on Avalanche or BNB Chain, and refuse to pretend the bond is “owned” before the vault finishes.
 
@@ -79,7 +79,7 @@ sequenceDiagram
   participant S as SERV / AgentRouter
   participant I as IXS MCP
   participant C as Avalanche or BNB
-  U->>B: Confirm live deposit ≥ $100
+  U->>B: Confirm live deposit ≥ $104
   B->>B: Check USDC + gas balances
   B->>S: Mandate allow/deny
   alt Denied

@@ -194,7 +194,7 @@ function Index() {
           </div>
           <ol className="grid gap-px overflow-hidden rounded-md border border-border bg-border sm:grid-cols-2">
             {[
-              "Mandate allows $100",
+              "Mandate clears $104 floor",
               "USDC deposit lands",
               "Status remains Pending",
               "Vault shares appear",
