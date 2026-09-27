@@ -108,3 +108,40 @@ BOND still does **live AgentKit deposits** with Pending honesty. Simulated-only 
 2. Confirm live deposit → Pending + Snowscan  
 3. Public host env (DB + encryption + LLM path) 24/7  
 4. WIN_CHECKLIST + X/@openservai
+
+
+## 2026-09-27 — Demo V2 + OpenServ submission kit
+
+### Shipped
+- `bond-demo-v2/` Hyperframes RECEIPT LEDGER redo (paper rail, kinetic ALLOCATE/PENDING/NO, punch-cuts — not v1 dark grain)
+- Liam ElevenLabs VO regenerated; delivery + X encode in `/opt/cursor/artifacts/bond-openserv-v2-*.mp4`
+- `docs/memory/SUBMIT_KIT.md` — form answers + Blue Tick X post with @openservai
+- Live Path A screen capture in progress (password masked); rotate `demo@bond.app` after record
+- AgentKit funded ≈105 USDC + AVAX on `0x1eFBb041…3b14e`
+
+### Submit
+- Live: https://bond-pi.vercel.app
+- GitHub: https://github.com/henrysammarfo/bond
+- Post X with video + tag @openservai before 28 Sep 2026 00:00 UTC
+- Demo password rotated after live record (offline artifact only)
+
+
+## 2026-09-27 — Live record + vault route fix
+
+### Shipped
+- Fixed `/dashboard/vaults/$vaultId` (and subscriptions detail) — parents lacked `<Outlet />`; detail never mounted. Deployed to production.
+- Live capture: login (masked) → Wallet 105 USDC → mandate → Scan ALLOCATE (BNB) → Avalanche subscribe attempt → **preflight REJECT** (concentration / NAV) — fail-closed money shot.
+- Hyperframes V2 ledger video SHIP; artifacts under `/opt/cursor/artifacts/`.
+- `demo@bond.app` password rotated; provisioner requires `DEMO_PASSWORD` env (no hardcoded secret).
+
+
+## 2026-09-27 — Live BNB Path A + synced demo + brand docs
+
+### Shipped
+- Bridged Avalanche USDC → BSC via LI.FI; live IXS subscribe **104 USDC** on BNB vault `6a26624ca7d16b245d665475`
+- Approve `0x7680eaa0…` + requestDeposit `0x227cb6a9…` on BscScan; subscription `a974083b-…` **Pending**
+- Nested MCP `tx.to`/`tx.data` unwrap so AgentKit signs real approve/deposit calls
+- Synced Liam VO Hyperframes cut: `artifacts/demo/bond-live-path-a-synced-x.mp4` + stills
+- OpenServ form Q5 SERV blanks + Q6 cream-on-forest logotypes in `docs/brand/`
+- README + memory MDs: logos render via relative PNG paths; mermaid diagrams scrubbed for GitHub (no middle-dots / slash-heavy labels)
+- `SUBMIT_KIT.md` / `LIVE_PROOF.md` / `WIN_CHECKLIST.md` point at `main` artifact paths after merge

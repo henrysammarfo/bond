@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>BOND — Settlement you can prove</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face {
+        font-family: "ManropeBond";
+        src: url("public/fonts/Manrope-SemiBold.ttf") format("truetype");
+        font-weight: 600;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: "SpaceBond";
+        src: url("public/fonts/SpaceGrotesk-Bold.ttf") format("truetype");
+        font-weight: 700;
+        font-style: normal;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #06140f;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #06140f;
+        color: #f4f7f5;
+        font-family: "ManropeBond", ui-sans-serif, system-ui, sans-serif;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+      .shot {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transform-origin: center center;
+      }
+      .veil {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          115deg,
+          rgba(6, 20, 15, 0.82) 0%,
+          rgba(6, 20, 15, 0.35) 48%,
+          rgba(6, 20, 15, 0.7) 100%
+        );
+      }
+      .veil-heavy {
+        background: rgba(6, 20, 15, 0.78);
+      }
+      .brand {
+        font-family: "SpaceBond", ui-sans-serif, system-ui, sans-serif;
+        letter-spacing: -0.04em;
+      }
+      .headline {
+        position: absolute;
+        left: 96px;
+        bottom: 160px;
+        max-width: 1180px;
+        font-family: "SpaceBond", ui-sans-serif, system-ui, sans-serif;
+        font-size: 84px;
+        line-height: 0.98;
+        letter-spacing: -0.045em;
+      }
+      .headline.sm {
+        font-size: 64px;
+      }
+      .sub {
+        position: absolute;
+        left: 96px;
+        bottom: 96px;
+        max-width: 980px;
+        font-size: 28px;
+        line-height: 1.35;
+        color: #c5d4cc;
+      }
+      .chip {
+        position: absolute;
+        left: 96px;
+        top: 88px;
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 18px;
+        border: 1px solid rgba(244, 247, 245, 0.18);
+        background: rgba(11, 31, 23, 0.72);
+        font-size: 18px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #9fe3b4;
+      }
+      .chip .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: #15b042;
+      }
+      .lower {
+        position: absolute;
+        left: 96px;
+        bottom: 72px;
+        padding: 18px 22px;
+        background: #0b1f17;
+        border-left: 5px solid #15b042;
+        max-width: 920px;
+      }
+      .lower strong {
+        display: block;
+        font-family: "SpaceBond", ui-sans-serif, system-ui, sans-serif;
+        font-size: 34px;
+        letter-spacing: -0.03em;
+        margin-bottom: 6px;
+      }
+      .lower span {
+        font-size: 20px;
+        color: #c5d4cc;
+      }
+      .center-card {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 1280px;
+        margin-left: -640px;
+        margin-top: -220px;
+        text-align: center;
+      }
+      .center-card h1 {
+        font-family: "SpaceBond", ui-sans-serif, system-ui, sans-serif;
+        font-size: 110px;
+        letter-spacing: -0.05em;
+        line-height: 0.95;
+      }
+      .center-card p {
+        margin-top: 28px;
+        font-size: 30px;
+        color: #c5d4cc;
+      }
+      .path {
+        position: absolute;
+        left: 120px;
+        top: 280px;
+        display: flex;
+        gap: 28px;
+      }
+      .step {
+        width: 520px;
+        padding: 36px 32px;
+        background: rgba(11, 31, 23, 0.88);
+        border: 1px solid rgba(244, 247, 245, 0.12);
+      }
+      .step em {
+        display: block;
+        font-style: normal;
+        color: #15b042;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        font-size: 16px;
+        margin-bottom: 14px;
+      }
+      .step strong {
+        display: block;
+        font-family: "SpaceBond", ui-sans-serif, system-ui, sans-serif;
+        font-size: 42px;
+        letter-spacing: -0.03em;
+        margin-bottom: 12px;
+      }
+      .step span {
+        font-size: 22px;
+        color: #c5d4cc;
+        line-height: 1.4;
+      }
+      .end {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 18px;
+        text-align: center;
+        background: radial-gradient(circle at 50% 35%, #123528 0%, #06140f 62%);
+      }
+      .end h1 {
+        font-family: "SpaceBond", ui-sans-serif, system-ui, sans-serif;
+        font-size: 120px;
+        letter-spacing: -0.05em;
+      }
+      .end .url {
+        font-size: 36px;
+        color: #9fe3b4;
+      }
+      .end .wallet {
+        margin-top: 24px;
+        font-size: 22px;
+        color: #c5d4cc;
+        font-family: "ManropeBond", ui-monospace, monospace;
+      }
+      .flash {
+        position: absolute;
+        inset: 0;
+        background: #15b042;
+        opacity: 0;
+        pointer-events: none;
+      }
+      .big-x {
+        position: absolute;
+        right: 120px;
+        top: 220px;
+        font-family: "SpaceBond", ui-sans-serif, system-ui, sans-serif;
+        font-size: 220px;
+        line-height: 0.85;
+        color: rgba(255, 90, 90, 0.92);
+        letter-spacing: -0.06em;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="104"
+      data-width="1920"
+      data-height="1080"
+    >
+      <audio
+        id="vo"
+        src="public/audio/narration.wav"
+        data-start="0"
+        data-duration="103.65"
+        data-track-index="9"
+      ></audio>
+
+      <!-- 0–8 Hook -->
+      <section id="s-hook" class="clip" data-start="0" data-duration="8.2" data-track-index="0">
+        <div class="veil veil-heavy"></div>
+        <div class="chip"><span class="dot"></span> Truth check</div>
+        <h2 id="hook-h" class="headline">Most RWA demos lie.</h2>
+        <p id="hook-s" class="sub">Green checks. Invented balances. Fake “settled.”</p>
+        <div id="hook-x" class="big-x">NO</div>
+      </section>
+
+      <!-- 8–18 Brand -->
+      <section id="s-brand" class="clip" data-start="8" data-duration="10" data-track-index="0">
+        <div class="end" style="background: radial-gradient(circle at 40% 30%, #184833 0%, #06140f 70%)">
+          <div class="chip" style="position: static"><span class="dot"></span> OpenServ · RWA Vaults</div>
+          <h1 id="brand-h" class="brand" style="font-size: 160px">BOND</h1>
+          <p id="brand-s">Live Path A. Settlement you can prove.</p>
+        </div>
+      </section>
+
+      <!-- 18–32 Path -->
+      <section id="s-path" class="clip" data-start="18" data-duration="14" data-track-index="0">
+        <div class="chip"><span class="dot"></span> Path A</div>
+        <div class="path">
+          <div id="step1" class="step">
+            <em>01 · SERV</em>
+            <strong>Decide</strong>
+            <span>Mandate allow / deny. Fail closed. No soft-pass.</span>
+          </div>
+          <div id="step2" class="step">
+            <em>02 · AgentKit</em>
+            <strong>Sign</strong>
+            <span>Real mainnet USDC. Avalanche primary. BNB companion.</span>
+          </div>
+          <div id="step3" class="step">
+            <em>03 · IXS</em>
+            <strong>Pending</strong>
+            <span>ERC-7540 async. Shares later. Honesty now.</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 32–48 Home -->
+      <section id="s-home" class="clip" data-start="32" data-duration="16" data-track-index="0" data-layout-allow-overflow>
+        <img id="home-shot" class="shot" src="public/shots/bond-home-hero.png" alt="" />
+        <div class="veil"></div>
+        <div class="lower" id="home-l">
+          <strong>Homepage</strong>
+          <span>Settlement you can prove — not cosplay yield.</span>
+        </div>
+      </section>
+
+      <!-- 48–62 Vaults -->
+      <section id="s-vaults" class="clip" data-start="48" data-duration="14" data-track-index="0" data-layout-allow-overflow>
+        <img id="vaults-shot" class="shot" src="public/shots/bond-vaults-dual-chain.png" alt="" />
+        <div class="veil"></div>
+        <div class="lower" id="vaults-l">
+          <strong>Live IXS vaults</strong>
+          <span>Avalanche + BNB · live floor $104 USDC redeemable</span>
+        </div>
+      </section>
+
+      <!-- 62–78 Scan -->
+      <section id="s-scan" class="clip" data-start="62" data-duration="16" data-track-index="0" data-layout-allow-overflow>
+        <img id="scan-shot" class="shot" src="public/shots/dash-scan.png" alt="" />
+        <div class="veil"></div>
+        <div class="lower" id="scan-l">
+          <strong>Scan → ALLOCATE / DEFER / REJECT</strong>
+          <span>SERV + preflight. Guardrails on. Fail closed.</span>
+        </div>
+      </section>
+
+      <!-- 78–90 Pending / wallet -->
+      <section id="s-pending" class="clip" data-start="78" data-duration="12" data-track-index="0" data-layout-allow-overflow>
+        <img id="wallet-shot" class="shot" src="public/shots/dash-wallet.png" alt="" />
+        <div class="veil"></div>
+        <div class="lower" id="pend-l">
+          <strong>Pending — not earning</strong>
+          <span>AgentKit signs live. Shares only after IXS proof.</span>
+        </div>
+      </section>
+
+      <!-- 90–100 Evidence -->
+      <section id="s-ev" class="clip" data-start="90" data-duration="10" data-track-index="0" data-layout-allow-overflow>
+        <img id="ov-shot" class="shot" src="public/shots/dash-overview.png" alt="" />
+        <div class="veil"></div>
+        <div class="lower" id="ev-l">
+          <strong>/evidence on Neon</strong>
+          <span>SERV I/O · MCP probes · on-chain reads · redacted · public</span>
+        </div>
+      </section>
+
+      <!-- 100–104 End -->
+      <section id="s-end" class="clip" data-start="100" data-duration="4" data-track-index="0">
+        <div class="end">
+          <h1 id="end-h" class="brand">BOND</h1>
+          <p id="end-u" class="url">bond-pi.vercel.app</p>
+          <p id="end-w" class="wallet">Fund AgentKit · Avalanche · 0x1eFBb041…3b14e · ≥104 USDC + AVAX</p>
+        </div>
+      </section>
+
+      <div id="flash" class="flash"></div>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // Hook
+      tl.fromTo("#hook-h", { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7, ease: "power3.out" }, 0.15);
+      tl.fromTo("#hook-s", { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: 0.55, ease: "power2.out" }, 0.55);
+      tl.fromTo("#hook-x", { scale: 1.4, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.45, ease: "back.out(1.6)", immediateRender: false }, 1.1);
+      tl.fromTo("#flash", { opacity: 0 }, { opacity: 0.18, duration: 0.08, yoyo: true, repeat: 1, immediateRender: false }, 1.15);
+
+      // Brand
+      tl.fromTo("#brand-h", { y: 50, opacity: 0 }, { y: 0, opacity: 1, duration: 0.75, ease: "power3.out" }, 8.15);
+      tl.fromTo("#brand-s", { opacity: 0 }, { opacity: 1, duration: 0.5 }, 8.7);
+
+      // Path steps
+      tl.fromTo("#step1", { y: 36, opacity: 0 }, { y: 0, opacity: 1, duration: 0.55, ease: "power3.out" }, 18.2);
+      tl.fromTo("#step2", { y: 36, opacity: 0 }, { y: 0, opacity: 1, duration: 0.55, ease: "power3.out" }, 18.55);
+      tl.fromTo("#step3", { y: 36, opacity: 0 }, { y: 0, opacity: 1, duration: 0.55, ease: "power3.out" }, 18.9);
+
+      // Ken Burns on product stills (inner img, not .clip)
+      tl.fromTo("#home-shot", { scale: 1.08 }, { scale: 1.0, duration: 16, ease: "none" }, 32);
+      tl.fromTo("#home-l", { x: -30, opacity: 0 }, { x: 0, opacity: 1, duration: 0.55, ease: "power2.out" }, 32.35);
+
+      tl.fromTo("#vaults-shot", { scale: 1.1 }, { scale: 1.02, duration: 14, ease: "none" }, 48);
+      tl.fromTo("#vaults-l", { x: -30, opacity: 0 }, { x: 0, opacity: 1, duration: 0.55, ease: "power2.out" }, 48.3);
+
+      tl.fromTo("#scan-shot", { scale: 1.06 }, { scale: 1.0, duration: 16, ease: "none" }, 62);
+      tl.fromTo("#scan-l", { x: -30, opacity: 0 }, { x: 0, opacity: 1, duration: 0.55, ease: "power2.out" }, 62.3);
+
+      tl.fromTo("#wallet-shot", { scale: 1.08 }, { scale: 1.0, duration: 12, ease: "none" }, 78);
+      tl.fromTo("#pend-l", { x: -30, opacity: 0 }, { x: 0, opacity: 1, duration: 0.55, ease: "power2.out" }, 78.3);
+
+      tl.fromTo("#ov-shot", { scale: 1.07 }, { scale: 1.0, duration: 10, ease: "none" }, 90);
+      tl.fromTo("#ev-l", { x: -30, opacity: 0 }, { x: 0, opacity: 1, duration: 0.55, ease: "power2.out" }, 90.3);
+
+      tl.fromTo("#end-h", { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.55, ease: "power3.out" }, 100.1);
+      tl.fromTo("#end-u", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 100.45);
+      tl.fromTo("#end-w", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 100.7);
+
+      // Hard-cut flash accents between major acts
+      tl.set("#flash", { opacity: 0 }, 0);
+      [8, 18, 32, 48, 62, 78, 90, 100].forEach((t) => {
+        tl.fromTo(
+          "#flash",
+          { opacity: 0 },
+          { opacity: 0.12, duration: 0.06, yoyo: true, repeat: 1, immediateRender: false },
+          t,
+        );
+      });
+
+      window.__timelines["main"] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>

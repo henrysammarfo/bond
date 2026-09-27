@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>BOND — Live Path A</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face {
+        font-family: "OswaldBond";
+        src: url("public/fonts/Oswald-Bold.ttf") format("truetype");
+        font-weight: 700;
+      }
+      @font-face {
+        font-family: "PlexMono";
+        src: url("public/fonts/IBMPlexMono-Medium.woff2") format("woff2");
+        font-weight: 500;
+      }
+      @font-face {
+        font-family: "MontserratBond";
+        src: url("public/fonts/Montserrat-Black.woff2") format("woff2");
+        font-weight: 900;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: #0a0a0a; }
+      #root {
+        position: relative; width: 100%; height: 100%; overflow: hidden;
+        background: #e8e4db; color: #141210; font-family: "PlexMono", monospace;
+      }
+      .clip { position: absolute; inset: 0; overflow: hidden; }
+      video.plate {
+        position: absolute; inset: 0; width: 100%; height: 100%;
+        object-fit: cover; object-position: top center;
+      }
+      .rail {
+        position: absolute; left: 0; right: 0; top: 0; height: 48px; z-index: 20;
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 0 28px 0 40px; font-size: 14px; letter-spacing: 0.08em;
+        text-transform: uppercase; color: #5a564e;
+        background: rgba(232,228,219,0.92); border-bottom: 1px solid rgba(26,26,26,0.12);
+      }
+      .rail .live { color: #065f74; font-weight: 700; }
+      .cap {
+        position: absolute; left: 40px; bottom: 56px; z-index: 15;
+        padding: 12px 16px; max-width: 720px;
+        background: rgba(232,228,219,0.92); border-left: 4px solid #076f87;
+        font-size: 18px; letter-spacing: 0.08em; text-transform: uppercase;
+      }
+      .slam {
+        position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%);
+        font-family: "OswaldBond", sans-serif; font-size: 160px; line-height: 0.9;
+        text-transform: uppercase; z-index: 18; color: #8a5a12; opacity: 0;
+      }
+      .open, .end {
+        position: absolute; inset: 0; z-index: 25;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        background: #e8e4db; text-align: center;
+      }
+      .open h1, .end h1 {
+        font-family: "MontserratBond", sans-serif; font-size: 140px; letter-spacing: -0.04em;
+      }
+      .open p, .end p { margin-top: 18px; font-size: 24px; color: #5a564e; letter-spacing: 0.04em; }
+      .end .url { color: #076f87; font-size: 28px; margin-top: 28px; }
+      .end .hash {
+        margin-top: 22px; font-size: 16px; color: #141210; max-width: 1400px;
+        word-break: break-all; line-height: 1.5;
+      }
+      .flash { position: absolute; inset: 0; background: #f0e4c8; opacity: 0; z-index: 22; pointer-events: none; }
+      .seam {
+        position: absolute; top: 0; left: -20%; width: 16%; height: 100%; z-index: 21; opacity: 0;
+        background: linear-gradient(90deg, transparent, rgba(7,111,135,0.35), transparent);
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="92" data-width="1920" data-height="1080">
+      <!-- A-roll already has locked VO (0.4s picture lead) -->
+      <video
+        id="plate"
+        class="plate"
+        src="public/footage/plate_silent.mp4"
+        data-start="0"
+        data-duration="91.7"
+        data-track-index="0"
+        muted
+      ></video>
+      <audio
+        id="vo"
+        src="public/audio/narration.wav"
+        data-start="0.4"
+        data-duration="91.21"
+        data-track-index="9"
+      ></audio>
+
+      <div class="rail" id="rail" data-start="0" data-duration="86" data-track-index="1">
+        <span><span class="live">● LIVE PATH A</span> · BOND · OPENSERV</span>
+        <span>BNB · PENDING UNTIL PROOF · FAIL-CLOSED</span>
+      </div>
+
+      <div id="cap" class="cap" data-start="0" data-duration="86" data-track-index="2">settlement you can prove</div>
+
+      <div id="slam" class="slam" data-start="0" data-duration="86" data-track-index="3">PENDING</div>
+      <div id="flash" class="flash" data-start="0" data-duration="92" data-track-index="4"></div>
+      <div id="seam" class="seam" data-start="0" data-duration="92" data-track-index="5"></div>
+
+      <section id="s-open" class="open clip" data-start="0" data-duration="2.2" data-track-index="6">
+        <h1>BOND</h1>
+        <p>OpenServ Edition One · Live Path A</p>
+      </section>
+
+      <section id="s-end" class="end clip" data-start="86" data-duration="6" data-track-index="6">
+        <h1>BOND</h1>
+        <p>Settlement you can prove.</p>
+        <p class="url">bond-pi.vercel.app</p>
+        <p class="hash">
+          Subscribe proof · bscscan.com/tx/0x227cb6a981c773f0e9a4ddb0942b4662f07c2a1453e678bbe2974e2c18d70f0c
+          <br />@openservai · AgentKit · Avalanche · BNB
+        </p>
+      </section>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      const caps = [
+        [0.5, "most demos lie"],
+        [7.2, "avalanche + bnb · live ixs"],
+        [19.5, "funded agentkit signer"],
+        [27.5, "scan → allocate / defer / reject"],
+        [36.5, "104 usdc · live deposit"],
+        [46.5, "pending — not earning"],
+        [60.5, "on-chain hash · refresh it"],
+        [72.5, "bscscan · verified"],
+        [80.5, "/evidence · neon receipts"],
+      ];
+      caps.forEach(([t, text], i) => {
+        tl.call(() => { document.getElementById("cap").textContent = text; }, null, t);
+        tl.fromTo("#cap", { x: -16, opacity: 0 }, { x: 0, opacity: 1, duration: 0.28, ease: "power2.out", immediateRender: false }, t);
+      });
+
+      // PENDING kinetic slam when pending section hits (~36s in a_roll story)
+      tl.fromTo("#flash", { opacity: 0 }, { opacity: 0.85, duration: 0.06, yoyo: true, repeat: 1, immediateRender: false }, 37.0);
+      tl.fromTo(
+        "#slam",
+        { x: 900, opacity: 0, scale: 1.2 },
+        { x: 0, opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2)", immediateRender: false },
+        37.05,
+      );
+      tl.to("#slam", { scale: 0.22, x: 520, y: -360, duration: 0.35, ease: "power2.inOut", immediateRender: false }, 40.2);
+
+      // cyan seams on act changes
+      [7, 19, 27, 36, 46, 60, 72, 80, 86].forEach((t) => {
+        tl.fromTo("#seam", { x: "-20%", opacity: 0 }, { x: "140%", opacity: 1, duration: 0.25, ease: "power1.inOut", immediateRender: false }, t);
+        tl.to("#seam", { opacity: 0, duration: 0.05, immediateRender: false }, t + 0.25);
+      });
+
+      tl.fromTo("#s-open", { opacity: 1 }, { opacity: 0, duration: 0.35, ease: "power2.in", immediateRender: false }, 1.8);
+      tl.fromTo("#s-end", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "power2.out", immediateRender: false }, 86.05);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>

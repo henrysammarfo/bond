@@ -35,7 +35,9 @@ import { Route as DashboardSettingsRouteImport } from './routes/dashboard.settin
 import { Route as DashboardSubscriptionsRouteImport } from './routes/dashboard.subscriptions'
 import { Route as DashboardVaultsRouteImport } from './routes/dashboard.vaults'
 import { Route as DashboardWalletRouteImport } from './routes/dashboard.wallet'
+import { Route as DashboardSubscriptionsIndexRouteImport } from './routes/dashboard.subscriptions.index'
 import { Route as DashboardSubscriptionsSubscriptionIdRouteImport } from './routes/dashboard.subscriptions.$subscriptionId'
+import { Route as DashboardVaultsIndexRouteImport } from './routes/dashboard.vaults.index'
 import { Route as DashboardVaultsVaultIdRouteImport } from './routes/dashboard.vaults.$vaultId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -168,12 +170,23 @@ const DashboardWalletRoute = DashboardWalletRouteImport.update({
   path: '/wallet',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardSubscriptionsIndexRoute =
+  DashboardSubscriptionsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => DashboardSubscriptionsRoute,
+  } as any)
 const DashboardSubscriptionsSubscriptionIdRoute =
   DashboardSubscriptionsSubscriptionIdRouteImport.update({
     id: '/$subscriptionId',
     path: '/$subscriptionId',
     getParentRoute: () => DashboardSubscriptionsRoute,
   } as any)
+const DashboardVaultsIndexRoute = DashboardVaultsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DashboardVaultsRoute,
+} as any)
 const DashboardVaultsVaultIdRoute = DashboardVaultsVaultIdRouteImport.update({
   id: '/$vaultId',
   path: '/$vaultId',
@@ -209,6 +222,8 @@ export interface FileRoutesByFullPath {
   '/dashboard/': typeof DashboardIndexRoute
   '/dashboard/subscriptions/$subscriptionId': typeof DashboardSubscriptionsSubscriptionIdRoute
   '/dashboard/vaults/$vaultId': typeof DashboardVaultsVaultIdRoute
+  '/dashboard/subscriptions/': typeof DashboardSubscriptionsIndexRoute
+  '/dashboard/vaults/': typeof DashboardVaultsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -232,12 +247,12 @@ export interface FileRoutesByTo {
   '/dashboard/mandates': typeof DashboardMandatesRoute
   '/dashboard/scan': typeof DashboardScanRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
-  '/dashboard/subscriptions': typeof DashboardSubscriptionsRouteWithChildren
-  '/dashboard/vaults': typeof DashboardVaultsRouteWithChildren
   '/dashboard/wallet': typeof DashboardWalletRoute
   '/dashboard': typeof DashboardIndexRoute
   '/dashboard/subscriptions/$subscriptionId': typeof DashboardSubscriptionsSubscriptionIdRoute
   '/dashboard/vaults/$vaultId': typeof DashboardVaultsVaultIdRoute
+  '/dashboard/subscriptions': typeof DashboardSubscriptionsIndexRoute
+  '/dashboard/vaults': typeof DashboardVaultsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -269,6 +284,8 @@ export interface FileRoutesById {
   '/dashboard/': typeof DashboardIndexRoute
   '/dashboard/subscriptions/$subscriptionId': typeof DashboardSubscriptionsSubscriptionIdRoute
   '/dashboard/vaults/$vaultId': typeof DashboardVaultsVaultIdRoute
+  '/dashboard/subscriptions/': typeof DashboardSubscriptionsIndexRoute
+  '/dashboard/vaults/': typeof DashboardVaultsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -301,6 +318,8 @@ export interface FileRouteTypes {
     | '/dashboard/'
     | '/dashboard/subscriptions/$subscriptionId'
     | '/dashboard/vaults/$vaultId'
+    | '/dashboard/subscriptions/'
+    | '/dashboard/vaults/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -324,12 +343,12 @@ export interface FileRouteTypes {
     | '/dashboard/mandates'
     | '/dashboard/scan'
     | '/dashboard/settings'
-    | '/dashboard/subscriptions'
-    | '/dashboard/vaults'
     | '/dashboard/wallet'
     | '/dashboard'
     | '/dashboard/subscriptions/$subscriptionId'
     | '/dashboard/vaults/$vaultId'
+    | '/dashboard/subscriptions'
+    | '/dashboard/vaults'
   id:
     | '__root__'
     | '/'
@@ -360,6 +379,8 @@ export interface FileRouteTypes {
     | '/dashboard/'
     | '/dashboard/subscriptions/$subscriptionId'
     | '/dashboard/vaults/$vaultId'
+    | '/dashboard/subscriptions/'
+    | '/dashboard/vaults/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -566,12 +587,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardWalletRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/subscriptions/': {
+      id: '/dashboard/subscriptions/'
+      path: '/'
+      fullPath: '/dashboard/subscriptions/'
+      preLoaderRoute: typeof DashboardSubscriptionsIndexRouteImport
+      parentRoute: typeof DashboardSubscriptionsRoute
+    }
     '/dashboard/subscriptions/$subscriptionId': {
       id: '/dashboard/subscriptions/$subscriptionId'
       path: '/$subscriptionId'
       fullPath: '/dashboard/subscriptions/$subscriptionId'
       preLoaderRoute: typeof DashboardSubscriptionsSubscriptionIdRouteImport
       parentRoute: typeof DashboardSubscriptionsRoute
+    }
+    '/dashboard/vaults/': {
+      id: '/dashboard/vaults/'
+      path: '/'
+      fullPath: '/dashboard/vaults/'
+      preLoaderRoute: typeof DashboardVaultsIndexRouteImport
+      parentRoute: typeof DashboardVaultsRoute
     }
     '/dashboard/vaults/$vaultId': {
       id: '/dashboard/vaults/$vaultId'
@@ -595,12 +630,14 @@ const BlogRouteWithChildren = BlogRoute._addFileChildren(BlogRouteChildren)
 
 interface DashboardSubscriptionsRouteChildren {
   DashboardSubscriptionsSubscriptionIdRoute: typeof DashboardSubscriptionsSubscriptionIdRoute
+  DashboardSubscriptionsIndexRoute: typeof DashboardSubscriptionsIndexRoute
 }
 
 const DashboardSubscriptionsRouteChildren: DashboardSubscriptionsRouteChildren =
   {
     DashboardSubscriptionsSubscriptionIdRoute:
       DashboardSubscriptionsSubscriptionIdRoute,
+    DashboardSubscriptionsIndexRoute: DashboardSubscriptionsIndexRoute,
   }
 
 const DashboardSubscriptionsRouteWithChildren =
@@ -610,10 +647,12 @@ const DashboardSubscriptionsRouteWithChildren =
 
 interface DashboardVaultsRouteChildren {
   DashboardVaultsVaultIdRoute: typeof DashboardVaultsVaultIdRoute
+  DashboardVaultsIndexRoute: typeof DashboardVaultsIndexRoute
 }
 
 const DashboardVaultsRouteChildren: DashboardVaultsRouteChildren = {
   DashboardVaultsVaultIdRoute: DashboardVaultsVaultIdRoute,
+  DashboardVaultsIndexRoute: DashboardVaultsIndexRoute,
 }
 
 const DashboardVaultsRouteWithChildren = DashboardVaultsRoute._addFileChildren(

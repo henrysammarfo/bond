@@ -1,6 +1,14 @@
 # BOND
 
 <p align="center">
+  <img src="docs/brand/bond-symbol-orbit-1080.png" width="160" alt="BOND symbol" />
+</p>
+
+<p align="center">
+  <img src="docs/brand/bond-logotype-orbit-wordmark.png" width="280" alt="BOND" />
+</p>
+
+<p align="center">
   <strong>Mandate in. Deposit on IXS. Stay Pending until shares are real.</strong>
 </p>
 
@@ -48,18 +56,18 @@ Same AgentKit address works on both EVM chains. Fund **USDC + gas on the chain y
 ```mermaid
 flowchart TB
   subgraph You["Your treasury workspace"]
-    Reg[Sign up / sign in]
-    Keys[BYO SERV · AgentRouter · agent key]
-    Mand[Create mandate]
+    Reg["Sign up / sign in"]
+    Keys["BYO SERV, AgentRouter, agent key"]
+    Mand["Create mandate"]
   end
-  subgraph BOND["BOND server"]
-    Gate[Policy + SERV mandate gate]
-    Sign[AgentKit signer · Avalanche or BNB]
-    Books[Ledger · Pending until shares]
+  subgraph Desk["BOND server"]
+    Gate["Policy + SERV mandate gate"]
+    Sign["AgentKit signer Avalanche or BNB"]
+    Books["Ledger Pending until shares"]
   end
-  subgraph IXS["IXS live vaults"]
-    Ava[Avalanche IXHYB]
-    Bnb[BNB IXHYB]
+  subgraph Vaults["IXS live vaults"]
+    Ava["Avalanche IXHYB"]
+    Bnb["BNB IXHYB"]
   end
   Reg --> Keys --> Mand --> Gate --> Sign
   Sign --> Ava
@@ -76,24 +84,44 @@ flowchart TB
 sequenceDiagram
   participant U as You
   participant B as BOND
-  participant S as SERV / AgentRouter
+  participant S as SERV
   participant I as IXS MCP
-  participant C as Avalanche or BNB
-  U->>B: Confirm live deposit ≥ $104
+  participant C as Chain
+  U->>B: Confirm live deposit ge 104 USDC
   B->>B: Check USDC + gas balances
-  B->>S: Mandate allow/deny
+  B->>S: Mandate allow or deny
   alt Denied
-    S-->>U: Clear reason · no spend
+    S-->>U: Clear reason - no spend
   else Allowed
     B->>I: Build approve + requestDeposit
     B->>C: Sign and broadcast
     C-->>B: Tx hashes
-    B-->>U: Pending · Snowscan / BscScan links
+    B-->>U: Pending - explorer links
   end
 ```
 
 ---
 
+## Live Path A proof (BNB)
+
+104 USDC subscribed on the BNB permissionless vault. Status in-app: **Pending**.
+
+| Step | Explorer |
+| :--- | :--- |
+| Approve | https://bscscan.com/tx/0x7680eaa08f91c39ffffc46d2bc990e3a7cc7a3cd7cae3bf761c24bfd84b8a29b |
+| requestDeposit | https://bscscan.com/tx/0x227cb6a981c773f0e9a4ddb0942b4662f07c2a1453e678bbe2974e2c18d70f0c |
+
+Full bridge + deposit sheet: [`docs/memory/LIVE_PROOF.md`](docs/memory/LIVE_PROOF.md)
+
+```mermaid
+flowchart LR
+  AvaUsdc["Avalanche USDC"] -->|LI.FI bridge| BscUsdc["BNB USDC"]
+  BscUsdc -->|approve + requestDeposit| Ixs["IXS BNB vault"]
+  Ixs --> Pending["BOND Pending"]
+  Pending --> Evidence["Public /evidence"]
+```
+
+---
 
 ## Preflight · SERV · Evidence
 
@@ -151,12 +179,12 @@ Deep technical ledger (bugs, workarounds, safety): [`docs/memory/TECHNICAL_DEEP_
 
 ```mermaid
 flowchart LR
-  UI[Public + Dashboard] --> SF[Server functions]
-  SF --> Neon[(Neon)]
-  SF --> IXS[IXS API/MCP]
-  SF --> SERV[SERV]
-  SF --> AR[AgentRouter · Tor]
-  SF --> EVM[Avalanche / BNB RPC]
+  UI["Public + Dashboard"] --> SF["Server functions"]
+  SF --> Neon[("Neon")]
+  SF --> IXS["IXS API/MCP"]
+  SF --> SERV["SERV"]
+  SF --> AR["AgentRouter Tor"]
+  SF --> EVM["Avalanche / BNB RPC"]
 ```
 
 ---
@@ -165,14 +193,13 @@ flowchart LR
 
 ```
 bond/
-├── src/
-│   ├── routes/           # Marketing + /dashboard + /login
-│   ├── components/       # Brand, vault UI, cookie consent
-│   ├── backend/          # Auth, IXS, AgentKit, SERV, org vault
-│   └── lib/              # Status machine (Pending ≠ owned)
-├── docs/memory/          # Bible, deep dive, operator setup, security
-├── public/               # favicon, og.png, robots, sitemap, headers
-└── scripts/              # db:push, Tor smoke, CDP export
+├── src/                  # Marketing + dashboard + backend
+├── docs/
+│   ├── brand/            # Logotype + orbit symbol (README / form Q6)
+│   └── memory/           # Bible, proof, submit kit, operator docs
+├── artifacts/demo/       # Live videos, stills, social upload assets
+├── public/               # favicon, og.png, robots, sitemap
+└── scripts/              # db:push, Tor smoke, CDP export, bridge
 ```
 
 ---
@@ -205,11 +232,26 @@ bun run cdp:export
 | Doc | Purpose |
 | :--- | :--- |
 | [`docs/memory/BOND_BIBLE.md`](docs/memory/BOND_BIBLE.md) | Product doctrine |
+| [`docs/memory/LIVE_PROOF.md`](docs/memory/LIVE_PROOF.md) | On-chain Path A hashes |
+| [`docs/memory/SUBMIT_KIT.md`](docs/memory/SUBMIT_KIT.md) | Form + X copy |
 | [`docs/memory/TECHNICAL_DEEP_DIVE.md`](docs/memory/TECHNICAL_DEEP_DIVE.md) | Bugs, APIs, novelty |
 | [`docs/memory/OPERATOR_SETUP.md`](docs/memory/OPERATOR_SETUP.md) | How to run and fund |
 | [`docs/memory/SECURITY.md`](docs/memory/SECURITY.md) | Keys, redeem, access |
 | [`docs/memory/VAULT_LIVE.md`](docs/memory/VAULT_LIVE.md) | Live IXS vault ids |
 | [`docs/memory/WIN_CHECKLIST.md`](docs/memory/WIN_CHECKLIST.md) | Submit evidence |
+| [`docs/brand/`](docs/brand/) | Logo assets for README + OpenServ Q6 |
+
+---
+
+## Brand / logo assets (OpenServ Q6)
+
+| File | Use |
+| :--- | :--- |
+| [`docs/brand/bond-symbol-orbit-1080.png`](docs/brand/bond-symbol-orbit-1080.png) | Square symbol (cream on forest) |
+| [`docs/brand/bond-logotype-orbit-wordmark.png`](docs/brand/bond-logotype-orbit-wordmark.png) | Wordmark |
+| [`docs/brand/bond-logotype-social.png`](docs/brand/bond-logotype-social.png) | 1024×1024 social upload |
+| [`docs/brand/bond-logotype.svg`](docs/brand/bond-logotype.svg) | Vector wordmark |
+| [`docs/brand/bond-symbol-seal-1080.png`](docs/brand/bond-symbol-seal-1080.png) | Seal variant |
 
 ---
 

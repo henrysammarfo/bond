@@ -1,0 +1,5 @@
+out/
+public/audio/*.wav
+*.mp4
+.hyperframes/
+node_modules/
