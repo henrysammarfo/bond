@@ -1,0 +1,15 @@
+---
+description: BOND UI — Orbit-adapted cinematic brand language
+globs: src/**/*.{tsx,css}
+alwaysApply: false
+---
+
+# BOND UI
+
+- Brand first: “BOND” is a hero-level signal; use logo assets from `src/assets/`.
+- Home hero: full-viewport cinematic composition (black upper field, immersive art, glass pill, entrance motion). Adapt Orbit scaling spirit via CSS `--u`; do not copy Orbit product copy.
+- Lucide icons only. No emoji.
+- Dashboard: dense, restrained, dark; Pending = warning tone, Finalized = success.
+- One job per section. Prefer composition over card chrome unless interaction needs a container.
+- Respect `prefers-reduced-motion`.
+- Fonts: Manrope + Space Grotesk already in root — keep brand coherent.

@@ -1,2 +1,15 @@
-import { createFileRoute } from "@tanstack/react-router"; import { LegalPage } from "@/components/PublicContent";
-export const Route=createFileRoute("/risk-disclosure")({head:()=>({meta:[{title:"Risk disclosure — BOND"},{name:"description",content:"Important RWA vault and settlement risks."},{property:"og:title",content:"BOND Risk Disclosure"},{property:"og:description",content:"Important RWA vault and settlement risks."},{property:"og:type",content:"website"},{name:"twitter:card",content:"summary_large_image"}]}),component:()=> <LegalPage type="risk"/>});
+import { createFileRoute } from "@tanstack/react-router";
+import { LegalPage } from "@/components/PublicContent";
+export const Route = createFileRoute("/risk-disclosure")({
+  head: () => ({
+    meta: [
+      { title: "Risk disclosure — BOND" },
+      { name: "description", content: "Important RWA vault and settlement risks." },
+      { property: "og:title", content: "BOND Risk Disclosure" },
+      { property: "og:description", content: "Important RWA vault and settlement risks." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
+  component: () => <LegalPage type="risk" />,
+});

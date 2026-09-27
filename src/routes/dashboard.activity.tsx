@@ -1,2 +1,15 @@
-import { createFileRoute } from "@tanstack/react-router"; import { ActivityPage } from "@/components/DashboardPages";
-export const Route=createFileRoute("/dashboard/activity")({head:()=>({meta:[{title:"Activity — BOND Demo"},{name:"description",content:"Review the BOND treasury activity trail."},{property:"og:title",content:"BOND Activity"},{property:"og:description",content:"Review the BOND treasury activity trail."},{property:"og:type",content:"website"},{name:"twitter:card",content:"summary_large_image"}]}),component:ActivityPage});
+import { createFileRoute } from "@tanstack/react-router";
+import { ActivityPage } from "@/components/DashboardPages";
+export const Route = createFileRoute("/dashboard/activity")({
+  head: () => ({
+    meta: [
+      { title: "Activity — BOND Demo" },
+      { name: "description", content: "Review the BOND treasury activity trail." },
+      { property: "og:title", content: "BOND Activity" },
+      { property: "og:description", content: "Review the BOND treasury activity trail." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
+  component: ActivityPage,
+});

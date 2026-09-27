@@ -1,2 +1,15 @@
-import { createFileRoute } from "@tanstack/react-router"; import { PricingPage } from "@/components/PublicContent";
-export const Route=createFileRoute("/pricing")({head:()=>({meta:[{title:"Pricing — BOND"},{name:"description",content:"Clear demo and mainnet cost boundaries for BOND."},{property:"og:title",content:"BOND Pricing"},{property:"og:description",content:"Clear demo and mainnet cost boundaries for BOND."},{property:"og:type",content:"website"},{name:"twitter:card",content:"summary_large_image"}]}),component:PricingPage});
+import { createFileRoute } from "@tanstack/react-router";
+import { PricingPage } from "@/components/PublicContent";
+export const Route = createFileRoute("/pricing")({
+  head: () => ({
+    meta: [
+      { title: "Pricing — BOND" },
+      { name: "description", content: "Clear demo and mainnet cost boundaries for BOND." },
+      { property: "og:title", content: "BOND Pricing" },
+      { property: "og:description", content: "Clear demo and mainnet cost boundaries for BOND." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
+  component: PricingPage,
+});

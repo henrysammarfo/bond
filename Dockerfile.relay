@@ -1,0 +1,19 @@
+# Tor + AgentRouter HTTPS relay for BOND (Cloud Run / any container host).
+FROM oven/bun:1.2-debian
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends tor ca-certificates curl \
+  && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+# Minimal deps for the relay process only
+RUN bun add socks-proxy-agent@^10.1.0
+
+COPY scripts/agentrouter-relay.ts scripts/tor-start.sh scripts/relay-entrypoint.sh ./scripts/
+RUN chmod +x /app/scripts/tor-start.sh /app/scripts/relay-entrypoint.sh
+
+ENV AGENTROUTER_TOR_SOCKS=socks5h://127.0.0.1:9050
+ENV PORT=8787
+EXPOSE 8787
+
+CMD ["/app/scripts/relay-entrypoint.sh"]

@@ -1,0 +1,15 @@
+---
+description: BOND security — sessions, secrets, tenancy, validation
+alwaysApply: true
+---
+
+# BOND Security
+
+- Auth: httpOnly Secure SameSite=Lax session cookie → server session row.
+- Ban `localStorage` / `sessionStorage` for auth, balances, subscriptions.
+- Secrets only via env / Secret Manager. Never commit keys or paste into source.
+- Every mutation resolves `orgId` from session; reject cross-tenant IDs.
+- Validate amounts, vault IDs, addresses with Zod before IXS/AgentKit calls.
+- CSRF middleware required on server functions.
+- Hard errors when IXS/CDP/SERV/DB fail — no synthetic success payloads.
+- Do not claim the system is unhackable; harden and document residual risk.

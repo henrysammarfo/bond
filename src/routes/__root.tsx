@@ -9,8 +9,10 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 
+import { CookieConsent } from "@/components/CookieConsent";
+import { AnalyticsBeacon } from "@/components/AnalyticsBeacon";
 import appCss from "../styles.css?url";
-import { reportLovableError } from "../lib/lovable-error-reporting";
+import { reportRuntimeError } from "../lib/runtime-error";
 
 function NotFoundComponent() {
   return (
@@ -38,7 +40,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
   useEffect(() => {
-    reportLovableError(error, { boundary: "tanstack_root_error_component" });
+    reportRuntimeError(error, { boundary: "tanstack_root_error_component" });
   }, [error]);
 
   return (
@@ -77,13 +79,30 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "BOND — Verifiable RWA settlement" },
-      { name: "description", content: "Mandate-controlled access to real-world asset vaults with honest settlement status." },
+      { title: "BOND — Mandate-gated RWA vaults on IXS" },
+      {
+        name: "description",
+        content:
+          "Register a treasury, connect SERV, subscribe Avalanche or BNB IXS vaults with AgentKit, and keep Pending until shares prove out.",
+      },
       { name: "author", content: "BOND" },
-      { property: "og:title", content: "BOND — Verifiable RWA settlement" },
-      { property: "og:description", content: "Mandate-controlled access to real-world asset vaults with honest settlement status." },
+      { name: "theme-color", content: "#0B1F17" },
+      { property: "og:title", content: "BOND — Mandate-gated RWA vaults on IXS" },
+      {
+        property: "og:description",
+        content:
+          "Honest ERC-7540 settlement. Avalanche + BNB. Your org AgentKit. Pending is not ownership.",
+      },
       { property: "og:type", content: "website" },
+      { property: "og:image", content: "/og.png" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "BOND — Mandate-gated RWA vaults on IXS" },
+      {
+        name: "twitter:description",
+        content:
+          "Honest ERC-7540 settlement. Avalanche + BNB. Your org AgentKit. Pending is not ownership.",
+      },
+      { name: "twitter:image", content: "/og.png" },
     ],
     links: [
       {
@@ -91,9 +110,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: appCss,
       },
       { rel: "icon", href: "/favicon.png", type: "image/png" },
+      { rel: "apple-touch-icon", href: "/favicon.png" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap",
+      },
     ],
   }),
   shellComponent: RootShell,
@@ -121,8 +144,9 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
+      <CookieConsent />
+      <AnalyticsBeacon />
     </QueryClientProvider>
   );
 }
