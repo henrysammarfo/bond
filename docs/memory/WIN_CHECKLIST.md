@@ -2,7 +2,7 @@
 
 - [ ] OpenServ org data collection enabled
 - [ ] SERV Reasoning used in mandate gate
-- [ ] AgentKit Avalanche wallet funded (≥100 USDC + AVAX gas)
+- [ ] AgentKit Avalanche wallet funded (≥104 USDC + AVAX gas) — currently **0 USDC / 0 AVAX**
 - [ ] Live deposit tx hash(es) recorded below
 - [ ] UI shows **Pending** (not earning) after requestDeposit
 - [ ] Shares shown only after live position proof
