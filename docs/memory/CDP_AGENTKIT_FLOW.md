@@ -1,41 +1,90 @@
-# CDP / AgentKit Avalanche wallet — exact flow
+# CDP / AgentKit Avalanche wallet — exact flow for BOND
 
-BOND signs IXS deposit txs with `AGENT_PRIVATE_KEY` (EVM key from a Coinbase CDP / AgentKit wallet on **Avalanche C-Chain**). Do this once, put secrets in `.env.local` / hosting env — **never git**.
+BOND signs IXS deposit txs with `AGENT_PRIVATE_KEY` (EVM hex key from a Coinbase CDP **API Key Wallet**). Same key works on Avalanche C-Chain (chainId `43114`) because CDP EVM accounts are address-level, not chain-locked.
 
-## A. Create CDP project + API keys
+Official refs: [CDP Portal](https://portal.cdp.coinbase.com) · [API keys](https://docs.cdp.coinbase.com/get-started/docs/cdp-api-keys) · [Server Wallet quickstart](https://docs.cdp.coinbase.com/server-wallets/v2/introduction/quickstart) · [Import & export](https://docs.cdp.coinbase.com/wallets/using-wallets/import-and-export) · [AgentKit](https://github.com/coinbase/agentkit/blob/main/typescript/agentkit/README.md)
 
-1. Open [portal.cdp.coinbase.com](https://portal.cdp.coinbase.com) → sign in.
-2. Create / select a project for BOND.
-3. **API Keys** → Create API key  
-   - Save **API Key ID** → `CDP_API_KEY_ID`  
-   - Save **API Key Secret** → `CDP_API_KEY_SECRET`  
-4. If the portal shows a **Wallet Secret** for Server Wallets / AgentKit v2 → `CDP_WALLET_SECRET`.
+**Never commit keys. Never paste `AGENT_PRIVATE_KEY` into chat/screenshots.**
 
-Official docs: [CDP Portal](https://portal.cdp.coinbase.com) · [AgentKit TS](https://github.com/coinbase/agentkit/blob/main/typescript/agentkit/README.md)
+---
 
-## B. Create an Avalanche wallet (pick one path)
+## Step 1 — Open CDP Portal and create a project
 
-### Path 1 — CDP Server Wallet (recommended for AgentKit)
+1. Go to **[portal.cdp.coinbase.com](https://portal.cdp.coinbase.com)** and sign in (Coinbase account).
+2. Create a project (or select an existing one) named e.g. `BOND`.
+3. Stay on that project for all steps below (project switcher top of portal).
 
-1. In CDP Portal → **Wallets** / **Server Wallets**.
-2. Create wallet with network **`avalanche-mainnet`** (C-Chain).  
-   If the UI only lists Base first, set network in code/env to `avalanche-mainnet` when configuring `CdpEvmWalletProvider`.
-3. Copy the wallet **address** → `CDP_WALLET_ADDRESS`.
-4. **Export private key** for that wallet (portal “Export” / CDP SDK `exportWallet`).  
-   - Put the hex key in `AGENT_PRIVATE_KEY` (with or without `0x`).  
-   - Optional duplicate: `CDP_WALLET_PRIVATE_KEY` (same value).
+---
 
-Minimal Node export sketch (run locally, never commit output):
+## Step 2 — Create a Secret API Key (with Export scope)
 
-```ts
-import { CdpClient } from "@coinbase/cdp-sdk";
-// Follow current CDP docs for v2 wallet export for your account.
-// Goal: one Avalanche EVM private key + address in env.
+1. Open **[portal.cdp.coinbase.com/projects/api-keys](https://portal.cdp.coinbase.com/projects/api-keys)** (API Keys dashboard).
+2. Select tab **Secret API Keys**.
+3. Click **Create API key** → name it `bond-server`.
+4. Under API restrictions / API-specific restrictions, enable:
+   - Wallet / account create & manage
+   - **Export (export private key)** — required for `cdp.evm.exportAccount`
+5. Prefer Ed25519 signature algorithm.
+6. Click **Create**.
+7. Copy immediately into `.env.local` (shown once):
+
+```bash
+CDP_API_KEY_ID=<key id from modal>
+CDP_API_KEY_SECRET=<secret from modal>
 ```
 
-### Path 2 — Local AgentKit configure + export
+Optional: download the JSON key file offline; do not commit it.
 
-From AgentKit README (`CdpEvmWalletProvider`):
+---
+
+## Step 3 — Generate a Wallet Secret
+
+Wallet Secret authenticates sensitive `POST`/`DELETE` wallet ops (create + export).
+
+1. In the same API Keys / Server Wallet area of the portal, open **Wallet Secret** (or **Generate Wallet Secret**).
+2. Generate once → copy the value (shown once).
+3. Put in `.env.local`:
+
+```bash
+CDP_WALLET_SECRET=<wallet secret>
+```
+
+Docs call this out in the [Server Wallet quickstart](https://docs.cdp.coinbase.com/server-wallets/v2/introduction/quickstart) prerequisites.
+
+---
+
+## Step 4 — Create the BOND Avalanche signer account + export key
+
+Run from the repo (uses `@coinbase/cdp-sdk`; prints address + writes keys only to stdout — copy by hand into `.env.local`):
+
+```bash
+# .env.local must already have CDP_API_KEY_ID, CDP_API_KEY_SECRET, CDP_WALLET_SECRET
+bun run cdp:export
+```
+
+What the script does:
+
+1. `cdp.evm.getOrCreateAccount({ name: "bond-avalanche-primary" })` — stable named account.
+2. Prints `CDP_WALLET_ADDRESS=0x…`
+3. `cdp.evm.exportAccount({ name: "bond-avalanche-primary" })` — returns 32-byte hex **without** `0x`.
+4. Prints `AGENT_PRIVATE_KEY=0x…` and `CDP_WALLET_PRIVATE_KEY=0x…` (same value).
+
+Then paste those three lines into `.env.local` / Lovable / hosting secrets.
+
+Equivalent one-liner if you prefer CDP CLI:
+
+```bash
+npx @coinbase/cdp-cli env live --key-file ./cdp_api_key.json
+npx @coinbase/cdp-cli env live --wallet-secret-file ./cdp_wallet_secret.txt
+npx @coinbase/cdp-cli evm accounts create name=bond-avalanche-primary
+# then export via bun run cdp:export (or SDK exportAccount)
+```
+
+### Why Avalanche works with a “generic” EVM account
+
+CDP EVM accounts are secp256k1 addresses. BOND’s runtime (`src/backend/agentkit/wallet.ts`) signs on `viem` chain `avalanche` (43114). You fund **that same address** on Avalanche C-Chain — no separate “Avalanche-only” CDP wallet type is required.
+
+AgentKit alternative (same keys):
 
 ```ts
 import { CdpEvmWalletProvider } from "@coinbase/agentkit";
@@ -47,49 +96,67 @@ const wallet = await CdpEvmWalletProvider.configureWithWallet({
   networkId: "avalanche-mainnet",
   idempotencyKey: "bond-avalanche-primary",
 });
-
-console.log("address", await wallet.getAddress());
-console.log("export", await wallet.exportWallet()); // keep offline → AGENT_PRIVATE_KEY
 ```
 
-BOND’s runtime signer (`src/backend/agentkit/wallet.ts`) uses **viem + `AGENT_PRIVATE_KEY`** so Cloudflare builds stay clean; the key must still come from this CDP/AgentKit wallet.
+BOND does **not** ship AgentKit in the Cloudflare build; we only need the exported private key.
 
-## C. Fund the wallet (required to win RWA track)
+---
 
-| Asset | Why | How |
+## Step 5 — Fund the address on Avalanche mainnet
+
+| Asset | Amount | Contract / note |
 | --- | --- | --- |
-| **≥ 100 USDC** on Avalanche | IXS minimum deposit | Send Avalanche USDC `0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E` to `CDP_WALLET_ADDRESS` |
-| **AVAX** | Gas for approve + requestDeposit (+ claim) | Bridge/buy AVAX on C-Chain → same address |
+| **USDC** | **≥ 100** | Avalanche USDC `0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E` |
+| **AVAX** | enough for gas | approve + `requestDeposit` (+ later claim) |
 
-Check: [snowscan.xyz](https://snowscan.xyz/address/YOUR_ADDRESS)
+Send to `CDP_WALLET_ADDRESS`. Confirm on [snowscan.xyz/address/YOUR_ADDRESS](https://snowscan.xyz).
 
-No testnet for this track. No mock deposit.
+No public testnet for this OpenServ RWA track. No mock deposit.
 
-## D. Env checklist
+---
+
+## Step 6 — Env checklist (final)
 
 ```bash
 CDP_API_KEY_ID=...
 CDP_API_KEY_SECRET=...
-CDP_WALLET_SECRET=...          # if portal issued one
+CDP_WALLET_SECRET=...
 CDP_WALLET_ADDRESS=0x...
-AGENT_PRIVATE_KEY=0x...        # exported EVM key — REQUIRED for BOND signing
+AGENT_PRIVATE_KEY=0x...          # REQUIRED — from bun run cdp:export
+CDP_WALLET_PRIVATE_KEY=0x...     # optional duplicate of AGENT_PRIVATE_KEY
 CDP_IDEMPOTENCY_KEY=bond-avalanche-primary
 ```
 
-## E. Verify before live subscribe
+---
+
+## Step 7 — Verify in the product
 
 ```bash
-# App must print the same address as CDP portal
+bun run db:push   # needs DATABASE_URL
 bun run dev
-# open /login → register → /dashboard/wallet
+# /login → register → /dashboard/wallet
 ```
 
-Wallet page reads live AVAX + USDC via Avalanche RPC. If balances show and address matches portal, signing is ready.
+Wallet page must show the same address as CDP + live AVAX/USDC balances. Then:
 
-Then: create Avalanche mandate → open primary vault → **Confirm live deposit** → UI **Pending (not earning)** until IXS shares.
+1. Create Avalanche USDC mandate ≥ $100  
+2. Open primary vault `6a952729732c2b84b55ce89d`  
+3. **Confirm live deposit** → UI **Pending (not earning)** until IXS shares  
+
+---
+
+## Troubleshooting
+
+| Symptom | Fix |
+| --- | --- |
+| Export 403 / forbidden | Recreate Secret API key with **Export** scope |
+| Missing wallet secret | Generate Wallet Secret in portal; set `CDP_WALLET_SECRET` |
+| Address mismatch in app | `CDP_WALLET_ADDRESS` must equal `privateKeyToAccount(AGENT_PRIVATE_KEY).address` |
+| USDC balance 0 | Wrong chain or wrong USDC contract — use Avalanche native USDC above |
+| Cloudflare build / AgentKit | Do not add `@coinbase/agentkit` to the app runtime; keep viem + exported key |
 
 ## Security
 
-- Never paste `AGENT_PRIVATE_KEY` into chat, screenshots, or git.
-- Prefer hosting secret stores (Lovable / Vercel / Cloudflare).
-- Rotate CDP keys after the hackathon.
+- Rotate CDP keys + Wallet Secret after the hackathon.
+- Prefer hosting secret stores over long-lived local files.
+- Clear terminal scrollback after `bun run cdp:export` if shared screen.

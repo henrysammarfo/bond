@@ -15,7 +15,8 @@
     "db:generate": "drizzle-kit generate",
     "e2e:deposit": "bun run scripts/live-deposit-e2e.ts",
     "tor:start": "bash scripts/tor-start.sh",
-    "smoke:llm": "bash scripts/tor-start.sh && bun run scripts/smoke-llm-tor.ts"
+    "smoke:llm": "bash scripts/tor-start.sh && bun run scripts/smoke-llm-tor.ts",
+    "cdp:export": "bun run scripts/cdp-export-wallet.ts"
   },
   "overrides": {
     "rolldown": "1.2.1"
@@ -83,6 +84,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@coinbase/cdp-sdk": "^1.57.0",
     "@eslint/js": "^9.32.0",
     "@lovable.dev/vite-tanstack-config": "^2.24.0",
     "@types/node": "^22.16.5",

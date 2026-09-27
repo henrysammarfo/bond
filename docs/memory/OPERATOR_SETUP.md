@@ -12,7 +12,7 @@ Docs: [IXS Vault API](https://api-v2.ixs.finance/docs) · [IXS agent skills](htt
 | Need | Link | What to do |
 | --- | --- | --- |
 | OpenServ + SERV | [openserv.ai/hackathon](https://www.openserv.ai/hackathon) · [console.openserv.ai](https://console.openserv.ai) | Enable org data collection; get **OPENSERV_API_KEY** (~$5 starter credit on signup) |
-| Coinbase CDP / AgentKit wallet | [portal.cdp.coinbase.com](https://portal.cdp.coinbase.com) · **[exact flow](./CDP_AGENTKIT_FLOW.md)** | Avalanche wallet → export **AGENT_PRIVATE_KEY** → fund ≥100 USDC + AVAX |
+| Coinbase CDP / AgentKit wallet | [portal.cdp.coinbase.com](https://portal.cdp.coinbase.com) · **[exact click-path](./CDP_AGENTKIT_FLOW.md)** | 1) Secret API key + **Export** scope 2) Wallet Secret 3) `bun run cdp:export` → `AGENT_PRIVATE_KEY` 4) fund ≥100 USDC + AVAX on Avalanche |
 | Neon Postgres | [console.neon.tech](https://console.neon.tech) · project `aged-flower-56535737` | Paste **DATABASE_URL** (or API key) — see Neon section below |
 | AgentRouter (no OpenAI key) | [agentrouter.org](https://agentrouter.org) · **[Tor setup](./AGENTROUTER_SETUP.md)** | Key + `bun run tor:start` + `bun run smoke:llm` (`deepseek-v4-flash`) |
 | TinyFish (fact-check ops) | [agent.tinyfish.ai](https://agent.tinyfish.ai) · **[Pay $10 wallet](https://agent.tinyfish.ai/wallet?utm_source=api&utm_medium=insufficient_funds&utm_campaign=automation)** | Top up, then set **TINYFISH_API_KEY** |
@@ -61,8 +61,24 @@ bunx neon@latest connection-string --project-id aged-flower-56535737 --branch pr
 
 Skip the Neon Functions `neon.ts` / `hello.ts` scaffold for BOND — we use Drizzle + TanStack serverFns, not Neon Functions preview.
 
+---
 
-Copy [`.env.example`](../.env.example) into Lovable/Vercel/Cloudflare secrets **and** local `.env.local`:
+## CDP wallet (exact)
+
+Full click-path: [`CDP_AGENTKIT_FLOW.md`](./CDP_AGENTKIT_FLOW.md).
+
+```bash
+# After CDP_API_KEY_ID / CDP_API_KEY_SECRET / CDP_WALLET_SECRET are in .env.local:
+bun run cdp:export
+# paste printed AGENT_PRIVATE_KEY + CDP_WALLET_ADDRESS into .env.local
+# fund ≥100 USDC (0xB97E…48a6E) + AVAX on Avalanche to that address
+```
+
+---
+
+## Env template
+
+Copy [`.env.example`](../../.env.example) into Lovable/Vercel/Cloudflare secrets **and** local `.env.local`:
 
 ```bash
 cp .env.example .env.local
@@ -73,15 +89,19 @@ Minimum to run the app:
 
 1. `DATABASE_URL` — Neon  
 2. `SESSION_SECRET` — random ≥32 chars (`openssl rand -hex 32`)  
-3. `AGENT_PRIVATE_KEY` — CDP/AgentKit Avalanche wallet private key  
-4. `AGENTROUTER_API_KEY` — mandate reasoning (required if OpenServ endpoint unavailable)  
-5. Optional but recommended: `OPENSERV_API_KEY`, `CDP_WALLET_ADDRESS`, `CDP_*`
+3. `AGENT_PRIVATE_KEY` — from `bun run cdp:export`  
+4. `AGENTROUTER_API_KEY` + Tor on cloud (`bun run tor:start`) — failover if SERV down  
+5. `OPENSERV_API_KEY` — SERV Reasoning at `https://inference-api.openserv.ai`  
+6. Optional: `CDP_WALLET_ADDRESS`, `TAVILY_API_KEY`, `TINYFISH_API_KEY`
 
 Defaults already correct:
 
 - `IXS_API_BASE_URL=https://api-v2.ixs.finance`
 - `IXS_MCP_URL=https://api-v2.ixs.finance/mcp`
 - `IXS_PRIMARY_VAULT_ID=6a952729732c2b84b55ce89d`
+- `OPENSERV_API_BASE_URL=https://inference-api.openserv.ai`
+- `AGENTROUTER_BASE_URL=https://agentrouter.org/v1`
+- `AGENTROUTER_MODEL=deepseek-v4-flash`
 
 ---
 
@@ -90,6 +110,7 @@ Defaults already correct:
 ```bash
 bun install
 bun run db:push          # applies Drizzle schema to Neon
+bun run tor:start && bun run smoke:llm   # expect smoke_llm_tor_ok
 bun run dev              # http://localhost:5173
 bun run build            # must stay green
 bun test                 # status machine + live IXS read
@@ -99,8 +120,8 @@ bun test                 # status machine + live IXS read
 
 ## 4. Fund the wallet (real money — Bible)
 
-1. In CDP portal, open the Avalanche wallet address (or whatever `AGENT_PRIVATE_KEY` derives).  
-2. Send **≥ 100 USDC** (Avalanche native USDC above) + enough **AVAX** for approve + requestDeposit (+ claim later).  
+1. Use address from `bun run cdp:export` / `CDP_WALLET_ADDRESS`.  
+2. Send **≥ 100 USDC** (Avalanche USDC above) + enough **AVAX** for approve + requestDeposit (+ claim later).  
 3. Confirm balances on [snowscan.xyz](https://snowscan.xyz).  
 4. No public testnet for this track — mocks will not win.
 
@@ -143,4 +164,10 @@ LIVE_DEPOSIT=1 bun run e2e:deposit
 
 # Fact-check vault still exists
 curl -s https://api-v2.ixs.finance/vaults/6a952729732c2b84b55ce89d | head
+
+# AgentRouter via Tor
+bun run smoke:llm
+
+# CDP export (needs portal keys)
+bun run cdp:export
 ```

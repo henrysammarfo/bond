@@ -45,9 +45,14 @@ function policyCheck(input: MandateInput): MandateDecision | null {
 
 async function openservDecide(input: MandateInput): Promise<MandateDecision | null> {
   const key = process.env.OPENSERV_API_KEY;
-  const base = process.env.OPENSERV_API_BASE_URL ?? "https://api.openserv.ai";
+  // SERV Reasoning API: https://inference-api.openserv.ai (OpenAI-compatible)
+  const base = (
+    process.env.OPENSERV_API_BASE_URL ?? "https://inference-api.openserv.ai"
+  ).replace(/\/$/, "");
   if (!key) return null;
-  const res = await fetch(`${base}/v1/reasoning/mandate-gate`, {
+
+  const chatBase = base.endsWith("/v1") ? base : `${base}/v1`;
+  const res = await fetch(`${chatBase}/chat/completions`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${key}`,
@@ -55,17 +60,28 @@ async function openservDecide(input: MandateInput): Promise<MandateDecision | nu
       Accept: "application/json",
     },
     body: JSON.stringify({
-      task: "mandate_gate",
-      mandate: {
-        amountUsd: input.amountDollars,
-        network: input.network,
-        asset: input.asset,
-        vaultId: input.vaultId,
-        monthlyLimitCents: input.mandateLimitCents,
-        usedCents: input.mandateUsedCents,
-      },
-      instruction:
-        "Allow only if amount ≥ 100 USDC, network Avalanche, asset USDC, and within remaining mandate. Reply JSON {allow:boolean,reason:string}.",
+      model: process.env.OPENSERV_MODEL ?? "gpt-5.4-mini",
+      temperature: 0,
+      response_format: { type: "json_object" },
+      messages: [
+        {
+          role: "system",
+          content:
+            'You are SERV mandate reasoning for BOND RWA vaults. Reply with exactly this JSON shape and no other keys: {"allow":true,"reason":"..."} or {"allow":false,"reason":"..."}. Use the key "allow" (boolean), never "approved". Allow only if amount ≥ 100 USDC, network Avalanche, asset USDC, mandate active, and within remaining mandate capacity. Never invent extra capacity.',
+        },
+        {
+          role: "user",
+          content: JSON.stringify({
+            amountUsd: input.amountDollars,
+            network: input.network,
+            asset: input.asset,
+            vaultId: input.vaultId,
+            monthlyLimitCents: input.mandateLimitCents,
+            usedCents: input.mandateUsedCents,
+            mandateStatus: input.mandateStatus,
+          }),
+        },
+      ],
     }),
   });
   if (!res.ok) {
@@ -73,12 +89,31 @@ async function openservDecide(input: MandateInput): Promise<MandateDecision | nu
     if (res.status === 404 || res.status === 501) return null;
     throw new Error(`OpenServ SERV gate failed (${res.status}): ${text || res.statusText}`);
   }
-  const data = (await res.json()) as { allow?: boolean; reason?: string; result?: MandateDecision };
+  const data = (await res.json()) as {
+    choices?: Array<{ message?: { content?: string } }>;
+    allow?: boolean;
+    reason?: string;
+  };
+  const content = data.choices?.[0]?.message?.content?.trim();
+  if (content) {
+    const raw = content.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
+    const parsed = JSON.parse(raw) as {
+      allow?: boolean;
+      approved?: boolean;
+      reason?: string;
+    };
+    const allow =
+      typeof parsed.allow === "boolean"
+        ? parsed.allow
+        : typeof parsed.approved === "boolean"
+          ? parsed.approved
+          : undefined;
+    if (typeof allow === "boolean") {
+      return { allow, reason: parsed.reason ?? "", source: "serv" };
+    }
+  }
   if (typeof data.allow === "boolean") {
     return { allow: data.allow, reason: data.reason ?? "", source: "serv" };
-  }
-  if (data.result && typeof data.result.allow === "boolean") {
-    return { ...data.result, source: "serv" };
   }
   throw new Error("OpenServ SERV gate returned an unusable response.");
 }

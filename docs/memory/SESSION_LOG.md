@@ -1,17 +1,14 @@
 # Session log
 
-## 2026-09-27 — plan → implement
+## 2026-09-27 — plan → implement → wire keys
 
 - Confirmed Path A (live RWA product).
-- Verified Avalanche primary vault via live IXS API.
-- Tavily: plan usage limit exceeded (needs quota refresh).
-- TinyFish: API key valid; wallet $0.00 — top up required for agent runs.
-- AgentRouter: use `https://agentrouter.org/v1` (not `api.agentrouter.org`).
-- `aftercut` folder not present on cloud VM.
-- Implemented: memory docs, rules, skills, Neon/Drizzle schema, httpOnly sessions, IXS REST+MCP, AgentKit Avalanche signer, SERV/AgentRouter mandate gate, live dashboard, Orbit-grade home, login/register.
-- Pending operator: set env secrets, `bun run db:push`, fund Avalanche wallet, run live deposit, fill WIN_CHECKLIST.
-- Added `docs/memory/OPERATOR_SETUP.md` with linked step-by-step setup.
-- Captured public page screenshots under `docs/memory/screenshots/` (home, vaults, how-it-works, login, product, security, docs).
-- Wired local `.env.local` (gitignored): OpenServ, AgentRouter, TinyFish, Tavily. AgentRouter Tor smoke = `smoke_llm_tor_ok` (deepseek-v4-flash). Mandate evaluate = allow via agentrouter.
-- Neon project `aged-flower-56535737` needs `DATABASE_URL` or `NEON_API_KEY` (browser OAuth timed out in cloud VM).
-- Still blocked for live deposit: CDP Avalanche `AGENT_PRIVATE_KEY` + funded USDC (see CDP_AGENTKIT_FLOW.md).
+- Verified Avalanche primary vault via live IXS API (`6a952729732c2b84b55ce89d` active).
+- Wired gitignored `.env.local`: OpenServ, AgentRouter, TinyFish, Tavily, Neon project id.
+- AgentRouter Tor: `smoke_llm_tor_ok` (deepseek-v4-flash, egress via SOCKS).
+- SERV: live at `https://inference-api.openserv.ai` — mandate path prefers SERV chat completions, failover AgentRouter.
+- Mandate smoke: allow via `serv` or `agentrouter`.
+- Tavily search OK with new key. TinyFish Search API OK (`api.search.tinyfish.ai` + `X-API-Key`).
+- Neon `aged-flower-56535737`: still need `DATABASE_URL` or `NEON_API_KEY` (headless `neon auth` cannot complete). Skip Neon Functions scaffold.
+- CDP: exact flow in `CDP_AGENTKIT_FLOW.md` + `bun run cdp:export` (needs portal Secret API key + Wallet Secret + Export scope). Still blocked for live deposit until operator runs export + funds ≥100 USDC + AVAX.
+- Screenshots: public pages under `docs/memory/screenshots/`. Dashboard auth shots need DB.
