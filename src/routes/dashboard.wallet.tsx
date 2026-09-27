@@ -1,2 +1,15 @@
-import { createFileRoute } from "@tanstack/react-router"; import { WalletPage } from "@/components/DashboardPages";
-export const Route=createFileRoute("/dashboard/wallet")({head:()=>({meta:[{title:"Wallet — BOND Demo"},{name:"description",content:"Inspect simulated USDC, SERV, and network states."},{property:"og:title",content:"BOND Demo Wallet"},{property:"og:description",content:"Inspect simulated USDC, SERV, and network states."},{property:"og:type",content:"website"},{name:"twitter:card",content:"summary_large_image"}]}),component:WalletPage});
+import { createFileRoute } from "@tanstack/react-router";
+import { WalletPage } from "@/components/DashboardPages";
+export const Route = createFileRoute("/dashboard/wallet")({
+  head: () => ({
+    meta: [
+      { title: "Wallet — BOND Demo" },
+      { name: "description", content: "Inspect simulated USDC, SERV, and network states." },
+      { property: "og:title", content: "BOND Demo Wallet" },
+      { property: "og:description", content: "Inspect simulated USDC, SERV, and network states." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
+  component: WalletPage,
+});

@@ -173,12 +173,153 @@
     font-family: var(--font-sans);
     letter-spacing: 0;
   }
-  button, a { -webkit-tap-highlight-color: transparent; }
-  ::selection { background: var(--primary); color: var(--primary-foreground); }
+  button,
+  a {
+    -webkit-tap-highlight-color: transparent;
+  }
+  ::selection {
+    background: var(--primary);
+    color: var(--primary-foreground);
+  }
 }
 
-@keyframes bond-rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes bond-orbit { to { transform: rotate(360deg); } }
-@utility animate-bond-rise { animation: bond-rise .8s cubic-bezier(.22,1,.36,1) both; }
-@utility animate-bond-orbit { animation: bond-orbit 28s linear infinite; }
-@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; } }
+@keyframes bond-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes bond-orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@utility animate-bond-rise {
+  animation: bond-rise 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@utility animate-bond-orbit {
+  animation: bond-orbit 28s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :root {
+    --bond-e-reveal: cubic-bezier(0.18, 0.85, 0.26, 1);
+    --bond-e-soft: cubic-bezier(0.22, 1, 0.36, 1);
+    --bond-e-nav: cubic-bezier(0.33, 1, 0.68, 1);
+  }
+  .bond-intro .bond-bar a,
+  .bond-intro .bond-bar button,
+  .bond-intro .bond-pill,
+  .bond-intro .bond-sub,
+  .bond-intro .bond-cta a {
+    opacity: 0;
+  }
+  .bond-intro .bond-ln-i {
+    transform: translate3d(0, 115%, 0);
+  }
+  @keyframes bond-i-rise {
+    from {
+      opacity: 0;
+      transform: translate3d(0, 12px, 0);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes bond-i-pill {
+    from {
+      opacity: 0;
+      transform: translate3d(0, 16px, 0) scale(0.972);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes bond-i-line {
+    from {
+      transform: translate3d(0, 115%, 0);
+    }
+    to {
+      transform: none;
+    }
+  }
+  @keyframes bond-i-sub {
+    from {
+      opacity: 0;
+      transform: translate3d(0, 16px, 0);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  .bond-intro-play .bond-bar a:first-child {
+    animation: bond-i-rise 0.62s var(--bond-e-nav) both;
+  }
+  .bond-intro-play .bond-nav a {
+    animation: bond-i-rise 0.55s var(--bond-e-nav) both;
+  }
+  .bond-intro-play .bond-nav a:nth-child(1) {
+    animation-delay: 0.07s;
+  }
+  .bond-intro-play .bond-nav a:nth-child(2) {
+    animation-delay: 0.115s;
+  }
+  .bond-intro-play .bond-nav a:nth-child(3) {
+    animation-delay: 0.16s;
+  }
+  .bond-intro-play .bond-nav a:nth-child(4) {
+    animation-delay: 0.205s;
+  }
+  .bond-intro-play .bond-nav a:nth-child(5) {
+    animation-delay: 0.25s;
+  }
+  .bond-intro-play .bond-actions a {
+    animation: bond-i-rise 0.55s var(--bond-e-nav) 0.215s both;
+  }
+  .bond-intro-play .bond-pill {
+    animation: bond-i-pill 0.62s var(--bond-e-soft) 0.26s both;
+  }
+  .bond-intro-play .bond-ln:nth-child(1) .bond-ln-i {
+    animation: bond-i-line 0.95s var(--bond-e-reveal) 0.34s both;
+  }
+  .bond-intro-play .bond-ln:nth-child(2) .bond-ln-i {
+    animation: bond-i-line 0.95s var(--bond-e-reveal) 0.48s both;
+  }
+  .bond-intro-play .bond-sub {
+    animation: bond-i-sub 0.7s var(--bond-e-soft) 0.86s both;
+  }
+  .bond-intro-play .bond-cta a:nth-child(1) {
+    animation: bond-i-pill 0.62s var(--bond-e-soft) 1s both;
+  }
+  .bond-intro-play .bond-cta a:nth-child(2) {
+    animation: bond-i-pill 0.62s var(--bond-e-soft) 1.07s both;
+  }
+}

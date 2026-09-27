@@ -1,2 +1,21 @@
-import { createFileRoute } from "@tanstack/react-router"; import { SecurityPage } from "@/components/PublicContent";
-export const Route=createFileRoute("/security")({head:()=>({meta:[{title:"Security — BOND"},{name:"description",content:"Explore BOND's mandate, verification, and exception model."},{property:"og:title",content:"BOND Security"},{property:"og:description",content:"Explore BOND's mandate, verification, and exception model."},{property:"og:type",content:"website"},{name:"twitter:card",content:"summary_large_image"}]}),component:SecurityPage});
+import { createFileRoute } from "@tanstack/react-router";
+import { SecurityPage } from "@/components/PublicContent";
+export const Route = createFileRoute("/security")({
+  head: () => ({
+    meta: [
+      { title: "Security — BOND" },
+      {
+        name: "description",
+        content: "Explore BOND's mandate, verification, and exception model.",
+      },
+      { property: "og:title", content: "BOND Security" },
+      {
+        property: "og:description",
+        content: "Explore BOND's mandate, verification, and exception model.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
+  component: SecurityPage,
+});

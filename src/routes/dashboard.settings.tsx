@@ -1,2 +1,15 @@
-import { createFileRoute } from "@tanstack/react-router"; import { SettingsPage } from "@/components/DashboardPages";
-export const Route=createFileRoute("/dashboard/settings")({head:()=>({meta:[{title:"Settings — BOND Demo"},{name:"description",content:"Configure the BOND demo workspace."},{property:"og:title",content:"BOND Settings"},{property:"og:description",content:"Configure the BOND demo workspace."},{property:"og:type",content:"website"},{name:"twitter:card",content:"summary_large_image"}]}),component:SettingsPage});
+import { createFileRoute } from "@tanstack/react-router";
+import { SettingsPage } from "@/components/DashboardPages";
+export const Route = createFileRoute("/dashboard/settings")({
+  head: () => ({
+    meta: [
+      { title: "Settings — BOND Demo" },
+      { name: "description", content: "Configure the BOND demo workspace." },
+      { property: "og:title", content: "BOND Settings" },
+      { property: "og:description", content: "Configure the BOND demo workspace." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
+  component: SettingsPage,
+});

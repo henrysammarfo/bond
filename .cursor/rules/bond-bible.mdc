@@ -1,0 +1,15 @@
+---
+description: BOND Bible truth rules — Pending honesty, live vaults, no mocks
+alwaysApply: true
+---
+
+# BOND Bible
+
+- Track: **RWA Vaults** (IXS). Submit by **28 Sep 2026 00:00 UTC**.
+- Flow: SERV mandate → AgentKit deposit Avalanche → UI **Pending** until shares proven.
+- Never label Pending as owned, invested, yielding, or earning.
+- Never invent balances, shares, TVL, or partners. Read IXS live or fail.
+- Primary vault: `6a952729732c2b84b55ce89d` / `0xaD01573b459805E3954398796203d830B57A8bD9`.
+- Minimum: **$100 real USDC** + gas. No testnet for the judged deposit.
+- No mock deposits. No soft-pass on SERV deny. No fixture ownership.
+- Read `docs/memory/` before changing vault/status/deposit code.

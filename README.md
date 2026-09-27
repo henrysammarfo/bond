@@ -1,26 +1,26 @@
 # bond
 
-GO THROUGH MD ATTACHED ,CREATE GOOD BRAND,logo WILL USE FORR future MERCH AND HODDIES , CREATE FULL PAGES AND ROUTES AND DASHBOARD ALL FLOWS ,ROUTES EERYTHING , USE THE RIGHT PRO PREMIUM ICONS , SUBPAGES FULL should match template prompt design
+Live RWA Vaults product for OpenServ Edition 01: SERV mandate → AgentKit/CDP Avalanche deposit → honest **Pending** until IXS shares exist.
 
-AND USE THIS TEMPLATE
+## Setup
 
-This project was built with [Lovable](https://lovable.dev).
+1. Copy [`.env.example`](.env.example) → `.env.local` and fill secrets (never commit keys).
+2. `bun install`
+3. `bun run db:push` (requires `DATABASE_URL`)
+4. `bun run dev`
 
-## Build with Lovable
+## Scripts
 
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/6f5bea9d-5377-4269-8be8-dd1096a81c81).
+| Script | Purpose |
+| --- | --- |
+| `bun run dev` | Local app |
+| `bun run build` | Production build (must be 0 errors) |
+| `bun run test` | Status unit tests + live IXS read |
+| `bun run e2e:deposit` | Preflight with `LIVE_DEPOSIT=1` |
+| `bun run db:push` | Push Drizzle schema to Neon |
 
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
+## Memory / agent guides
 
-## Development
+See `docs/memory/`, `.cursor/rules/`, `.cursor/skills/bond-*`.
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
-
-```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
-```
+Built with [Lovable](https://lovable.dev/projects/6f5bea9d-5377-4269-8be8-dd1096a81c81).
