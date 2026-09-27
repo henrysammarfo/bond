@@ -104,7 +104,7 @@ function Index() {
               ))}
             </nav>
             <div className="bond-actions flex items-center gap-2">
-              <ButtonLink to="/dashboard" className="bg-white text-black hover:bg-white/90">
+            <ButtonLink to="/dashboard" className="h-10 min-h-10 bg-white px-4 text-sm font-semibold text-black hover:bg-white/90">
                 Open treasury
               </ButtonLink>
             </div>
@@ -128,7 +128,10 @@ function Index() {
             vault proves finality.
           </p>
           <div className="bond-cta mt-8 flex justify-center">
-            <ButtonLink to="/dashboard" className="min-w-44 bg-white text-black hover:bg-white/90">
+            <ButtonLink
+              to="/dashboard"
+              className="h-10 min-h-10 min-w-44 bg-white px-4 text-sm font-semibold text-black hover:bg-white/90"
+            >
               Open treasury
             </ButtonLink>
           </div>

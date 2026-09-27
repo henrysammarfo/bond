@@ -114,7 +114,7 @@ function LoginPage() {
           <Button
             type="submit"
             disabled={pending}
-            className="w-full bg-white text-black hover:bg-white/90"
+            className="h-10 min-h-10 w-full bg-white text-sm font-semibold text-black hover:bg-white/90"
           >
             {pending ? "Working…" : mode === "login" ? "Sign in" : "Create account"}
           </Button>

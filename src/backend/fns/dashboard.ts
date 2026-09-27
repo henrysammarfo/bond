@@ -62,7 +62,8 @@ export const getDashboardOverviewFn = createServerFn({ method: "GET" }).handler(
     await ensureOrgAgentWallet(auth.orgId);
     const address = await getWalletAddress(auth.orgId);
     const bal = await getWalletBalances(address);
-    walletUsdc = bal.usdc;
+    const n = Number(bal.usdc);
+    walletUsdc = Number.isFinite(n) ? n.toFixed(2) : bal.usdc;
   } catch {
     // Wallet credentials may be absent until secrets are wired; overview still returns DB truth.
   }

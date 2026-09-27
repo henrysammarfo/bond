@@ -5,7 +5,6 @@ import {
   CircleAlert,
   Copy,
   ExternalLink,
-  Filter,
   Plus,
   Search,
   ShieldCheck,
@@ -39,10 +38,32 @@ import {
   preflightVaultFn,
 } from "@/backend/fns/allocate";
 import { Button, ButtonLink } from "./Button";
-import { PageTitle, Panel, Status } from "./DashboardUI";
+import { PageTitle, Panel, Status, EmptyState, Kpi } from "./DashboardUI";
 
 function errMessage(e: unknown): string {
   return e instanceof Error ? e.message : "Request failed";
+}
+
+function CopyAddress({ value }: { value: string }) {
+  const [ok, setOk] = useState(false);
+  return (
+    <button
+      type="button"
+      aria-label={ok ? "Copied" : "Copy address"}
+      className="grid size-8 place-items-center rounded-[8px] text-dashboard-muted hover:bg-[#F4F4F5] hover:text-[#111]"
+      onClick={async () => {
+        try {
+          await navigator.clipboard.writeText(value);
+          setOk(true);
+          window.setTimeout(() => setOk(false), 1500);
+        } catch {
+          /* ignore */
+        }
+      }}
+    >
+      {ok ? <Check size={15} className="text-[#15B042]" /> : <Copy size={15} />}
+    </button>
+  );
 }
 
 function snowscanTx(hash: string | null | undefined) {
@@ -57,8 +78,8 @@ function snowscanAddress(address: string | null | undefined) {
 
 export function DashboardOverview() {
   const q = useQuery({ queryKey: ["overview"], queryFn: () => getDashboardOverviewFn() });
-  if (q.isLoading) return <Panel>Loading live overview…</Panel>;
-  if (q.error) return <Panel className="text-danger">{errMessage(q.error)}</Panel>;
+  if (q.isLoading) return <Panel className="text-sm text-dashboard-muted">Loading live overview…</Panel>;
+  if (q.error) return <Panel className="text-sm text-danger">{errMessage(q.error)}</Panel>;
   const d = q.data!;
   return (
     <>
@@ -67,68 +88,62 @@ export function DashboardOverview() {
         title="Overview"
         action={
           <ButtonLink to="/dashboard/vaults">
-            <Plus size={16} />
+            <Plus size={15} />
             New subscription
           </ButtonLink>
         }
       />
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {(
-          [
-            ["Owned positions", `$${d.owned}`, "Finalized shares only"],
-            ["Pending deposits", `$${d.pending}`, "Excluded from ownership"],
-            [
-              "Available USDC",
-              d.availableUsdc === "—" ? "Wallet unavailable" : `$${d.availableUsdc}`,
-              "AgentKit · Avalanche + BNB",
-            ],
-            ["Active mandate", `$${d.mandateRemaining}`, `of $${d.mandateLimit} remaining`],
-          ] as const
-        ).map(([l, v, detail]) => (
-          <Panel key={l}>
-            <p className="text-xs text-dashboard-muted">{l}</p>
-            <p className="mt-5 font-display text-3xl font-semibold">{v}</p>
-            <p className="mt-2 text-xs text-dashboard-muted">{detail}</p>
-          </Panel>
-        ))}
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <Kpi label="Owned positions" value={`$${d.owned}`} detail="Finalized shares only" />
+        <Kpi label="Pending deposits" value={`$${d.pending}`} detail="Excluded from ownership" />
+        <Kpi
+          label="Available USDC"
+          value={d.availableUsdc === "—" ? "—" : `$${d.availableUsdc}`}
+          detail="AgentKit · Avalanche + BNB"
+        />
+        <Kpi
+          label="Active mandate"
+          value={`$${d.mandateRemaining}`}
+          detail={`of $${d.mandateLimit} remaining`}
+        />
       </div>
-      <div className="mt-6 grid gap-6 xl:grid-cols-[1.25fr_.75fr]">
+      <div className="mt-6 grid gap-4 xl:grid-cols-[1.25fr_.75fr]">
         <Panel>
-          <h2 className="font-semibold">Position state</h2>
-          <p className="mt-1 text-xs text-dashboard-muted">
+          <h2 className="text-base font-medium tracking-[-0.01em]">Position state</h2>
+          <p className="mt-1 text-[13px] text-dashboard-muted">
             Ownership and instructions remain separate.
           </p>
-          <div className="mt-8 grid gap-3 text-sm">
-            <div className="flex justify-between border-b border-dashboard-border py-3">
+          <div className="mt-6 grid gap-0 text-sm">
+            <div className="flex h-10 items-center justify-between border-b border-dashboard-border">
               <span className="text-dashboard-muted">Owned</span>
-              <span>${d.owned}</span>
+              <span className="tabular-nums font-medium">${d.owned}</span>
             </div>
-            <div className="flex justify-between border-b border-dashboard-border py-3">
+            <div className="flex h-10 items-center justify-between border-b border-dashboard-border">
               <span className="text-dashboard-muted">Pending (not earning)</span>
-              <span className="text-warning">${d.pending}</span>
+              <span className="tabular-nums font-medium text-[#8A4B00]">${d.pending}</span>
             </div>
-            <div className="flex justify-between py-3">
+            <div className="flex h-10 items-center justify-between">
               <span className="text-dashboard-muted">Wallet USDC</span>
-              <span>{d.availableUsdc}</span>
+              <span className="tabular-nums font-medium">{d.availableUsdc}</span>
             </div>
           </div>
         </Panel>
         <Panel>
-          <h2 className="font-semibold">Recent activity</h2>
-          <div className="mt-5 divide-y divide-dashboard-border">
+          <h2 className="text-base font-medium tracking-[-0.01em]">Recent activity</h2>
+          <div className="mt-4 divide-y divide-dashboard-border">
             {d.activity.length === 0 && (
-              <p className="py-4 text-sm text-dashboard-muted">No events yet.</p>
+              <p className="py-6 text-sm text-dashboard-muted">No events yet.</p>
             )}
             {d.activity.map((a) => (
-              <div key={a.event + a.time} className="flex gap-3 py-4">
+              <div key={a.event + a.time} className="flex gap-3 py-3">
                 <span
-                  className={`mt-1 size-2 rounded-full ${a.tone === "good" ? "bg-success" : a.tone === "bad" ? "bg-danger" : "bg-warning"}`}
+                  className={`mt-1.5 size-2 shrink-0 rounded-full ${a.tone === "good" ? "bg-[#15B042]" : a.tone === "bad" ? "bg-danger" : "bg-[#E8A317]"}`}
                 />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium">{a.event}</p>
-                  <p className="mt-1 truncate text-xs text-dashboard-muted">{a.detail}</p>
+                  <p className="mt-0.5 truncate text-[12px] text-dashboard-muted">{a.detail}</p>
                 </div>
-                <span className="text-[11px] text-dashboard-muted">
+                <span className="shrink-0 text-[11px] tabular-nums text-dashboard-muted">
                   {new Date(a.time).toLocaleString()}
                 </span>
               </div>
@@ -250,7 +265,15 @@ export function MandatesPage() {
           </Panel>
         ))}
         {q.data?.length === 0 && (
-          <Panel>No mandates yet. Create an Avalanche or BNB Chain USDC mandate to subscribe.</Panel>
+          <EmptyState
+            title="No mandates yet"
+            body="Create an Avalanche or BNB Chain USDC mandate before you subscribe."
+            action={
+              <Button onClick={() => setOpen(true)}>
+                <Plus size={15} /> New mandate
+              </Button>
+            }
+          />
         )}
       </div>
     </>
@@ -274,15 +297,21 @@ export function DashboardVaultsPage() {
       <p className="mb-4 text-sm text-dashboard-muted">
         Live from IXS. Avalanche primary · BNB companion · whitelist browse.
       </p>
-      <div className="mb-6 flex max-w-md items-center gap-2 rounded-md border border-dashboard-border bg-dashboard-panel px-3">
-        <Search size={16} className="text-dashboard-muted" />
+      <div className="mb-5 flex max-w-md items-center gap-2 rounded-[10px] border border-dashboard-border bg-white px-3 shadow-[0_1px_2px_rgb(0_0_0/0.03)]">
+        <Search size={15} className="text-dashboard-muted" />
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search vaults"
-          className="h-10 flex-1 bg-transparent text-sm outline-none"
+          className="h-8 flex-1 bg-transparent text-sm outline-none placeholder:text-dashboard-muted"
         />
       </div>
+      {matches.length === 0 && !q.isLoading && (
+        <EmptyState
+          title="No vaults match"
+          body="Try another network name or clear the search."
+        />
+      )}
       <div className="grid gap-5 lg:grid-cols-2">
         {matches.map((v) => {
           const role = (v as { role?: string }).role;
@@ -290,48 +319,47 @@ export function DashboardVaultsPage() {
           return (
             <Panel key={v.id}>
               <div className="flex items-start justify-between gap-3">
-                <div className="grid size-10 place-items-center rounded-md bg-dashboard-accent">
-                  <WalletCards size={19} />
+                <div className="grid size-9 place-items-center rounded-[10px] bg-[#F4F4F5]">
+                  <WalletCards size={17} />
                 </div>
-                <div className="flex flex-wrap items-center justify-end gap-2">
-                  {role === "primary" && (
-                    <span className="text-[11px] font-semibold uppercase text-primary">Primary</span>
-                  )}
-                  {role === "secondary" && (
-                    <span className="text-[11px] font-semibold uppercase text-primary">BNB lane</span>
-                  )}
-                  {role === "whitelist" && (
-                    <span className="text-[11px] font-semibold uppercase text-warning">Whitelist</span>
-                  )}
-                  {depositable ? (
-                    <span className="text-[11px] font-semibold text-success">Subscribe open</span>
-                  ) : null}
+                <div className="flex flex-wrap items-center justify-end gap-1.5">
+                  {role === "primary" && <Status value="Primary" />}
+                  {role === "secondary" && <Status value="BNB lane" />}
+                  {role === "whitelist" && <Status value="Whitelist" />}
+                  {depositable ? <Status value="Subscribe open" /> : <Status value="Browse" />}
                   <Status value={v.status} />
                 </div>
               </div>
-              <h2 className="mt-6 text-xl font-semibold">{v.name}</h2>
-              <p className="mt-2 text-sm leading-6 text-dashboard-muted">{v.description}</p>
-              <div className="mt-6 grid grid-cols-3 border-y border-dashboard-border py-4 text-sm">
+              <h2 className="mt-5 text-base font-medium tracking-[-0.01em]">
+                {v.name}
+                <span className="mt-1 block text-[13px] font-normal text-dashboard-muted">
+                  {v.network}
+                </span>
+              </h2>
+              <p className="mt-2 text-sm leading-5 text-dashboard-muted">{v.description}</p>
+              <div className="mt-5 grid grid-cols-3 border-y border-dashboard-border py-3 text-sm">
                 <div>
-                  <p className="text-xs text-dashboard-muted">Network</p>
-                  <p className="mt-1">{v.network}</p>
+                  <p className="text-[12px] text-dashboard-muted">Network</p>
+                  <p className="mt-1 font-medium">{v.network}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-dashboard-muted">Asset</p>
-                  <p className="mt-1">{v.asset}</p>
+                  <p className="text-[12px] text-dashboard-muted">Asset</p>
+                  <p className="mt-1 font-medium">{v.asset}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-dashboard-muted">Minimum</p>
-                  <p className="mt-1">{v.minimum}</p>
+                  <p className="text-[12px] text-dashboard-muted">Live min</p>
+                  <p className="mt-1 font-medium tabular-nums">
+                    {depositable ? "$104" : v.minimum}
+                  </p>
                 </div>
               </div>
               <ButtonLink
                 to="/dashboard/vaults/$vaultId"
                 params={{ vaultId: v.id }}
-                variant="secondary"
-                className="mt-5"
+                variant={depositable ? "primary" : "secondary"}
+                className="mt-4"
               >
-                {depositable ? "Subscribe" : "Inspect"} <ArrowRight size={15} />
+                {depositable ? "Subscribe" : "Inspect"} <ArrowRight size={14} />
               </ButtonLink>
             </Panel>
           );
@@ -413,16 +441,18 @@ export function VaultDetailPage({ vaultId }: { vaultId: string }) {
             </dl>
           </Panel>
           <Panel>
-            <h2 className="font-semibold">Contract</h2>
-            <div className="mt-4 flex items-center gap-2 rounded-md bg-dashboard px-3 py-3">
-              <code className="min-w-0 flex-1 truncate text-xs text-dashboard-muted">
+            <h2 className="text-base font-medium">Contract</h2>
+            <div className="mt-4 flex items-center gap-1 rounded-[10px] border border-dashboard-border bg-[#FAFAFA] px-2 py-1.5">
+              <code className="min-w-0 flex-1 truncate px-1 font-mono text-[12px] text-dashboard-muted">
                 {vault.address}
               </code>
-              <Copy size={15} />
+              <CopyAddress value={vault.address} />
               <a
                 href={`${vault.explorerUrl}/address/${vault.address}`}
                 target="_blank"
                 rel="noreferrer"
+                aria-label="Open in explorer"
+                className="grid size-8 place-items-center rounded-[8px] text-dashboard-muted hover:bg-[#F4F4F5] hover:text-[#111]"
               >
                 <ExternalLink size={15} />
               </a>
@@ -535,46 +565,53 @@ export function SubscriptionsPage() {
   return (
     <>
       <PageTitle eyebrow="Settlement ledger" title="Subscriptions" />
-      <div className="mb-5 flex flex-wrap gap-2">
+      <div className="mb-5 flex flex-wrap gap-1.5">
         {(["All", "Pending", "Finalized", "Rejected", "Claimable"] as const).map((f) => (
-          <Button
+          <button
             key={f}
-            variant={filter === f ? "secondary" : "ghost"}
+            type="button"
             onClick={() => setFilter(f)}
+            className={
+              filter === f
+                ? "inline-flex h-8 items-center rounded-[10px] bg-[#F4F4F5] px-3 text-[13px] font-medium text-[#111]"
+                : "inline-flex h-8 items-center rounded-[10px] px-3 text-[13px] font-medium text-dashboard-muted hover:bg-[#F4F4F5] hover:text-[#111]"
+            }
           >
-            <Filter size={14} />
             {f}
-          </Button>
+          </button>
         ))}
       </div>
-      {q.error && <Panel className="mb-4 text-danger">{errMessage(q.error)}</Panel>}
+      {q.error && <Panel className="mb-4 text-sm text-danger">{errMessage(q.error)}</Panel>}
       <Panel className="overflow-x-auto p-0">
         <table className="w-full min-w-[720px] text-left text-sm">
-          <thead className="border-b border-dashboard-border text-xs text-dashboard-muted">
+          <thead className="border-b border-dashboard-border text-[12px] font-medium text-dashboard-muted">
             <tr>
-              <th className="p-4">Vault</th>
-              <th>Amount</th>
-              <th>Status</th>
-              <th>Shares</th>
-              <th>Date</th>
-              <th></th>
+              <th className="h-9 px-4 font-medium">Vault</th>
+              <th className="font-medium">Amount</th>
+              <th className="font-medium">Status</th>
+              <th className="font-medium">Shares</th>
+              <th className="font-medium">Date</th>
+              <th />
             </tr>
           </thead>
           <tbody>
             {q.data?.map((s) => (
-              <tr key={s.id} className="border-b border-dashboard-border last:border-0">
-                <td className="p-4 font-medium">{s.vault}</td>
-                <td>{s.amount}</td>
+              <tr
+                key={s.id}
+                className="h-10 border-b border-dashboard-border last:border-0 hover:bg-[#FAFAFA]"
+              >
+                <td className="px-4 font-medium">{s.vault}</td>
+                <td className="tabular-nums">{s.amount}</td>
                 <td>
                   <Status value={s.status} />
                 </td>
-                <td>{s.shares}</td>
+                <td className="tabular-nums">{s.shares}</td>
                 <td className="text-dashboard-muted">{s.date}</td>
-                <td>
+                <td className="pr-4 text-right">
                   <Link
                     to="/dashboard/subscriptions/$subscriptionId"
                     params={{ subscriptionId: s.id }}
-                    className="text-primary hover:underline"
+                    className="text-[13px] font-medium text-primary hover:underline"
                   >
                     View
                   </Link>
@@ -584,7 +621,9 @@ export function SubscriptionsPage() {
           </tbody>
         </table>
         {q.data?.length === 0 && (
-          <p className="p-6 text-sm text-dashboard-muted">No subscriptions yet.</p>
+          <p className="p-6 text-sm text-dashboard-muted">
+            No subscriptions yet. Scan vaults or start a new subscription.
+          </p>
         )}
       </Panel>
     </>
@@ -849,23 +888,23 @@ export function WalletPage() {
             <div className="mt-7 grid grid-cols-2 gap-4">
               <div className="rounded-md bg-dashboard p-4">
                 <p className="text-xs text-dashboard-muted">Avalanche USDC</p>
-                <p className="mt-2 text-xl font-semibold">{q.data.usdc}</p>
-                <p className="mt-1 text-xs text-dashboard-muted">{q.data.avax} AVAX</p>
+                <p className="mt-2 text-xl font-medium tabular-nums">{Number(q.data.usdc).toFixed(2)}</p>
+                <p className="mt-1 text-xs text-dashboard-muted tabular-nums">{Number(q.data.avax).toFixed(4)} AVAX</p>
               </div>
               <div className="rounded-md bg-dashboard p-4">
                 <p className="text-xs text-dashboard-muted">BNB Chain USDC</p>
-                <p className="mt-2 text-xl font-semibold">{q.data.bnbUsdc ?? "0"}</p>
-                <p className="mt-1 text-xs text-dashboard-muted">{q.data.bnbNative ?? "0"} BNB</p>
+                <p className="mt-2 text-xl font-medium tabular-nums">{Number(q.data.bnbUsdc ?? 0).toFixed(2)}</p>
+                <p className="mt-1 text-xs text-dashboard-muted tabular-nums">{Number(q.data.bnbNative ?? 0).toFixed(4)} BNB</p>
               </div>
             </div>
             {!avaxFunded && (
-              <p className="mt-5 text-xs leading-5 text-warning">
-                Avalanche: fund ≥100 USDC + AVAX gas before Avalanche subscribe.
+              <p className="mt-5 text-xs leading-5 text-[#8A4B00]">
+                Avalanche: fund ≥104 USDC + AVAX gas before Avalanche subscribe.
               </p>
             )}
             {!bnbFunded && (
-              <p className="mt-2 text-xs leading-5 text-warning">
-                BNB Chain: fund ≥100 USDC + BNB gas before BNB subscribe.
+              <p className="mt-2 text-xs leading-5 text-[#8A4B00]">
+                BNB Chain: fund ≥104 USDC + BNB gas before BNB subscribe.
               </p>
             )}
           </Panel>
@@ -927,7 +966,16 @@ export function ScanPage() {
           .
         </p>
       </Panel>
-      {scan.error && <Panel className="mb-6 text-danger">{errMessage(scan.error)}</Panel>}
+      {scan.error && <Panel className="mb-6 text-sm text-danger">{errMessage(scan.error)}</Panel>}
+      {!scan.data && !scan.isPending && (
+        <EmptyState
+          title="Run a live vault scan"
+          body="Preflight every IXS vault, then SERV returns ALLOCATE / DEFER / REJECT. Results publish to /evidence. Use Run analysis above."
+        />
+      )}
+      {scan.isPending && (
+        <Panel className="mb-6 text-sm text-dashboard-muted">Scanning live IXS vaults…</Panel>
+      )}
       {scan.data && (
         <div className="mb-8 space-y-5">
           <Panel>
@@ -1250,13 +1298,14 @@ export function SettingsPage() {
               </p>
             </div>
             <button
+              type="button"
               aria-label="Toggle settlement notifications"
               aria-pressed={notifications}
               onClick={() => setNotifications(!notifications)}
-              className={`relative h-7 w-12 rounded-full transition-colors ${notifications ? "bg-success" : "bg-dashboard-accent"}`}
+              className={`relative h-[14px] w-6 rounded-full transition-colors ${notifications ? "bg-primary" : "bg-[#D4D4D8]"}`}
             >
               <span
-                className={`absolute top-1 size-5 rounded-full bg-dashboard-foreground transition-transform ${notifications ? "left-6" : "left-1"}`}
+                className={`absolute top-[2px] size-[10px] rounded-full bg-white shadow-sm transition-transform ${notifications ? "left-[12px]" : "left-[2px]"}`}
               />
             </button>
           </div>
