@@ -1,0 +1,2 @@
+import { createFileRoute } from "@tanstack/react-router"; import { BlogPage } from "@/components/PublicContent";
+export const Route=createFileRoute("/blog")({head:()=>({meta:[{title:"Journal — BOND"},{name:"description",content:"Notes on treasury control and verifiable settlement."},{property:"og:title",content:"BOND Journal"},{property:"og:description",content:"Notes on treasury control and verifiable settlement."},{property:"og:type",content:"website"},{name:"twitter:card",content:"summary_large_image"}]}),component:BlogPage});

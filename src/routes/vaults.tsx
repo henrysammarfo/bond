@@ -1,0 +1,2 @@
+import { createFileRoute } from "@tanstack/react-router"; import { VaultsPage } from "@/components/PublicContent";
+export const Route=createFileRoute("/vaults")({head:()=>({meta:[{title:"RWA Vaults — BOND"},{name:"description",content:"Inspect supported Avalanche and BNB Chain RWA vault routes."},{property:"og:title",content:"RWA Vaults — BOND"},{property:"og:description",content:"Inspect supported Avalanche and BNB Chain RWA vault routes."},{property:"og:type",content:"website"},{name:"twitter:card",content:"summary_large_image"}]}),component:VaultsPage});
