@@ -36,14 +36,11 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
           ))}
         </nav>
         <div className="hidden items-center gap-2 lg:flex">
-          <ButtonLink to="/login" variant={overlay ? "secondary" : "ghost"}>
-            Sign in
-          </ButtonLink>
           <ButtonLink
             to="/dashboard"
             className={overlay ? "bg-hero-foreground text-hero hover:bg-hero-foreground/90" : ""}
           >
-            Open app
+            Open treasury
           </ButtonLink>
         </div>
         <Button
@@ -69,7 +66,7 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
             </Link>
           ))}
           <ButtonLink to="/dashboard" className="mt-4 w-full">
-            Open app
+            Open treasury
           </ButtonLink>
         </nav>
       )}

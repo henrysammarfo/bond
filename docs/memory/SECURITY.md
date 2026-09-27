@@ -25,7 +25,7 @@ See also: [`TECHNICAL_DEEP_DIVE.md`](./TECHNICAL_DEEP_DIVE.md) (bugs, WAF/Tor, C
 | Users can | Users cannot (yet) |
 | --- | --- |
 | Register org, login, logout (httpOnly) | Browser MetaMask “connect wallet” UX |
-| Own AgentKit Avalanche address (generated or imported) | Instant refund (redeem is async IXS) |
+| Own AgentKit Avalanche + BNB address (generated or imported) | Instant refund (redeem is async IXS) |
 | Connect own SERV / AgentRouter keys in Settings | |
 | Use platform fallback keys for demo | |
 | Create mandates, live vault browse, deposit with funding check | |
@@ -38,4 +38,4 @@ Platform covers fair judge demo. BYO keys = run on your credentials. See `TECHNI
 1. Keep the key backup.  
 2. When shares finalize → redeem via IXS MCP (`vault_build_request_redeem` → status → `vault_build_claim_redeem`) signed by the same key.  
 3. Rotate chat-exposed API keys.  
-4. Move secrets to Lovable/Vercel/hosting secret store for the public URL.
+4. Move secrets to Vercel / Cloudflare secret store for the public URL.

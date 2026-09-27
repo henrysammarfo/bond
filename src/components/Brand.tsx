@@ -13,11 +13,10 @@ export function BrandMark({
   return (
     <img
       src={src}
-      alt=""
+      alt="BOND mark"
       width={32}
       height={32}
       className={`size-8 object-contain ${className}`}
-      aria-hidden="true"
     />
   );
 }

@@ -27,9 +27,16 @@ function policyCheck(input: MandateInput): MandateDecision | null {
   }
   if (
     input.network.toLowerCase() !== "avalanche" &&
-    !input.network.toLowerCase().includes("avalanche")
+    !input.network.toLowerCase().includes("avalanche") &&
+    input.network.toLowerCase() !== "bnb" &&
+    !input.network.toLowerCase().includes("bnb") &&
+    !input.network.toLowerCase().includes("bsc")
   ) {
-    return { allow: false, reason: "Primary deposit path requires Avalanche.", source: "policy" };
+    return {
+      allow: false,
+      reason: "Primary deposit path requires Avalanche or BNB Chain.",
+      source: "policy",
+    };
   }
   if (input.asset.toUpperCase() !== "USDC") {
     return { allow: false, reason: "Only USDC is permitted.", source: "policy" };
@@ -70,7 +77,7 @@ async function openservDecide(
         {
           role: "system",
           content:
-            'You are SERV mandate reasoning for BOND RWA vaults. Reply with exactly this JSON shape and no other keys: {"allow":true,"reason":"..."} or {"allow":false,"reason":"..."}. Use the key "allow" (boolean), never "approved". Allow only if amount ≥ 100 USDC, network Avalanche, asset USDC, mandate active, and within remaining mandate capacity. Never invent extra capacity.',
+            'You are SERV mandate reasoning for BOND RWA vaults. Reply with exactly this JSON shape and no other keys: {"allow":true,"reason":"..."} or {"allow":false,"reason":"..."}. Use the key "allow" (boolean), never "approved". Allow only if amount ≥ 100 USDC, network is Avalanche or BNB Chain (or BSC), asset USDC, mandate active, and within remaining mandate capacity. Never invent extra capacity.',
         },
         {
           role: "user",

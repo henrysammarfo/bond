@@ -82,7 +82,7 @@ What the script does:
 3. `cdp.evm.exportAccount({ name: "bond-avalanche-primary" })` — returns 32-byte hex **without** `0x`.
 4. Prints `AGENT_PRIVATE_KEY=0x…` and `CDP_WALLET_PRIVATE_KEY=0x…` (same value).
 
-Then paste those three lines into `.env.local` / Lovable / hosting secrets.
+Then paste those three lines into `.env.local` / Vercel / Cloudflare hosting secrets.
 
 Equivalent one-liner if you prefer CDP CLI:
 

@@ -5,10 +5,16 @@ import { getDb } from "../db/client";
 import { auditEvents, mandates, orgs, subscriptions } from "../db/schema";
 import { requireAuth } from "../auth/session";
 import { getMandateForOrg, getSubscriptionForOrg } from "../tenancy";
-import { getVault, getPosition, primaryVaultId } from "../ixs/client";
+import { getVault, getPosition, primaryVaultId, depositableVaultIds } from "../ixs/client";
 import { buildClaimDeposit, buildRequestDeposit, requestStatus, vaultGetMcp } from "../ixs/mcp";
 import { evaluateMandate } from "../serv/mandate";
-import { executeTxSteps, getWalletAddress, getWalletBalances, assertDepositFunding } from "../agentkit/wallet";
+import {
+  executeTxSteps,
+  getWalletAddress,
+  getWalletBalances,
+  assertDepositFunding,
+  chainFromVaultChainId,
+} from "../agentkit/wallet";
 import { ensureOrgAgentWallet } from "../org/integrations";
 import {
   centsToDollars,
@@ -169,8 +175,23 @@ export const getWalletFn = createServerFn({ method: "GET" }).handler(async () =>
   const auth = await requireAuth();
   await ensureOrgAgentWallet(auth.orgId);
   const address = await getWalletAddress(auth.orgId);
-  const balances = await getWalletBalances(address);
-  return { ...balances, source: "org-agentkit" as const };
+  const [avalanche, bnb] = await Promise.all([
+    getWalletBalances(address, "avalanche"),
+    getWalletBalances(address, "bsc"),
+  ]);
+  return {
+    address,
+    source: "org-agentkit" as const,
+    avalanche,
+    bnb,
+    // Legacy single-chain fields (Avalanche) for older UI bindings.
+    network: avalanche.network,
+    chainId: avalanche.chainId,
+    usdc: avalanche.usdc,
+    avax: avalanche.avax,
+    bnbNative: bnb.bnb,
+    bnbUsdc: bnb.usdc,
+  };
 });
 
 export const getSettingsFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -213,13 +234,26 @@ export const subscribeVaultFn = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const auth = await requireAuth();
-    if (data.vaultId !== primaryVaultId()) {
-      throw new Error("Only the Avalanche primary vault accepts deposits in this release.");
+    if (!depositableVaultIds().has(data.vaultId)) {
+      throw new Error(
+        "This vault is not open for AgentKit subscribe (whitelist or unsupported). Use Avalanche primary or BNB permissionless vault.",
+      );
     }
     const mandate = await getMandateForOrg(auth, data.mandateId);
+    const vault = await getVault(data.vaultId);
+    const depositChain = chainFromVaultChainId(vault.chainId);
+    const networkLabel = depositChain === "bsc" ? "BNB Chain" : "Avalanche";
+    // Mandate network field is Avalanche by default — allow BNB when vault is BNB.
+    const networkForGate =
+      depositChain === "bsc"
+        ? mandate.network.toLowerCase().includes("bnb") ||
+          mandate.network.toLowerCase().includes("bsc")
+          ? mandate.network
+          : "BNB Chain"
+        : mandate.network;
     const decision = await evaluateMandate({
       amountDollars: data.amountDollars,
-      network: mandate.network,
+      network: networkForGate,
       asset: mandate.asset,
       vaultId: data.vaultId,
       mandateLimitCents: mandate.monthlyLimitCents,
@@ -231,12 +265,11 @@ export const subscribeVaultFn = createServerFn({ method: "POST" })
       throw new Error(`SERV mandate denied: ${decision.reason}`);
     }
 
-    const vault = await getVault(data.vaultId);
     const mcpMeta = await vaultGetMcp(data.vaultId);
     const settlement = String(mcpMeta.settlement ?? "async-erc7540");
     await ensureOrgAgentWallet(auth.orgId);
     const ownerAddress = await getWalletAddress(auth.orgId);
-    await assertDepositFunding(ownerAddress, data.amountDollars);
+    await assertDepositFunding(ownerAddress, data.amountDollars, depositChain);
     const assetAmount = usdcToBaseUnits(data.amountDollars).toString();
 
     const built = await buildRequestDeposit({
@@ -244,7 +277,7 @@ export const subscribeVaultFn = createServerFn({ method: "POST" })
       ownerAddress,
       assetAmount,
     });
-    const hashes = await executeTxSteps(built.steps, auth.orgId);
+    const hashes = await executeTxSteps(built.steps, auth.orgId, depositChain);
     const approveTxHash = hashes[0] ?? null;
     const requestTxHash = hashes[hashes.length - 1] ?? null;
 
@@ -365,7 +398,12 @@ export const claimSubscriptionFn = createServerFn({ method: "POST" })
       ownerAddress: sub.ownerAddress,
       requestId,
     });
-    const hashes = await executeTxSteps(built.steps, auth.orgId);
+    const vaultMeta = await getVault(sub.vaultId);
+    const hashes = await executeTxSteps(
+      built.steps,
+      auth.orgId,
+      chainFromVaultChainId(vaultMeta.chainId),
+    );
     const claimTxHash = hashes[hashes.length - 1] ?? null;
     const position = await getPosition(sub.vaultId, sub.ownerAddress);
     const shareBalance = String(

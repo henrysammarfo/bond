@@ -104,7 +104,7 @@ export function DashboardShell() {
         </nav>
         <div className="absolute inset-x-4 bottom-4 space-y-2">
           <div className="rounded-md border border-dashboard-border bg-dashboard-accent/40 p-3">
-            <p className="text-xs font-semibold">Live Avalanche</p>
+            <p className="text-xs font-semibold">Avalanche + BNB live</p>
             <p className="mt-1 text-[11px] leading-5 text-dashboard-muted">
               Pending until IXS proves shares. No invented balances.
             </p>
@@ -125,7 +125,9 @@ export function DashboardShell() {
             <Menu size={19} />
           </Button>
           <div className="ml-auto flex items-center gap-3">
-            <span className="hidden text-xs text-dashboard-muted sm:inline">Avalanche · Live</span>
+            <span className="hidden text-xs text-dashboard-muted sm:inline">
+              Avalanche · BNB · Live
+            </span>
             <span className="size-2 rounded-full bg-success" />
             <span className="grid size-8 place-items-center rounded-full bg-dashboard-accent text-xs font-semibold">
               {initials || "B"}

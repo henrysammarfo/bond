@@ -35,7 +35,7 @@ smoke_llm_tor_ok
 
 `User-Agent: QwenCode/0.2.0 (linux; x64)` + `x-stainless-*` as in VIGIL.
 
-## Vercel / Lovable (no Tor in Functions)
+## Vercel / Cloudflare (no Tor in Functions)
 
 Serverless IPs also WAF. Options:
 

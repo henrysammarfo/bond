@@ -5,7 +5,7 @@ import { getDb } from "../db/client";
 import { mandates, auditEvents } from "../db/schema";
 import { requireAuth } from "../auth/session";
 import { dollarsToCents, centsToDollars } from "../../lib/status";
-import { primaryVaultId } from "../ixs/client";
+import { primaryVaultId, secondaryBnbVaultId } from "../ixs/client";
 
 export const listMandatesFn = createServerFn({ method: "GET" }).handler(async () => {
   const auth = await requireAuth();
@@ -34,9 +34,8 @@ export const createMandateFn = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const auth = await requireAuth();
-    if (data.network !== "Avalanche") {
-      throw new Error("Create Avalanche mandates for the primary deposit path.");
-    }
+    const vaultId =
+      data.network === "BNB Chain" ? secondaryBnbVaultId() : primaryVaultId();
     const db = getDb();
     const [row] = await db
       .insert(mandates)
@@ -45,7 +44,7 @@ export const createMandateFn = createServerFn({ method: "POST" })
         name: data.name,
         asset: data.asset,
         network: data.network,
-        vaultId: primaryVaultId(),
+        vaultId,
         monthlyLimitCents: dollarsToCents(data.monthlyLimitDollars),
         status: "active",
       })

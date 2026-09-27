@@ -3,6 +3,7 @@
 Deadline: **28 Sep 2026, 00:00 UTC** · Track: [OpenServ RWA Vaults (IXS)](https://www.openserv.ai/hackathon)
 
 Primary vault (live): Avalanche `0xaD01573b459805E3954398796203d830B57A8bD9` · vaultId `6a952729732c2b84b55ce89d`  
+Companion vault (live): BNB Chain · vaultId `6a26624ca7d16b245d665475`  
 Docs: [IXS Vault API](https://api-v2.ixs.finance/docs) · [IXS agent skills](https://github.com/IXS-Finance/ixs-rwa-agent-skills)
 
 ## Product mode (read first)
@@ -10,8 +11,8 @@ Docs: [IXS Vault API](https://api-v2.ixs.finance/docs) · [IXS agent skills](htt
 BOND is a **multitenant all-around RWA treasury app** for the OpenServ track:
 
 - Orgs **register / login / logout** (httpOnly sessions, Neon).
-- Each org gets its **own AgentKit Avalanche signer** (encrypted). Settings → Integrations: connect **your own SERV / AgentRouter** keys, import or rotate agent key, or use platform fallback for judges.
-- SERV mandate gate → live IXS subscribe → **Pending until shares** + Snowscan proofs.
+- Each org gets its **own AgentKit EVM signer** (encrypted) for Avalanche + BNB. Settings → Integrations: connect **your own SERV / AgentRouter** keys, import or rotate agent key, or use platform fallback for judges.
+- SERV mandate gate → live IXS subscribe → **Pending until shares** + explorer proofs.
 
 Platform keys cover the fair demo path; BYO keys let judges and treasuries run on their own credentials. See [`SECURITY.md`](./SECURITY.md) · [`TECHNICAL_DEEP_DIVE.md`](./TECHNICAL_DEEP_DIVE.md).
 
@@ -24,15 +25,15 @@ Platform keys cover the fair demo path; BYO keys let judges and treasuries run o
 | OpenServ + SERV | [openserv.ai/hackathon](https://www.openserv.ai/hackathon) · [console.openserv.ai](https://console.openserv.ai) | Enable org data collection; get **OPENSERV_API_KEY** (~$5 starter credit on signup) |
 | Coinbase CDP / AgentKit wallet | [portal.cdp.coinbase.com](https://portal.cdp.coinbase.com) · **[exact click-path](./CDP_AGENTKIT_FLOW.md)** | API key JSON ≠ Wallet Secret. Still need **[Generate Wallet Secret](https://portal.cdp.coinbase.com/wallets/non-custodial/security)**. Interim signer address ready to fund (see SESSION_LOG). |
 | Neon Postgres | [console.neon.tech](https://console.neon.tech) · project `aged-flower-56535737` | `NEON_API_KEY` wired → schema **pushed** |
-| Competitor Judr | [tryjudr.vercel.app](https://tryjudr.vercel.app/) · **[notes](./COMPETITORS.md)** | Arbitration + standing IXS 100 USDC — BOND must show mandate→Pending→shares on-chain |
 | AgentRouter (no OpenAI key) | [agentrouter.org](https://agentrouter.org) · **[Tor setup](./AGENTROUTER_SETUP.md)** | Key + `bun run tor:start` + `bun run smoke:llm` (`deepseek-v4-flash`) |
 | TinyFish (fact-check ops) | [agent.tinyfish.ai](https://agent.tinyfish.ai) · **[Pay $10 wallet](https://agent.tinyfish.ai/wallet?utm_source=api&utm_medium=insufficient_funds&utm_campaign=automation)** | Top up, then set **TINYFISH_API_KEY** |
 | Tavily | [app.tavily.com](https://app.tavily.com) | Refresh quota / new key → **TAVILY_API_KEY** |
-| IXS live vault list | [api-v2.ixs.finance/vaults](https://api-v2.ixs.finance/vaults) | Confirm Avalanche vault still listed |
-| Avalanche explorer | [snowscan.xyz](https://snowscan.xyz) | Watch txs after deposit |
+| IXS live vault list | [api-v2.ixs.finance/vaults](https://api-v2.ixs.finance/vaults) | Confirm Avalanche + BNB vaults still listed |
+| Avalanche explorer | [snowscan.xyz](https://snowscan.xyz) | Watch Avalanche txs after deposit |
+| BNB explorer | [bscscan.com](https://bscscan.com) | Watch BNB Chain txs after deposit |
 | USDC on Avalanche | Contract `0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E` | Fund **≥100 USDC** + **AVAX for gas** to AgentKit address |
+| USDC on BNB | Contract `0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d` | Fund **≥100 USDC** + **BNB for gas** for the companion vault |
 | GitHub PR | [bond PR #1](https://github.com/henrysammarfo/bond/pull/1) | Review / merge when ready |
-| Lovable project | [lovable.dev project](https://lovable.dev/projects/6f5bea9d-5377-4269-8be8-dd1096a81c81) | Env secrets sync with connected branch |
 | Submit | X post + [@openservai](https://x.com/openservai) + form from [hackathon page](https://www.openserv.ai/hackathon) | Before deadline |
 
 **Rotate** any keys that were pasted in chat.
@@ -83,13 +84,14 @@ Full click-path: [`CDP_AGENTKIT_FLOW.md`](./CDP_AGENTKIT_FLOW.md).
 bun run cdp:export
 # paste printed AGENT_PRIVATE_KEY + CDP_WALLET_ADDRESS into .env.local
 # fund ≥100 USDC (0xB97E…48a6E) + AVAX on Avalanche to that address
+# for BNB lane: same address needs BSC USDC + BNB gas
 ```
 
 ---
 
 ## Env template
 
-Copy [`.env.example`](../../.env.example) into Lovable/Vercel/Cloudflare secrets **and** local `.env.local`:
+Copy [`.env.example`](../../.env.example) into Vercel / Cloudflare secrets **and** local `.env.local`:
 
 ```bash
 cp .env.example .env.local
@@ -103,13 +105,14 @@ Minimum to run the app:
 3. `AGENT_PRIVATE_KEY` — from `bun run cdp:export`  
 4. `AGENTROUTER_API_KEY` + Tor on cloud (`bun run tor:start`) — failover if SERV down  
 5. `OPENSERV_API_KEY` — SERV Reasoning at `https://inference-api.openserv.ai`  
-6. Optional: `CDP_WALLET_ADDRESS`, `TAVILY_API_KEY`, `TINYFISH_API_KEY`
+6. Optional: `CDP_WALLET_ADDRESS`, `TAVILY_API_KEY`, `TINYFISH_API_KEY`, `VITE_PUBLIC_ANALYTICS_ID`
 
 Defaults already correct:
 
 - `IXS_API_BASE_URL=https://api-v2.ixs.finance`
 - `IXS_MCP_URL=https://api-v2.ixs.finance/mcp`
 - `IXS_PRIMARY_VAULT_ID=6a952729732c2b84b55ce89d`
+- `IXS_BNB_VAULT_ID=6a26624ca7d16b245d665475`
 - `OPENSERV_API_BASE_URL=https://inference-api.openserv.ai`
 - `AGENTROUTER_BASE_URL=https://agentrouter.org/v1`
 - `AGENTROUTER_MODEL=deepseek-v4-flash`
@@ -120,65 +123,19 @@ Defaults already correct:
 
 ```bash
 bun install
-bun run db:push          # applies Drizzle schema to Neon
-bun run tor:start && bun run smoke:llm   # expect smoke_llm_tor_ok
-bun run dev              # http://localhost:5173
-bun run build            # must stay green
-bun test                 # status machine + live IXS read
+bun run db:push
+bun run tor:start   # cloud IP → AgentRouter
+bun run dev
 ```
 
----
-
-## 4. Fund the wallet (real money — Bible)
-
-1. Use address from `bun run cdp:export` / `CDP_WALLET_ADDRESS`.  
-2. Send **≥ 100 USDC** (Avalanche USDC above) + enough **AVAX** for approve + requestDeposit (+ claim later).  
-3. Confirm balances on [snowscan.xyz](https://snowscan.xyz).  
-4. No public testnet for this track — mocks will not win.
+Open http://localhost:3000 → Register → Settings → Integrations → Mandates → Vaults → Confirm live deposit.
 
 ---
 
-## 5. Demo the live product (shot list)
+## Live win path
 
-Do this after secrets + DB + funding:
-
-| Step | URL | What to show |
-| --- | --- | --- |
-| A | `/` | Cinematic BOND hero |
-| B | `/vaults` | Live IXS Avalanche (+ BNB browse) cards |
-| C | `/how-it-works` | Allow → Deposit → Pending → Shares |
-| D | `/login` | Register org (httpOnly session) |
-| E | `/dashboard` | Live overview (no invented owned $) |
-| F | `/dashboard/mandates` | Create Avalanche USDC mandate ≥$100 |
-| G | `/dashboard/vaults/$primaryVaultId` | Confirm live deposit → **Pending not earning** |
-| H | `/dashboard/subscriptions/$id` | Refresh / claim when IXS ready → shares |
-
-Fill evidence in [`WIN_CHECKLIST.md`](./WIN_CHECKLIST.md) (tx hashes + demo URL).
-
----
-
-## 6. Submit checklist
-
-1. Public demo URL live  
-2. X post: name, concept, images/screenshots, GitHub/demo links, tag **@openservai**  
-3. Fill the official form linked from [openserv.ai/hackathon](https://www.openserv.ai/hackathon)  
-4. Org data collection enabled in OpenServ console  
-5. Screenshots show **Pending** until shares — never “earning” early  
-
----
-
-## Quick commands
-
-```bash
-# Live IXS preflight (no spend)
-LIVE_DEPOSIT=1 bun run e2e:deposit
-
-# Fact-check vault still exists
-curl -s https://api-v2.ixs.finance/vaults/6a952729732c2b84b55ce89d | head
-
-# AgentRouter via Tor
-bun run smoke:llm
-
-# CDP export (needs portal keys)
-bun run cdp:export
-```
+1. Fund org AgentKit address (≥100 USDC + gas on the chain you use).  
+2. Create matching mandate (Avalanche or BNB Chain).  
+3. Subscribe → Pending + explorer link.  
+4. Wait for shares → Refresh / Claim.  
+5. Capture screenshots for [`WIN_CHECKLIST.md`](./WIN_CHECKLIST.md).

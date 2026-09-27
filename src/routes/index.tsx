@@ -1,11 +1,10 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, CheckCircle2, Clock3, ShieldCheck } from "lucide-react";
+import { createFileRoute } from "@tanstack/react-router";
+import { CheckCircle2, Clock3, ShieldCheck } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import heroImage from "@/assets/bond-hero.jpg";
 import { Brand } from "@/components/Brand";
 import { ButtonLink } from "@/components/Button";
 import { SiteFooter } from "@/components/SiteFooter";
-import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -77,11 +76,10 @@ function Index() {
       <section className="bond-frame relative h-[100dvh] min-h-[640px] overflow-hidden">
         <img
           src={heroImage}
-          alt=""
+          alt="BOND treasury atmosphere — dark horizon over calm water"
           width={1920}
           height={1280}
           className="bond-sky pointer-events-none absolute inset-0 size-full object-cover object-top select-none"
-          aria-hidden="true"
         />
         <div className="bond-veil pointer-events-none absolute inset-0 bg-black/25" />
         <header className="bond-bar absolute inset-x-0 top-0 z-30">
@@ -105,31 +103,17 @@ function Index() {
               ))}
             </nav>
             <div className="bond-actions flex items-center gap-2">
-              <ButtonLink
-                to="/login"
-                variant="secondary"
-                className="hidden border-white/90 bg-transparent text-white hover:bg-white/10 sm:inline-flex"
-              >
-                Sign in
-              </ButtonLink>
               <ButtonLink to="/dashboard" className="bg-white text-black hover:bg-white/90">
-                Open app
+                Open treasury
               </ButtonLink>
             </div>
           </div>
         </header>
 
         <main className="bond-hero relative z-10 mx-auto flex h-full max-w-5xl flex-col items-center px-5 pt-[18vh] text-center sm:pt-[20vh]">
-          <a
-            href="/product"
-            className="bond-pill inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/12 px-3 py-1.5 text-xs font-semibold backdrop-blur-md transition-colors hover:bg-white/17"
-          >
-            <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-black">
-              New
-            </span>
-            <span className="text-white/88">Settlement, without the story</span>
-            <ArrowRight size={13} className="text-white/95" />
-          </a>
+          <p className="bond-pill text-xs font-semibold uppercase tracking-[0.2em] text-white/80">
+            BOND
+          </p>
           <h1 className="bond-headline mt-7 max-w-4xl font-display text-[clamp(2.4rem,6vw,4.6rem)] font-semibold leading-[1.02] tracking-tight">
             <span className="bond-ln block overflow-hidden pb-2 -mb-2">
               <span className="bond-ln-i block">The bond is yours</span>
@@ -138,24 +122,16 @@ function Index() {
               <span className="bond-ln-i block">when the shares exist.</span>
             </span>
           </h1>
-          <p className="bond-sub mt-6 max-w-2xl text-base leading-7 text-white/50 sm:text-lg">
+          <p className="bond-sub mt-6 max-w-2xl text-base leading-7 text-white/75 sm:text-lg">
             BOND checks the mandate, sends the deposit, and keeps the position Pending until the
             vault proves finality.
           </p>
-          <div className="bond-cta mt-8 flex flex-col gap-3 sm:flex-row">
-            <ButtonLink to="/dashboard" className="min-w-36 bg-white text-black hover:bg-white/90">
+          <div className="bond-cta mt-8 flex justify-center">
+            <ButtonLink to="/dashboard" className="min-w-44 bg-white text-black hover:bg-white/90">
               Open treasury
             </ButtonLink>
-            <Link
-              ref={lastCta}
-              to="/how-it-works"
-              className={cn(
-                "inline-flex min-h-10 min-w-36 items-center justify-center gap-2 rounded-md border border-white/90 bg-transparent px-4 text-sm font-semibold text-white transition-colors hover:bg-white/10",
-              )}
-            >
-              See the flow
-            </Link>
           </div>
+          <span ref={lastCta} className="sr-only" aria-hidden="true" />
           {intro ? <span className="sr-only">Entrance animation playing</span> : null}
         </main>
       </section>

@@ -82,23 +82,15 @@ Written for judges and operators. Every item below was hit live while shipping P
 
 ---
 
-### 7. Judr track confusion
-
-**Symptom:** Judr already has live Avalanche 100 USDC `requestDeposit` + Base payout; judges may think IXS is “taken.”
-
-**Reality:** Judr = arbitration + standing escrow yield. BOND = **RWA Vaults** mandate → per-org deposit → Pending until shares. Documented in `COMPETITORS.md`.
-
----
-
 ## API depth (what we actually call)
 
 | API | Usage |
 | --- | --- |
-| IXS REST `GET /vaults`, `/vaults/:id` | Live primary Avalanche vault `6a952729732c2b84b55ce89d` |
+| IXS REST `GET /vaults`, `/vaults/:id` | Avalanche primary `6a952729732c2b84b55ce89d` + BNB companion `6a26624ca7d16b245d665475` |
 | IXS MCP | `vault_get`, `vault_build_request_deposit`, `vault_request_status`, `vault_build_claim_deposit` |
 | OpenServ SERV | `POST …/v1/chat/completions` mandate JSON gate |
 | AgentRouter | Tor chat completions `deepseek-v4-flash` + stainless headers |
-| Avalanche RPC | `eth_getBalance`, USDC `balanceOf`, send approve + requestDeposit |
+| Avalanche + BSC RPC | `eth_getBalance`, USDC `balanceOf`, send approve + requestDeposit on either chain |
 | Coinbase CDP SDK | create/import account (export optional) |
 | Neon | Pooled Postgres; Drizzle push |
 | Tavily / TinyFish | Ops fact-check only |

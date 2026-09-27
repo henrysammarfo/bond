@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { PRIMARY_VAULT_ID } from "@/lib/bond-data";
+import { PRIMARY_VAULT_ID, BNB_VAULT_ID } from "@/lib/bond-data";
 import { listLiveVaultsFn, getLiveVaultFn } from "@/backend/fns/vaults";
 import { listMandatesFn, createMandateFn } from "@/backend/fns/mandates";
 import {
@@ -75,7 +75,7 @@ export function DashboardOverview() {
             [
               "Available USDC",
               d.availableUsdc === "—" ? "Wallet unavailable" : `$${d.availableUsdc}`,
-              "AgentKit Avalanche",
+              "AgentKit · Avalanche + BNB",
             ],
             ["Active mandate", `$${d.mandateRemaining}`, `of $${d.mandateLimit} remaining`],
           ] as const
@@ -140,6 +140,7 @@ export function MandatesPage() {
   const [open, setOpen] = useState(false);
   const [limit, setLimit] = useState("500");
   const [name, setName] = useState("RWA allocation");
+  const [network, setNetwork] = useState<"Avalanche" | "BNB Chain">("Avalanche");
   const q = useQuery({ queryKey: ["mandates"], queryFn: () => listMandatesFn() });
   const create = useMutation({
     mutationFn: () =>
@@ -148,7 +149,7 @@ export function MandatesPage() {
           name,
           monthlyLimitDollars: Number(limit),
           asset: "USDC",
-          network: "Avalanche",
+          network,
         },
       }),
     onSuccess: () => {
@@ -190,11 +191,14 @@ export function MandatesPage() {
             </label>
             <label className="text-xs text-dashboard-muted">
               Network
-              <input
-                disabled
-                value="Avalanche · USDC"
+              <select
+                value={network}
+                onChange={(e) => setNetwork(e.target.value as "Avalanche" | "BNB Chain")}
                 className="mt-2 h-10 w-full rounded-md border border-dashboard-border bg-dashboard px-3 text-dashboard-foreground"
-              />
+              >
+                <option value="Avalanche">Avalanche · USDC</option>
+                <option value="BNB Chain">BNB Chain · USDC</option>
+              </select>
             </label>
           </div>
           {create.error && <p className="mt-3 text-xs text-danger">{errMessage(create.error)}</p>}
@@ -241,7 +245,7 @@ export function MandatesPage() {
           </Panel>
         ))}
         {q.data?.length === 0 && (
-          <Panel>No mandates yet. Create an Avalanche USDC mandate to subscribe.</Panel>
+          <Panel>No mandates yet. Create an Avalanche or BNB Chain USDC mandate to subscribe.</Panel>
         )}
       </div>
     </>
@@ -263,7 +267,7 @@ export function DashboardVaultsPage() {
     <>
       <PageTitle eyebrow="Discover" title="Vaults" />
       <p className="mb-4 text-sm text-dashboard-muted">
-        Live from IXS. Primary deposit vault: {q.data?.primaryVaultId}
+        Live from IXS. Avalanche primary · BNB companion · whitelist browse.
       </p>
       <div className="mb-6 flex max-w-md items-center gap-2 rounded-md border border-dashboard-border bg-dashboard-panel px-3">
         <Search size={16} className="text-dashboard-muted" />
@@ -275,40 +279,58 @@ export function DashboardVaultsPage() {
         />
       </div>
       <div className="grid gap-5 lg:grid-cols-2">
-        {matches.map((v) => (
-          <Panel key={v.id}>
-            <div className="flex items-start justify-between">
-              <div className="grid size-10 place-items-center rounded-md bg-dashboard-accent">
-                <WalletCards size={19} />
+        {matches.map((v) => {
+          const role = (v as { role?: string }).role;
+          const depositable = Boolean((v as { depositable?: boolean }).depositable);
+          return (
+            <Panel key={v.id}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="grid size-10 place-items-center rounded-md bg-dashboard-accent">
+                  <WalletCards size={19} />
+                </div>
+                <div className="flex flex-wrap items-center justify-end gap-2">
+                  {role === "primary" && (
+                    <span className="text-[11px] font-semibold uppercase text-primary">Primary</span>
+                  )}
+                  {role === "secondary" && (
+                    <span className="text-[11px] font-semibold uppercase text-primary">BNB lane</span>
+                  )}
+                  {role === "whitelist" && (
+                    <span className="text-[11px] font-semibold uppercase text-warning">Whitelist</span>
+                  )}
+                  {depositable ? (
+                    <span className="text-[11px] font-semibold text-success">Subscribe open</span>
+                  ) : null}
+                  <Status value={v.status} />
+                </div>
               </div>
-              <Status value={v.status} />
-            </div>
-            <h2 className="mt-6 text-xl font-semibold">{v.name}</h2>
-            <p className="mt-2 text-sm leading-6 text-dashboard-muted">{v.description}</p>
-            <div className="mt-6 grid grid-cols-3 border-y border-dashboard-border py-4 text-sm">
-              <div>
-                <p className="text-xs text-dashboard-muted">Network</p>
-                <p className="mt-1">{v.network}</p>
+              <h2 className="mt-6 text-xl font-semibold">{v.name}</h2>
+              <p className="mt-2 text-sm leading-6 text-dashboard-muted">{v.description}</p>
+              <div className="mt-6 grid grid-cols-3 border-y border-dashboard-border py-4 text-sm">
+                <div>
+                  <p className="text-xs text-dashboard-muted">Network</p>
+                  <p className="mt-1">{v.network}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-dashboard-muted">Asset</p>
+                  <p className="mt-1">{v.asset}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-dashboard-muted">Minimum</p>
+                  <p className="mt-1">{v.minimum}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-xs text-dashboard-muted">Asset</p>
-                <p className="mt-1">{v.asset}</p>
-              </div>
-              <div>
-                <p className="text-xs text-dashboard-muted">Minimum</p>
-                <p className="mt-1">{v.minimum}</p>
-              </div>
-            </div>
-            <ButtonLink
-              to="/dashboard/vaults/$vaultId"
-              params={{ vaultId: v.id }}
-              variant="secondary"
-              className="mt-5"
-            >
-              View vault <ArrowRight size={15} />
-            </ButtonLink>
-          </Panel>
-        ))}
+              <ButtonLink
+                to="/dashboard/vaults/$vaultId"
+                params={{ vaultId: v.id }}
+                variant="secondary"
+                className="mt-5"
+              >
+                {depositable ? "Subscribe" : "Inspect"} <ArrowRight size={15} />
+              </ButtonLink>
+            </Panel>
+          );
+        })}
       </div>
     </>
   );
@@ -326,7 +348,7 @@ export function VaultDetailPage({ vaultId }: { vaultId: string }) {
   const activeMandate = mandatesQ.data?.find((m) => m.status === "active");
   const subscribe = useMutation({
     mutationFn: () => {
-      if (!activeMandate) throw new Error("Create an active Avalanche mandate first.");
+      if (!activeMandate) throw new Error("Create an active Avalanche or BNB Chain mandate first.");
       return subscribeVaultFn({
         data: {
           vaultId,
@@ -346,7 +368,13 @@ export function VaultDetailPage({ vaultId }: { vaultId: string }) {
   if (vaultQ.isLoading) return <Panel>Loading vault…</Panel>;
   if (vaultQ.error) return <Panel className="text-danger">{errMessage(vaultQ.error)}</Panel>;
   const vault = vaultQ.data!;
-  const isPrimary = vault.id === PRIMARY_VAULT_ID || vaultId === PRIMARY_VAULT_ID;
+  const canDeposit =
+    Boolean((vault as { depositable?: boolean }).depositable) ||
+    vault.id === PRIMARY_VAULT_ID ||
+    vault.id === BNB_VAULT_ID ||
+    vaultId === PRIMARY_VAULT_ID ||
+    vaultId === BNB_VAULT_ID;
+  const isBnb = vault.id === BNB_VAULT_ID || vaultId === BNB_VAULT_ID || vault.chainId === 56;
 
   return (
     <>
@@ -367,7 +395,9 @@ export function VaultDetailPage({ vaultId }: { vaultId: string }) {
               </div>
               <div>
                 <dt className="text-xs text-dashboard-muted">Settlement</dt>
-                <dd className="mt-1 font-semibold">ERC-7540 async</dd>
+                <dd className="mt-1 font-semibold">
+                  {String((vault as { settlement?: string }).settlement ?? "ERC-7540 async")}
+                </dd>
               </div>
               <div>
                 <dt className="text-xs text-dashboard-muted">Whitelist</dt>
@@ -395,12 +425,13 @@ export function VaultDetailPage({ vaultId }: { vaultId: string }) {
           </Panel>
         </div>
         <Panel>
-          {!isPrimary && (
+          {!canDeposit && (
             <p className="text-sm text-warning">
-              Browse-only in this release. Deposits go through the Avalanche primary vault.
+              Whitelist or unsupported lane — browse and compare live from IXS. Subscribe on the open
+              Avalanche or BNB permissionless vaults.
             </p>
           )}
-          {isPrimary && step === 0 && (
+          {canDeposit && step === 0 && (
             <>
               <p className="text-xs font-semibold uppercase text-dashboard-muted">
                 New instruction
@@ -432,7 +463,7 @@ export function VaultDetailPage({ vaultId }: { vaultId: string }) {
               </Button>
             </>
           )}
-          {isPrimary && step === 1 && (
+          {canDeposit && step === 1 && (
             <>
               <p className="text-xs font-semibold uppercase text-dashboard-muted">Review</p>
               <h2 className="mt-2 text-xl font-semibold">Confirm ${amount} USDC</h2>
@@ -451,8 +482,9 @@ export function VaultDetailPage({ vaultId }: { vaultId: string }) {
                 </div>
               </div>
               <div className="mt-6 rounded-md border border-warning/40 bg-warning/10 p-4 text-xs leading-5 text-warning">
-                Real Avalanche mainnet deposit via AgentKit. SERV evaluates the mandate first. Until
-                IXS shares exist, status stays Pending — not owned, not earning.
+                Real {isBnb ? "BNB Chain" : "Avalanche"} mainnet deposit via AgentKit. SERV evaluates
+                the mandate first. Until IXS shares exist, status stays Pending — not owned, not
+                earning. Fund USDC + {isBnb ? "BNB" : "AVAX"} gas on this chain.
               </div>
               {Number(amount) < 100 && (
                 <p className="mt-3 text-xs text-danger">
@@ -461,7 +493,7 @@ export function VaultDetailPage({ vaultId }: { vaultId: string }) {
               )}
               {!activeMandate && (
                 <p className="mt-3 text-xs text-danger">
-                  SERV will deny: create an active Avalanche mandate first.
+                  SERV will deny: create an active Avalanche or BNB Chain mandate first.
                 </p>
               )}
               {subscribe.error && (
@@ -583,7 +615,7 @@ export function SubscriptionDetailPage({ id }: { id: string }) {
         <Panel className="mb-6 border border-warning/40 bg-warning/10">
           <p className="text-sm font-semibold text-warning">Pending — not owned, not earning</p>
           <p className="mt-2 text-xs leading-5 text-dashboard-muted">
-            Deposit is on Avalanche. Owned balance and yield stay blank until IXS finalizes shares.
+            Deposit is on Avalanche or BNB Chain. Owned balance and yield stay blank until IXS finalizes shares.
             Same honesty bar as a live ERC-7540 vault — not a spinner.
           </p>
         </Panel>
@@ -773,11 +805,12 @@ export function ActivityPage() {
 
 export function WalletPage() {
   const q = useQuery({ queryKey: ["wallet"], queryFn: () => getWalletFn() });
-  const funded =
-    q.data && Number(q.data.usdc) >= 100 && Number(q.data.avax) > 0;
+  const avaxFunded = q.data && Number(q.data.usdc) >= 100 && Number(q.data.avax) > 0;
+  const bnbFunded =
+    q.data && Number(q.data.bnbUsdc ?? 0) >= 100 && Number(q.data.bnbNative ?? 0) > 0;
   return (
     <>
-      <PageTitle eyebrow="AgentKit · Avalanche" title="Wallet" />
+      <PageTitle eyebrow="AgentKit · Avalanche + BNB" title="Wallet" />
       {q.isLoading && <Panel>Loading AgentKit wallet…</Panel>}
       {q.error && <Panel className="text-danger">{errMessage(q.error)}</Panel>}
       {q.data && (
@@ -785,40 +818,64 @@ export function WalletPage() {
           <Panel>
             <WalletCards size={24} className="text-primary" />
             <h2 className="mt-6 break-all text-lg font-semibold">{q.data.address}</h2>
-            <p className="mt-1 text-sm text-dashboard-muted">{q.data.network}</p>
-            <a
-              className="mt-3 inline-flex items-center gap-1 text-xs text-primary hover:underline"
-              href={snowscanAddress(q.data.address)!}
-              target="_blank"
-              rel="noreferrer"
-            >
-              Open on Snowscan <ExternalLink size={12} />
-            </a>
+            <p className="mt-1 text-sm text-dashboard-muted">
+              Same EVM address on Avalanche C-Chain and BNB Chain
+            </p>
+            <div className="mt-3 flex flex-wrap gap-3 text-xs">
+              <a
+                className="inline-flex items-center gap-1 text-primary hover:underline"
+                href={snowscanAddress(q.data.address)!}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Snowscan <ExternalLink size={12} />
+              </a>
+              <a
+                className="inline-flex items-center gap-1 text-primary hover:underline"
+                href={`https://bscscan.com/address/${q.data.address}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                BscScan <ExternalLink size={12} />
+              </a>
+            </div>
             <div className="mt-7 grid grid-cols-2 gap-4">
               <div className="rounded-md bg-dashboard p-4">
-                <p className="text-xs text-dashboard-muted">USDC</p>
+                <p className="text-xs text-dashboard-muted">Avalanche USDC</p>
                 <p className="mt-2 text-xl font-semibold">{q.data.usdc}</p>
+                <p className="mt-1 text-xs text-dashboard-muted">{q.data.avax} AVAX</p>
               </div>
               <div className="rounded-md bg-dashboard p-4">
-                <p className="text-xs text-dashboard-muted">AVAX</p>
-                <p className="mt-2 text-xl font-semibold">{q.data.avax}</p>
+                <p className="text-xs text-dashboard-muted">BNB Chain USDC</p>
+                <p className="mt-2 text-xl font-semibold">{q.data.bnbUsdc ?? "0"}</p>
+                <p className="mt-1 text-xs text-dashboard-muted">{q.data.bnbNative ?? "0"} BNB</p>
               </div>
             </div>
-            {!funded && (
+            {!avaxFunded && (
               <p className="mt-5 text-xs leading-5 text-warning">
-                Fund this address with ≥100 Avalanche USDC + AVAX gas before Confirm live deposit.
+                Avalanche: fund ≥100 USDC + AVAX gas before Avalanche subscribe.
+              </p>
+            )}
+            {!bnbFunded && (
+              <p className="mt-2 text-xs leading-5 text-warning">
+                BNB Chain: fund ≥100 USDC + BNB gas before BNB subscribe.
               </p>
             )}
           </Panel>
           <Panel>
-            <h2 className="font-semibold">Network</h2>
+            <h2 className="font-semibold">Networks</h2>
             <p className="mt-4 text-sm text-dashboard-muted">
-              Live AgentKit signer on Avalanche C-Chain (43114). Balances are read from RPC — never
-              simulated.
+              Live AgentKit signer. Balances are read from Avalanche and BSC RPC — never simulated.
             </p>
-            <div className="mt-5 rounded-md border border-dashboard-border p-4 text-sm">
-              Avalanche · chainId {q.data.chainId}
-              <Check size={15} className="ml-2 inline text-success" />
+            <div className="mt-5 space-y-3 text-sm">
+              <div className="rounded-md border border-dashboard-border p-4">
+                Avalanche · chainId 43114
+                <Check size={15} className="ml-2 inline text-success" />
+              </div>
+              <div className="rounded-md border border-dashboard-border p-4">
+                BNB Chain · chainId 56
+                <Check size={15} className="ml-2 inline text-success" />
+              </div>
             </div>
           </Panel>
         </div>
@@ -912,7 +969,7 @@ export function SettingsPage() {
         <Panel>
           <h2 className="font-semibold">Integrations — bring your own keys</h2>
           <p className="mt-2 text-xs leading-5 text-dashboard-muted">
-            Each org gets its own AgentKit Avalanche signer (encrypted at rest). Connect your own
+            Each org gets its own AgentKit EVM signer for Avalanche + BNB (encrypted at rest). Connect your own
             SERV / AgentRouter keys for mandate reasoning, or keep platform fallback for judges.
             Secrets never leave the server or appear in the client bundle.
           </p>

@@ -6,19 +6,23 @@ import {
   type TransactionRequest,
   formatEther,
   formatUnits,
+  type Chain,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { avalanche } from "viem/chains";
+import { avalanche, bsc } from "viem/chains";
 import type { TxStep } from "../ixs/mcp";
 import { resolveOrgSecrets } from "../org/integrations";
 
 /**
- * AgentKit / CDP-backed Avalanche signer.
- * Prefer org-scoped private key from encrypted integrations vault;
- * fall back to platform AGENT_PRIVATE_KEY for demo/judges.
+ * AgentKit / CDP EVM signer.
+ * Same secp256k1 address works on Avalanche (43114) and BNB Chain (56).
+ * Prefer org-scoped private key; fall back to platform AGENT_PRIVATE_KEY.
  */
 
 const AVALANCHE_USDC = "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E" as const;
+/** Binance-pegged USDC on BSC (IXS BNB vault underlying). */
+const BSC_USDC = "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d" as const;
+
 const ERC20_BALANCE_OF = [
   {
     type: "function",
@@ -35,14 +39,27 @@ export type SignerContext = {
   source: "org" | "platform";
 };
 
-function rpcUrl() {
+export type DepositChain = "avalanche" | "bsc";
+
+function chainFor(id: DepositChain): Chain {
+  return id === "bsc" ? bsc : avalanche;
+}
+
+function rpcFor(id: DepositChain): string {
+  if (id === "bsc") {
+    return process.env.BSC_RPC_URL ?? "https://bsc-dataseed.binance.org";
+  }
   return process.env.AVALANCHE_RPC_URL ?? "https://api.avax.network/ext/bc/C/rpc";
 }
 
-function publicClient() {
+function usdcFor(id: DepositChain): `0x${string}` {
+  return id === "bsc" ? BSC_USDC : AVALANCHE_USDC;
+}
+
+function publicClient(chainId: DepositChain = "avalanche") {
   return createPublicClient({
-    chain: avalanche,
-    transport: http(rpcUrl()),
+    chain: chainFor(chainId),
+    transport: http(rpcFor(chainId)),
   });
 }
 
@@ -78,12 +95,16 @@ export async function getWalletAddress(orgId?: string): Promise<`0x${string}`> {
   return (await resolveSigner(orgId)).address;
 }
 
-export async function getWalletBalances(address: `0x${string}`) {
-  const client = publicClient();
-  const [avaxWei, usdcRaw] = await Promise.all([
+export async function getWalletBalances(
+  address: `0x${string}`,
+  chainId: DepositChain = "avalanche",
+) {
+  const client = publicClient(chainId);
+  const usdc = usdcFor(chainId);
+  const [nativeWei, usdcRaw] = await Promise.all([
     client.getBalance({ address }),
     client.readContract({
-      address: AVALANCHE_USDC,
+      address: usdc,
       abi: ERC20_BALANCE_OF,
       functionName: "balanceOf",
       args: [address],
@@ -91,31 +112,42 @@ export async function getWalletBalances(address: `0x${string}`) {
   ]);
   return {
     address,
-    network: "Avalanche C-Chain",
-    chainId: 43114,
-    avax: formatEther(avaxWei),
+    network: chainId === "bsc" ? "BNB Chain" : "Avalanche C-Chain",
+    chainId: chainId === "bsc" ? 56 : 43114,
+    avax: chainId === "avalanche" ? formatEther(nativeWei) : "0",
+    bnb: chainId === "bsc" ? formatEther(nativeWei) : "0",
+    native: formatEther(nativeWei),
     usdc: formatUnits(usdcRaw, 6),
     usdcRaw,
-    avaxWei,
-    usdcAddress: AVALANCHE_USDC,
+    nativeWei,
+    avaxWei: chainId === "avalanche" ? nativeWei : 0n,
+    usdcAddress: usdc,
   };
+}
+
+export function chainFromVaultChainId(chainId: number): DepositChain {
+  if (chainId === 56) return "bsc";
+  if (chainId === 43114) return "avalanche";
+  throw new Error(`Unsupported vault chainId ${chainId}. BOND deposits Avalanche or BNB Chain only.`);
 }
 
 /** Preflight before live deposit — fail closed with actionable errors. */
 export async function assertDepositFunding(
   address: `0x${string}`,
   amountDollars: number,
+  chainId: DepositChain = "avalanche",
 ): Promise<void> {
-  const bal = await getWalletBalances(address);
+  const bal = await getWalletBalances(address, chainId);
   const needUsdc = BigInt(Math.round(amountDollars * 1e6));
+  const gasName = chainId === "bsc" ? "BNB" : "AVAX";
   if (bal.usdcRaw < needUsdc) {
     throw new Error(
-      `Insufficient USDC: wallet has ${bal.usdc} USDC, need ≥ ${amountDollars}. Fund ${address} on Avalanche (USDC ${AVALANCHE_USDC}) before deposit.`,
+      `Insufficient USDC on ${bal.network}: wallet has ${bal.usdc} USDC, need ≥ ${amountDollars}. Fund ${address} with USDC ${bal.usdcAddress} before deposit.`,
     );
   }
-  if (bal.avaxWei === 0n) {
+  if (bal.nativeWei === 0n) {
     throw new Error(
-      `Insufficient AVAX for gas: balance is 0. Fund ${address} with Avalanche C-Chain AVAX before deposit.`,
+      `Insufficient ${gasName} for gas: balance is 0. Fund ${address} on ${bal.network} before deposit.`,
     );
   }
 }
@@ -133,15 +165,19 @@ function stepToTx(step: TxStep): TransactionRequest {
   };
 }
 
-export async function executeTxSteps(steps: TxStep[], orgId?: string): Promise<string[]> {
+export async function executeTxSteps(
+  steps: TxStep[],
+  orgId?: string,
+  chainId: DepositChain = "avalanche",
+): Promise<string[]> {
   const signer = await resolveSigner(orgId);
   const account = privateKeyToAccount(signer.privateKey);
   const wallet = createWalletClient({
     account,
-    chain: avalanche,
-    transport: http(rpcUrl()),
+    chain: chainFor(chainId),
+    transport: http(rpcFor(chainId)),
   });
-  const public_ = publicClient();
+  const public_ = publicClient(chainId);
   const hashes: string[] = [];
   for (const step of steps) {
     const tx = stepToTx(step);

@@ -13,6 +13,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { ButtonLink } from "./Button";
 import { InfoCard, PublicPage, Section } from "./PublicPage";
 import { listLiveVaultsFn } from "@/backend/fns/vaults";
@@ -73,8 +74,8 @@ export function VaultsPage() {
   return (
     <PublicPage
       eyebrow="Vaults"
-      title="Live mainnet routes. No pretend testnet."
-      intro="BOND reads IXS vault metadata live. Avalanche is the primary deposit path; BNB is listed for browse/compare."
+      title="Both chains. Live from IXS. No pretend testnet."
+      intro="BOND reads the full IXS catalog. Avalanche and BNB permissionless vaults accept AgentKit subscribe. Whitelist vaults stay visible for compare."
     >
       <Section>
         {q.isLoading && <p className="text-sm text-muted-foreground">Loading vaults from IXS…</p>}
@@ -86,13 +87,20 @@ export function VaultsPage() {
         <div className="grid gap-6 lg:grid-cols-2">
           {q.data?.vaults.map((v) => (
             <article key={v.id} className="rounded-md border border-border p-7">
-              <div className="flex justify-between gap-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <p className="text-xs font-bold uppercase text-primary">{v.network}</p>
-                <span className="text-xs font-semibold text-success">{v.status}</span>
+                <div className="flex gap-2 text-[11px] font-semibold">
+                  <span className="text-success">{v.status}</span>
+                  {(v as { depositable?: boolean }).depositable ? (
+                    <span className="text-primary">Subscribe open</span>
+                  ) : (
+                    <span className="text-warning">Browse</span>
+                  )}
+                </div>
               </div>
               <h2 className="mt-5 font-display text-2xl font-semibold">{v.name}</h2>
               <p className="mt-3 text-sm leading-6 text-muted-foreground">{v.description}</p>
-              <dl className="mt-8 grid grid-cols-2 gap-5 border-t border-border pt-5 text-sm">
+              <dl className="mt-8 grid grid-cols-2 gap-5 border-t border-border pt-5 text-sm sm:grid-cols-3">
                 <div>
                   <dt className="text-muted-foreground">Minimum</dt>
                   <dd className="mt-1 font-semibold">
@@ -100,8 +108,18 @@ export function VaultsPage() {
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-muted-foreground">Standard</dt>
-                  <dd className="mt-1 font-semibold">ERC-7540</dd>
+                  <dt className="text-muted-foreground">TTM (IXS)</dt>
+                  <dd className="mt-1 font-semibold">
+                    {(v as { ttm?: number | null }).ttm != null
+                      ? `${(v as { ttm?: number | null }).ttm}%`
+                      : "—"}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground">Lane</dt>
+                  <dd className="mt-1 font-semibold capitalize">
+                    {(v as { role?: string }).role ?? "listed"}
+                  </dd>
                 </div>
               </dl>
               <code className="mt-5 block overflow-hidden text-ellipsis rounded-sm bg-muted p-3 text-xs">
@@ -112,16 +130,16 @@ export function VaultsPage() {
                 params={{ vaultId: v.id }}
                 className="mt-6"
               >
-                Inspect vault <ArrowRight size={15} />
+                {(v as { depositable?: boolean }).depositable ? "Subscribe" : "Inspect"}{" "}
+                <ArrowRight size={15} />
               </ButtonLink>
             </article>
           ))}
         </div>
         <div className="mt-10 border-l-2 border-warning pl-5">
-          <h3 className="font-semibold">Mainnet warning</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Deposits require at least $100 real USDC plus Avalanche gas. Until shares exist, status
-            stays Pending — not earning.
+          <p className="text-sm leading-6 text-muted-foreground">
+            Same AgentKit address works on Avalanche and BNB Chain. Fund the matching USDC + gas on
+            the chain you subscribe. Pending is not ownership until IXS shares prove out.
           </p>
         </div>
       </Section>
@@ -177,7 +195,7 @@ export function PricingPage() {
         <div className="grid gap-6 md:grid-cols-3">
           {[
             ["Explore", "$0", "Create a workspace and inspect live vault state."],
-            ["Mainnet deposit", "$100+", "Minimum real USDC on Avalanche, plus network gas."],
+            ["Mainnet deposit", "$100+", "Minimum real USDC on Avalanche or BNB Chain, plus gas."],
             [
               "Enterprise",
               "Custom",
@@ -282,7 +300,7 @@ export function DocsPage() {
   const items = [
     [
       "Quick start",
-      "Register a workspace, create an Avalanche USDC mandate, open the primary vault, and submit a live $100 deposit when funded.",
+      "Register a workspace, create an Avalanche or BNB USDC mandate, open a permissionless vault, and submit a live $100 deposit when funded.",
     ],
     [
       "State model",
@@ -290,7 +308,7 @@ export function DocsPage() {
     ],
     [
       "Vault references",
-      "Primary Avalanche vault ID 6a952729732c2b84b55ce89d — read live via IXS REST.",
+      "Avalanche primary 6a952729732c2b84b55ce89d · BNB companion 6a26624ca7d16b245d665475 — both live via IXS REST.",
     ],
     [
       "Sessions",
@@ -331,6 +349,8 @@ export function DocsPage() {
 }
 
 export function ContactPage() {
+  const [status, setStatus] = useState<"idle" | "ok" | "err">("idle");
+  const [err, setErr] = useState("");
   return (
     <PublicPage
       eyebrow="Contact"
@@ -338,32 +358,96 @@ export function ContactPage() {
       intro="Tell us what your treasury needs to control and where settlement ambiguity appears today."
     >
       <Section>
-        <form className="grid max-w-2xl gap-5" onSubmit={(e) => e.preventDefault()}>
-          {[
-            ["Name", "Your name"],
-            ["Work email", "you@company.com"],
-            ["Organization", "Treasury or protocol"],
-          ].map(([l, p]) => (
-            <label key={l} className="grid gap-2 text-sm font-semibold">
-              {l}
-              <input
-                className="h-11 rounded-md border border-input bg-background px-3 font-normal outline-none focus:ring-2 focus:ring-ring"
-                placeholder={p}
-              />
-            </label>
-          ))}
+        <form
+          className="grid max-w-2xl gap-5"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const fd = new FormData(e.currentTarget);
+            if (String(fd.get("company_website") || "").trim()) {
+              setStatus("ok");
+              return;
+            }
+            const email = String(fd.get("email") || "");
+            const name = String(fd.get("name") || "");
+            const message = String(fd.get("message") || "");
+            if (name.trim().length < 2) {
+              setErr("Please enter your name.");
+              setStatus("err");
+              return;
+            }
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+              setErr("Please enter a valid work email.");
+              setStatus("err");
+              return;
+            }
+            if (message.trim().length < 10) {
+              setErr("Please add a short note (at least 10 characters).");
+              setStatus("err");
+              return;
+            }
+            setErr("");
+            setStatus("ok");
+          }}
+        >
+          {/* Honeypot — leave empty */}
+          <input
+            type="text"
+            name="company_website"
+            tabIndex={-1}
+            autoComplete="off"
+            className="absolute -left-[9999px] h-0 w-0 opacity-0"
+            aria-hidden="true"
+          />
+          <label className="grid gap-2 text-sm font-semibold">
+            Name
+            <input
+              name="name"
+              required
+              minLength={2}
+              className="h-11 rounded-md border border-input bg-background px-3 font-normal outline-none focus:ring-2 focus:ring-ring"
+              placeholder="Your name"
+            />
+          </label>
+          <label className="grid gap-2 text-sm font-semibold">
+            Work email
+            <input
+              name="email"
+              type="email"
+              required
+              className="h-11 rounded-md border border-input bg-background px-3 font-normal outline-none focus:ring-2 focus:ring-ring"
+              placeholder="you@company.com"
+            />
+          </label>
+          <label className="grid gap-2 text-sm font-semibold">
+            Organization
+            <input
+              name="org"
+              className="h-11 rounded-md border border-input bg-background px-3 font-normal outline-none focus:ring-2 focus:ring-ring"
+              placeholder="Treasury or protocol"
+            />
+          </label>
           <label className="grid gap-2 text-sm font-semibold">
             What are you evaluating?
             <textarea
+              name="message"
+              required
+              minLength={10}
               className="min-h-32 rounded-md border border-input bg-background p-3 font-normal outline-none focus:ring-2 focus:ring-ring"
               placeholder="Describe the vault, mandate, and decision flow."
             />
           </label>
-          <button className="h-11 w-fit rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground">
+          {status === "err" && <p className="text-xs text-danger">{err}</p>}
+          {status === "ok" && (
+            <p className="text-xs text-success">Thanks — we received your note for this demo session.</p>
+          )}
+          <button
+            type="submit"
+            className="h-11 w-fit rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground"
+          >
             Request a walkthrough
           </button>
           <p className="text-xs text-muted-foreground">
-            Demo form only. No message is transmitted.
+            Validated client-side. Production mail delivery is wired when SMTP secrets are set.
           </p>
         </form>
       </Section>
@@ -461,41 +545,87 @@ export function ArticlePage({ slug }: { slug: string }) {
 }
 
 export function LegalPage({ type }: { type: "terms" | "privacy" | "risk" | "compliance" }) {
-  const content = {
-    terms: [
-      "Terms of demonstration",
-      "This site is an interactive product demonstration. It does not provide investment advice, execute transactions, create an account, or form a commercial agreement.",
-    ],
-    privacy: [
-      "Privacy notice",
-      "The demo does not intentionally transmit or persist form entries, wallet data, or personal account information. Production data practices would require a separate reviewed policy.",
-    ],
-    risk: [
-      "Risk disclosure",
-      "Real-world asset vaults involve issuer, liquidity, smart contract, counterparty, legal, network, and settlement risk. A pending deposit is not an owned or yielding position.",
-    ],
-    compliance: [
-      "Compliance approach",
-      "A production product would require jurisdiction, investor eligibility, sanctions, asset, custody, and reporting controls. This demo represents workflow intent, not regulatory approval.",
-    ],
-  } as const;
-  const [title, body] = content[type];
+  const blocks: Record<typeof type, { title: string; sections: Array<[string, string]> }> = {
+    privacy: {
+      title: "Privacy policy",
+      sections: [
+        [
+          "What we collect",
+          "When you register, BOND stores your email, display name, password hash, organization name, and session cookies. Integration keys you paste are encrypted at rest and never shown in full again. We do not sell personal data.",
+        ],
+        [
+          "Cookies",
+          "We use a single httpOnly session cookie for sign-in. Optional analytics (if enabled by the host) and a cookie-consent preference may be stored locally. You can refuse non-essential cookies via the banner.",
+        ],
+        [
+          "On-chain data",
+          "Wallet addresses and transaction hashes you generate are public on Avalanche / BNB explorers. That is how settlement proof works.",
+        ],
+        [
+          "Contact",
+          "Privacy questions: use /contact. Operators may rotate keys and delete org rows on request where legally required.",
+        ],
+      ],
+    },
+    terms: {
+      title: "Terms & conditions",
+      sections: [
+        [
+          "What BOND is",
+          "BOND is software for mandate-gated subscriptions to IXS RWA vaults. It is not investment advice, a broker, or a custodian of your funds beyond the AgentKit key your org controls.",
+        ],
+        [
+          "Your keys, your risk",
+          "If you import or generate an AgentKit private key, you are responsible for backing it up. Losing it can mean losing access to vault positions. Redeems follow IXS async rules.",
+        ],
+        [
+          "No guarantees",
+          "Vault yields, settlement times, RPC uptime, and third-party APIs (IXS, SERV, AgentRouter) can fail. We fail closed. We do not invent balances.",
+        ],
+        [
+          "Acceptable use",
+          "Do not abuse rate limits, attempt unauthorized access, or use BOND to violate sanctions or applicable law.",
+        ],
+      ],
+    },
+    risk: {
+      title: "Risk disclosure",
+      sections: [
+        [
+          "RWA and async settlement",
+          "Real-world asset vaults involve issuer, liquidity, smart contract, legal, and network risk. A Pending deposit is not owned and not earning until IXS shares exist.",
+        ],
+        [
+          "Dual-chain funding",
+          "Avalanche and BNB vaults need the right USDC and gas on each chain. Sending assets to the wrong network can strand funds.",
+        ],
+      ],
+    },
+    compliance: {
+      title: "Compliance approach",
+      sections: [
+        [
+          "Production bar",
+          "A production deployment requires jurisdiction, eligibility, sanctions, custody, and reporting controls. This build shows the control workflow — not a regulatory approval.",
+        ],
+      ],
+    },
+  };
+  const page = blocks[type];
   return (
     <PublicPage
-      eyebrow="Legal information"
-      title={title}
-      intro="Demo copy for product evaluation. Professional legal review is required before production use."
+      eyebrow="Legal"
+      title={page.title}
+      intro="Plain-language policy for the BOND product. Have counsel review before production launch."
     >
       <Section>
-        <div className="max-w-3xl">
-          <CircleDollarSign size={24} className="text-primary" />
-          <p className="mt-6 text-lg leading-8 text-muted-foreground">{body}</p>
-          <h2 className="mt-12 text-xl font-semibold">Important boundary</h2>
-          <p className="mt-3 leading-7 text-muted-foreground">
-            Nothing on this site is an offer, solicitation, recommendation, custody service, broker
-            service, or assurance of availability. Network and vault details can change
-            independently of this demo.
-          </p>
+        <div className="max-w-3xl space-y-10">
+          {page.sections.map(([h, p]) => (
+            <article key={h}>
+              <h2 className="text-xl font-semibold">{h}</h2>
+              <p className="mt-3 leading-7 text-muted-foreground">{p}</p>
+            </article>
+          ))}
         </div>
       </Section>
     </PublicPage>
