@@ -166,15 +166,28 @@ export async function assertDepositFunding(
 }
 
 function stepToTx(step: TxStep): TransactionRequest {
-  const to = (step.to ?? step.contractAddress ?? step.target) as string | undefined;
-  const data = (step.data ?? step.calldata ?? step.input) as string | undefined;
+  // IXS MCP may flatten fields or nest them under `tx` (erc20_approve_exact / requestDeposit).
+  const nested = (step as { tx?: Record<string, unknown> }).tx;
+  const to = (step.to ??
+    step.contractAddress ??
+    step.target ??
+    nested?.to ??
+    nested?.contractAddress ??
+    nested?.target) as string | undefined;
+  const data = (step.data ??
+    step.calldata ??
+    step.input ??
+    nested?.data ??
+    nested?.calldata ??
+    nested?.input) as string | undefined;
+  const valueRaw = step.value ?? nested?.value;
   if (!to || !data) {
     throw new Error(`IXS step missing to/data: ${JSON.stringify(step)}`);
   }
   return {
     to: to as `0x${string}`,
     data: data as Hex,
-    value: step.value ? BigInt(String(step.value)) : 0n,
+    value: valueRaw ? BigInt(String(valueRaw)) : 0n,
   };
 }
 
