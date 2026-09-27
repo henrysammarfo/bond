@@ -20,6 +20,16 @@ What you get in practice: org workspaces with httpOnly sessions, mandate limits 
 
 How a judge walks it: open bond-pi.vercel.app, sign in, check the funded AgentKit wallet, create a mandate, run Scan, try Subscribe. If preflight is clean, you get a live deposit and a Pending status. If the vault is too thin or NAV is stale, you get a clear REJECT before gas is spent. That fail-closed behavior is intentional.
 
+We already ran the live BNB lane end to end. 104 USDC went on-chain. Status in the app is Pending. You can verify the subscribe hash on BscScan:
+
+https://bscscan.com/tx/0x227cb6a981c773f0e9a4ddb0942b4662f07c2a1453e678bbe2974e2c18d70f0c
+
+Approve:
+
+https://bscscan.com/tx/0x7680eaa08f91c39ffffc46d2bc990e3a7cc7a3cd7cae3bf761c24bfd84b8a29b
+
+Full proof sheet with bridge txs too: https://github.com/henrysammarfo/bond/blob/cursor/bond-demo-v2-0222/docs/memory/LIVE_PROOF.md
+
 ---
 
 ## Link to your project
@@ -34,9 +44,15 @@ https://github.com/henrysammarfo/bond
 
 https://bond-pi.vercel.app/evidence
 
-AgentKit signer (fund or verify): 0x1eFBb041E94aCc18D50C578eD34c265075d3b14e
+https://bond-pi.vercel.app/dashboard/subscriptions/a974083b-a637-41e1-9159-45491cf1ec08
 
-Demo videos (in repo): https://github.com/henrysammarfo/bond/tree/cursor/bond-demo-v2-0222/artifacts/demo
+https://bscscan.com/tx/0x227cb6a981c773f0e9a4ddb0942b4662f07c2a1453e678bbe2974e2c18d70f0c
+
+AgentKit signer: 0x1eFBb041E94aCc18D50C578eD34c265075d3b14e
+
+Demo videos: https://github.com/henrysammarfo/bond/tree/cursor/bond-demo-v2-0222/artifacts/demo
+
+Live proof: https://github.com/henrysammarfo/bond/blob/cursor/bond-demo-v2-0222/docs/memory/LIVE_PROOF.md
 
 ---
 
@@ -48,83 +64,69 @@ Optional quote/reply context: https://x.com/openservai/status/209951428253054175
 
 ---
 
-## X post (Blue Tick, long form)
+## X post (Blue Tick long form — engagement style)
 
-Attach the ledger video first, then 2 or 3 stills (wallet, scan ALLOCATE, evidence or preflight reject). Then post:
+Attach the finished live demo video first. Then stills: wallet, Pending, BscScan, Evidence. Hook in the first line. Proof links mid-thread energy. Tag @openservai.
 
 ```
 Most RWA demos flash a green check, invent a balance, and call it settled.
+
 Cute. Wrong.
 
-This is BOND, built for OpenServ Edition 01.
+This is BOND — built for @openservai Edition 01.
 
-SERV decides if the mandate is allowed.
-AgentKit signs a real USDC deposit on Avalanche, with BNB as the companion lane.
-IXS is async ERC-7540. Until the shares exist we say Pending. Not earning. Not owned.
+I got tired of agent-wallet demos that skip the hard part. So we shipped Path A for real.
 
-You get mandate limits, a live vault Scan that returns ALLOCATE / DEFER / REJECT, and a public Evidence page on Neon with SERV I/O, MCP probes, and on-chain reads with block numbers. Redacted. Refreshable. Fail closed before money moves.
+SERV reads the mandate and decides allow or deny.
+AgentKit signs a live USDC deposit.
+IXS is async ERC-7540 — USDC can land before shares exist.
+Until those shares prove out, BOND says Pending. Not earning. Not owned.
 
-Live floor is 104 USDC so a position stays redeemable after fees.
+That honesty is the product.
 
-Try it live:
-https://bond-pi.vercel.app
+What judges can poke today:
+• Live dual-chain vaults (Avalanche + BNB)
+• Mandate limits + Scan → ALLOCATE / DEFER / REJECT
+• Fail-closed preflight (redeemable floor 104 USDC, ≤25% TVL, NAV freshness)
+• Public Evidence on Neon — SERV I/O, MCP probes, on-chain reads with block numbers
+• httpOnly sessions. No localStorage cosplay. No invented TVL.
+
+We just ran the live BNB lane end to end.
+
+104 USDC. AgentKit signer. Status in-app: Pending.
+
+Verify the subscribe yourself:
+https://bscscan.com/tx/0x227cb6a981c773f0e9a4ddb0942b4662f07c2a1453e678bbe2974e2c18d70f0c
+
+Approve tx:
+https://bscscan.com/tx/0x7680eaa08f91c39ffffc46d2bc990e3a7cc7a3cd7cae3bf761c24bfd84b8a29b
+
+Subscription in the app:
+https://bond-pi.vercel.app/dashboard/subscriptions/a974083b-a637-41e1-9159-45491cf1ec08
 
 Evidence:
 https://bond-pi.vercel.app/evidence
 
-Code:
-https://github.com/henrysammarfo/bond
+Live demo:
+https://bond-pi.vercel.app
 
-AgentKit signer we funded for the demo:
+Code + full proof sheet (bridge + deposit hashes):
+https://github.com/henrysammarfo/bond
+https://github.com/henrysammarfo/bond/blob/cursor/bond-demo-v2-0222/docs/memory/LIVE_PROOF.md
+
+AgentKit address we funded:
 0x1eFBb041E94aCc18D50C578eD34c265075d3b14e
 
-Built with @openservai · AgentKit · Avalanche
+If your UI lies early, your treasury lies forever.
+BOND keeps Pending until proof.
+
+Built with @openservai · AgentKit · Avalanche · BNB Chain
 Settlement you can prove.
 ```
 
-Shorter alt if media eats the character budget:
-
-```
-BOND for @openservai Edition 01
-
-Live Path A. SERV decides. AgentKit signs. IXS stays Pending until shares prove.
-Evidence on Neon. No fake settled.
-
-https://bond-pi.vercel.app
-https://github.com/henrysammarfo/bond
-```
-
 ---
 
-## What “preflight REJECT on Avalanche” means (plain English)
+## Operator notes
 
-We tried a live 104 USDC subscribe on the Avalanche primary vault. Before AgentKit broadcasts anything, BOND runs deterministic preflight.
-
-That vault currently has about 403 USDC of total assets. Our rule is one leg may not be more than 25% of vault TVL. 25% of ~403 is about 101 USDC. Our live redeemable floor is 104 USDC. So 104 is already over the concentration cap. On top of that, on-chain maxDeposit was 0 and NAV looked stale, so the vault was not safely open for a new deposit.
-
-BOND rejected the subscribe in the UI with a clear message. No tx. No fake Pending. That is the product working.
-
-The BNB companion vault cleared the same preflight checks at 104 USDC. To finish a Pending money shot on that lane, the same AgentKit address needs at least 104 USDC plus a little BNB gas on BSC. Avalanche USDC does not count on BNB.
-
----
-
-## Videos and stills (viewable)
-
-Committed under `artifacts/demo/` on branch `cursor/bond-demo-v2-0222`:
-
-| File | What it is |
-| --- | --- |
-| `artifacts/demo/bond-openserv-v2-x.mp4` | Receipt ledger sizzle for the X attach |
-| `artifacts/demo/bond-live-path-a-demo-x.mp4` | Live product walk (home, vaults, login masked, evidence) |
-| `artifacts/demo/bond-live-subscribe-attempt-x.mp4` | Live subscribe attempt + preflight REJECT |
-| `artifacts/demo/demo-wallet-agentkit.png` | Funded wallet still |
-| `artifacts/demo/demo-scan-allocate.png` | Scan ALLOCATE still |
-| `artifacts/demo/demo-preflight-reject.png` | Fail-closed reject still |
-| `artifacts/demo/demo-evidence-final.png` | Evidence page still |
-
-Also mirrored on the agent box at `/opt/cursor/artifacts/` with the same names.
-
-## Demo login
-
-Email: demo@bond.app  
-Password: rotated after the live record. See `/opt/cursor/artifacts/DEMO_LOGIN_ROTATED.txt` on the agent machine. Never post it.
+Demo login rotated after recording — see agent artifact `DEMO_LOGIN_ROTATED.txt` (never post).
+Footage + VO Hyperframes project: `bond-demo-live/`
