@@ -13,7 +13,7 @@
 import { config } from "dotenv";
 import { CdpClient } from "@coinbase/cdp-sdk";
 
-config({ path: ".env.local" });
+config({ path: ".env.local", override: true });
 
 const ACCOUNT_NAME = process.env.CDP_IDEMPOTENCY_KEY || "bond-avalanche-primary";
 
