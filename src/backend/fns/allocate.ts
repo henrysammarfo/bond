@@ -63,7 +63,7 @@ export const simulateVaultDepositFn = createServerFn({ method: "POST" })
     });
   });
 
-/** Public evidence — no auth. */
+/** Public evidence — no auth. Durable on Neon. */
 export const getPublicEvidenceFn = createServerFn({ method: "GET" }).handler(async () => {
-  return getEvidenceBundle();
+  return await getEvidenceBundle();
 });

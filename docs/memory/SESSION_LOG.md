@@ -1,6 +1,17 @@
 # Session log
 
 
+## 2026-09-27 — Evidence on Neon (Tor stays off Neon)
+
+### Shipped
+- `evidence_entries` + `evidence_meta` tables; store writes/reads via Drizzle
+- Public `/evidence` survives Vercel cold starts; still redacts wallets/secrets
+- **Tor relay cannot run on Neon** (Postgres only — no SOCKS/Tor process). Keep Cloudflare tunnel / Cloud Run `Dockerfile.relay`
+
+### Note
+Evidence soft-fails on DB write so subscribe/scan remain primary paths.
+
+
 ## 2026-09-27 — Pre-merge audit + harden
 
 ### Fixed

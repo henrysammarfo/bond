@@ -32,6 +32,8 @@ Written for judges and operators. Every item below was hit live while shipping P
 
 **Serverless:** Vercel cannot run Tor. Use HTTPS Tor relay (`AGENTROUTER_RELAY_URL` + `AGENTROUTER_RELAY_SECRET`) — `scripts/agentrouter-relay.ts` / `Dockerfile.relay`. Client prefers relay when URL is set. `bun run smoke:llm:relay` → `smoke_llm_relay_ok`.
 
+**Neon cannot host Tor either** — Neon is Postgres. Evidence ring *does* persist on Neon (`evidence_entries` / `evidence_meta`). Tor stays on a compute host (tunnel / Cloud Run).
+
 ---
 
 ### 2. Bun / dotenv silently drops `DATABASE_URL` containing `&`

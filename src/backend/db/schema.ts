@@ -124,3 +124,26 @@ export const orgIntegrations = pgTable("org_integrations", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+/**
+ * Public evidence ring persisted on Neon (survives Vercel serverless cold starts).
+ * Payloads are redacted on read for /evidence.
+ */
+export const evidenceEntries = pgTable("evidence_entries", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  kind: text("kind").notNull(),
+  label: text("label").notNull(),
+  chainId: integer("chain_id"),
+  blockNumber: integer("block_number"),
+  request: jsonb("request").$type<unknown>(),
+  response: jsonb("response").$type<unknown>(),
+  ok: boolean("ok").notNull().default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Singleton-ish KV for last allocation scan payload (`key = last_scan`). */
+export const evidenceMeta = pgTable("evidence_meta", {
+  key: text("key").primaryKey(),
+  value: jsonb("value").$type<unknown>(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});

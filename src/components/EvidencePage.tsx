@@ -15,7 +15,7 @@ export function EvidencePage() {
     <PublicPage
       eyebrow="Evidence"
       title="Every fact behind a BOND decision."
-      intro="SERV inputs and outputs, IXS MCP probes, and on-chain reads with block numbers. Public, redacted, and ephemeral per server instance — no invented greens."
+      intro="SERV inputs and outputs, IXS MCP probes, and on-chain reads with block numbers. Public, redacted, and durable on Neon — no invented greens."
     >
       <Section>
         <div className="mb-8 flex flex-wrap items-center gap-3">
@@ -25,6 +25,11 @@ export function EvidencePage() {
           </Link>
           <p className="text-xs text-muted-foreground">
             Generated {q.data?.generatedAt ? new Date(q.data.generatedAt).toLocaleString() : "…"}
+            {q.data && "durable" in q.data && q.data.durable === "neon"
+              ? " · durable on Neon"
+              : q.data && "ephemeral" in q.data && q.data.ephemeral
+                ? " · ephemeral fallback"
+                : ""}
           </p>
         </div>
         <p className="mb-10 max-w-3xl text-sm leading-7 text-muted-foreground">

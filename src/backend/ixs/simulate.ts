@@ -82,7 +82,7 @@ export async function simulateDeposit(params: {
   }
 
   const ok = results.every((r) => r.ok);
-  recordEvidence({
+  await recordEvidence({
     kind: "simulate",
     label: `eth_call deposit · ${vault.name}`,
     chainId: vault.chainId,
