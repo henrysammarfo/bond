@@ -30,7 +30,7 @@ Written for judges and operators. Every item below was hit live while shipping P
 
 **Code:** `src/backend/llm/agentrouter.ts`, `scripts/tor-start.sh`, `bun run smoke:llm` → `smoke_llm_tor_ok`.
 
-**Flaw for serverless:** Vercel/CF Functions cannot run Tor. Mandate LLM on those hosts needs a relay or Tor-capable worker — documented in `AGENTROUTER_SETUP.md`.
+**Serverless:** Vercel cannot run Tor. Use HTTPS Tor relay (`AGENTROUTER_RELAY_URL` + `AGENTROUTER_RELAY_SECRET`) — `scripts/agentrouter-relay.ts` / `Dockerfile.relay`. Client prefers relay when URL is set. `bun run smoke:llm:relay` → `smoke_llm_relay_ok`.
 
 ---
 

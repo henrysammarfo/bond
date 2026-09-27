@@ -1,6 +1,12 @@
 /**
  * AgentRouter client for BOND.
- * Cloud IPs often get Aliyun WAF HTML unless AGENTROUTER_USE_TOR=1.
+ * Cloud IPs often get Aliyun WAF HTML unless traffic exits via Tor.
+ *
+ * Paths (first match wins):
+ * 1. AGENTROUTER_RELAY_URL set → HTTPS to Tor relay (Vercel / serverless)
+ * 2. AGENTROUTER_USE_TOR=1 → local SOCKS (127.0.0.1:9050)
+ * 3. else direct fetch (often WAF-blocked on cloud egress)
+ *
  * Prefer https://agentrouter.org/v1 + stainless/QwenCode headers + deepseek-v4-flash.
  */
 import * as https from "node:https";
@@ -27,6 +33,18 @@ function torSocks(): string {
   return process.env.AGENTROUTER_TOR_SOCKS ?? "socks5h://127.0.0.1:9050";
 }
 
+/** Public HTTPS Tor relay (serverless-safe). No trailing slash. */
+function relayUrl(): string | null {
+  const raw = process.env.AGENTROUTER_RELAY_URL?.trim();
+  if (!raw) return null;
+  return raw.replace(/\/$/, "");
+}
+
+function relaySecret(): string | null {
+  const s = process.env.AGENTROUTER_RELAY_SECRET?.trim();
+  return s || null;
+}
+
 export function stainlessHeaders(apiKey: string): Record<string, string> {
   return {
     Authorization: `Bearer ${apiKey}`,
@@ -47,7 +65,7 @@ function assertJsonBody(text: string, context: string): unknown {
   const trimmed = text.trim();
   if (trimmed.startsWith("<!") || trimmed.toLowerCase().includes("aliyun_waf")) {
     throw new Error(
-      `AgentRouter WAF_BLOCKED (${context}). Direct cloud IP hit captcha HTML. Set AGENTROUTER_USE_TOR=1 and run bun run tor:start.`,
+      `AgentRouter WAF_BLOCKED (${context}). Direct cloud IP hit captcha HTML. Set AGENTROUTER_RELAY_URL (serverless) or AGENTROUTER_USE_TOR=1 + bun run tor:start.`,
     );
   }
   try {
@@ -55,6 +73,33 @@ function assertJsonBody(text: string, context: string): unknown {
   } catch {
     throw new Error(`AgentRouter returned non-JSON (${context}): ${trimmed.slice(0, 180)}`);
   }
+}
+
+async function postViaRelay(path: string, body: unknown, apiKeyOverride?: string): Promise<unknown> {
+  const base = relayUrl();
+  const secret = relaySecret();
+  if (!base || !secret) {
+    throw new Error("AGENTROUTER_RELAY_URL and AGENTROUTER_RELAY_SECRET are required for relay mode.");
+  }
+  const apiKey = requireKey(apiKeyOverride);
+  // Relay mirrors AgentRouter paths under /v1/* (e.g. /v1/chat/completions).
+  const relayPath = path.startsWith("/v1/")
+    ? path
+    : path.startsWith("http")
+      ? path
+      : `/v1${path.startsWith("/") ? path : `/${path}`}`;
+  const url = relayPath.startsWith("http") ? relayPath : `${base}${relayPath}`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      ...stainlessHeaders(apiKey),
+      "x-bond-relay-secret": secret,
+    },
+    body: JSON.stringify(body),
+  });
+  const text = await res.text();
+  if (!res.ok) throw new Error(`AgentRouter relay ${res.status}: ${text.slice(0, 300)}`);
+  return assertJsonBody(text, "relay");
 }
 
 async function postViaTor(path: string, body: unknown, apiKeyOverride?: string): Promise<unknown> {
@@ -112,6 +157,16 @@ async function postDirect(path: string, body: unknown, apiKeyOverride?: string):
   return assertJsonBody(text, "direct");
 }
 
+async function postChat(path: string, body: unknown, apiKeyOverride?: string): Promise<unknown> {
+  if (relayUrl()) {
+    return postViaRelay(path, body, apiKeyOverride);
+  }
+  if (useTor()) {
+    return postViaTor(path, body, apiKeyOverride);
+  }
+  return postDirect(path, body, apiKeyOverride);
+}
+
 export async function agentRouterChat(
   messages: Array<{ role: string; content: string }>,
   opts?: {
@@ -130,9 +185,7 @@ export async function agentRouterChat(
   if (opts?.responseFormat === "json_object") {
     body.response_format = { type: "json_object" };
   }
-  const data = (await (useTor()
-    ? postViaTor("/chat/completions", body, opts?.apiKey)
-    : postDirect("/chat/completions", body, opts?.apiKey))) as {
+  const data = (await postChat("/chat/completions", body, opts?.apiKey)) as {
     choices?: Array<{ message?: { content?: string } }>;
   };
   const content = data.choices?.[0]?.message?.content;

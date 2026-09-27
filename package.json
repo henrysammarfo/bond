@@ -16,7 +16,9 @@
     "db:generate": "drizzle-kit generate",
     "e2e:deposit": "bun run scripts/live-deposit-e2e.ts",
     "tor:start": "bash scripts/tor-start.sh",
+    "relay:agentrouter": "bash scripts/tor-start.sh && bun run scripts/agentrouter-relay.ts",
     "smoke:llm": "bash scripts/tor-start.sh && bun run scripts/smoke-llm-tor.ts",
+    "smoke:llm:relay": "bun run scripts/smoke-llm-relay.ts",
     "cdp:export": "bun run scripts/cdp-export-wallet.ts",
     "smoke:stack": "bun run test:all && bun run build"
   },

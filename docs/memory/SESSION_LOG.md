@@ -1,11 +1,24 @@
 # Session log
 
 
+## 2026-09-27 — AgentRouter Tor on Vercel (HTTPS relay)
+
+### Shipped
+- `AGENTROUTER_RELAY_URL` + `AGENTROUTER_RELAY_SECRET` client path in `agentrouter.ts` (serverless-safe)
+- `scripts/agentrouter-relay.ts` — authenticated HTTPS → Tor SOCKS → `agentrouter.org`
+- `Dockerfile.relay` for durable Cloud Run later
+- Live tunnel relay for deadline: Cloudflare Quick Tunnel in front of Tor on the agent host
+- Vercel Production: `AGENTROUTER_USE_TOR=1` + relay URL/secret; smoke `smoke_llm_relay_ok`
+
+### Note
+Quick Tunnel URL is ephemeral — keep relay+tunnel up through judging, then move to Cloud Run (`Dockerfile.relay`) for permanence.
+
+
 ## 2026-09-27 — Vercel production live
 
 ### Shipped
 - Linked Vercel project `teamtitanlink/bond` → GitHub `henrysammarfo/bond`
-- Production env synced (25 secrets); `AGENTROUTER_USE_TOR=0` on Vercel (no SOCKS — OpenServ is primary SERV path)
+- Production env synced; **Tor ON via HTTPS relay** (`AGENTROUTER_USE_TOR=1` + `AGENTROUTER_RELAY_URL`)
 - SSO deployment protection disabled for public judging
 - **Production URL:** https://bond-pi.vercel.app (`/`, `/vaults`, `/evidence`, `/login` → 200)
 
@@ -16,8 +29,8 @@
 4. **Rotate** chat-pasted secrets (Vercel token, Neon, CDP, OpenServ, AgentRouter, etc.) after submission
 
 ### Notes
-- AgentRouter failover on Vercel may hit Aliyun WAF without Tor; OpenServ path must stay healthy
-- Do not commit `.env.local` / Vercel token
+- Keep Tor relay + Cloudflare tunnel up through judging (or move to Cloud Run `Dockerfile.relay`)
+- Do not commit `.env.local` / Vercel token / relay secret
 
 
 ## 2026-09-27 — Preflight + evidence (beat simulated-only allocators)
