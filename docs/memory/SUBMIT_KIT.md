@@ -1,6 +1,12 @@
 # OpenServ Edition 01 — BOND submission kit
 
+<p align="center">
+  <img src="../brand/bond-logotype-orbit-wordmark.png" width="220" alt="BOND" />
+</p>
+
 Copy these into the form. Speak like a person, not a pitch deck.
+
+**Logotype upload (form Q6):** use [`docs/brand/bond-logotype-social.png`](../brand/bond-logotype-social.png) (1024×1024) or [`docs/brand/bond-symbol-orbit-1080.png`](../brand/bond-symbol-orbit-1080.png).
 
 ---
 
@@ -28,7 +34,7 @@ Approve:
 
 https://bscscan.com/tx/0x7680eaa08f91c39ffffc46d2bc990e3a7cc7a3cd7cae3bf761c24bfd84b8a29b
 
-Full proof sheet with bridge txs too: https://github.com/henrysammarfo/bond/blob/cursor/bond-demo-v2-0222/docs/memory/LIVE_PROOF.md
+Full proof sheet with bridge txs too: https://github.com/henrysammarfo/bond/blob/main/docs/memory/LIVE_PROOF.md
 
 ---
 
@@ -50,9 +56,11 @@ https://bscscan.com/tx/0x227cb6a981c773f0e9a4ddb0942b4662f07c2a1453e678bbe2974e2
 
 AgentKit signer: 0x1eFBb041E94aCc18D50C578eD34c265075d3b14e
 
-Demo videos: https://github.com/henrysammarfo/bond/tree/cursor/bond-demo-v2-0222/artifacts/demo
+Demo videos: https://github.com/henrysammarfo/bond/tree/main/artifacts/demo
 
-Live proof: https://github.com/henrysammarfo/bond/blob/cursor/bond-demo-v2-0222/docs/memory/LIVE_PROOF.md
+Live proof: https://github.com/henrysammarfo/bond/blob/main/docs/memory/LIVE_PROOF.md
+
+Brand / logo: https://github.com/henrysammarfo/bond/tree/main/docs/brand
 
 ---
 
@@ -112,7 +120,7 @@ https://bond-pi.vercel.app
 
 Code + full proof sheet (bridge + deposit hashes):
 https://github.com/henrysammarfo/bond
-https://github.com/henrysammarfo/bond/blob/cursor/bond-demo-v2-0222/docs/memory/LIVE_PROOF.md
+https://github.com/henrysammarfo/bond/blob/main/docs/memory/LIVE_PROOF.md
 
 AgentKit address we funded:
 0x1eFBb041E94aCc18D50C578eD34c265075d3b14e
@@ -141,6 +149,16 @@ Before SERV my agent could look smart and still move money dumb. With SERV it ha
 If you're building agents without SERV you're shipping vibes with a private key attached.
 
 Without SERV my agent would still be cosplaying settlement — green checks, no proof, no receipts.
+
+---
+
+## Form Q6 — logotype
+
+Upload one of:
+
+- [`docs/brand/bond-logotype-social.png`](../brand/bond-logotype-social.png) — 1024×1024 cream-on-forest
+- [`docs/brand/bond-symbol-orbit-1080.png`](../brand/bond-symbol-orbit-1080.png) — orbit symbol
+- [`docs/brand/bond-logotype.svg`](../brand/bond-logotype.svg) — vector wordmark
 
 ---
 

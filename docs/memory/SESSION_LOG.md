@@ -133,3 +133,15 @@ BOND still does **live AgentKit deposits** with Pending honesty. Simulated-only 
 - Live capture: login (masked) → Wallet 105 USDC → mandate → Scan ALLOCATE (BNB) → Avalanche subscribe attempt → **preflight REJECT** (concentration / NAV) — fail-closed money shot.
 - Hyperframes V2 ledger video SHIP; artifacts under `/opt/cursor/artifacts/`.
 - `demo@bond.app` password rotated; provisioner requires `DEMO_PASSWORD` env (no hardcoded secret).
+
+
+## 2026-09-27 — Live BNB Path A + synced demo + brand docs
+
+### Shipped
+- Bridged Avalanche USDC → BSC via LI.FI; live IXS subscribe **104 USDC** on BNB vault `6a26624ca7d16b245d665475`
+- Approve `0x7680eaa0…` + requestDeposit `0x227cb6a9…` on BscScan; subscription `a974083b-…` **Pending**
+- Nested MCP `tx.to`/`tx.data` unwrap so AgentKit signs real approve/deposit calls
+- Synced Liam VO Hyperframes cut: `artifacts/demo/bond-live-path-a-synced-x.mp4` + stills
+- OpenServ form Q5 SERV blanks + Q6 cream-on-forest logotypes in `docs/brand/`
+- README + memory MDs: logos render via relative PNG paths; mermaid diagrams scrubbed for GitHub (no middle-dots / slash-heavy labels)
+- `SUBMIT_KIT.md` / `LIVE_PROOF.md` / `WIN_CHECKLIST.md` point at `main` artifact paths after merge

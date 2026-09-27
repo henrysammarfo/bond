@@ -1,5 +1,9 @@
 # Live Path A proof — OpenServ Edition 01
 
+<p align="center">
+  <img src="../brand/bond-symbol-orbit-1080.png" width="120" alt="BOND symbol" />
+</p>
+
 Verified on-chain. Refresh the explorer links anytime.
 
 ## AgentKit signer
@@ -7,6 +11,17 @@ Verified on-chain. Refresh the explorer links anytime.
 `0x1eFBb041E94aCc18D50C578eD34c265075d3b14e`
 
 Same EVM address on Avalanche and BNB Chain.
+
+## Flow
+
+```mermaid
+flowchart LR
+  Fund["Fund AgentKit"] --> Bridge["LI.FI Avalanche to BSC"]
+  Bridge --> Approve["Approve USDC"]
+  Approve --> Deposit["requestDeposit"]
+  Deposit --> Pending["BOND Pending"]
+  Pending --> Evidence["Public evidence"]
+```
 
 ## Bridge Avalanche USDC → BNB Chain (LI.FI)
 
@@ -37,9 +52,31 @@ App: https://bond-pi.vercel.app/dashboard/subscriptions/a974083b-a637-41e1-9159-
 SERV: allow (source `serv`)  
 Preflight: **allocate**
 
+```mermaid
+sequenceDiagram
+  participant W as AgentKit
+  participant L as LI.FI
+  participant V as IXS BNB vault
+  participant App as BOND
+  W->>L: Bridge USDC Avalanche to BSC
+  L-->>W: BSC USDC + gas
+  W->>V: Approve USDC
+  W->>V: requestDeposit 104 USDC
+  V-->>App: Tx confirmed
+  App-->>App: Status Pending
+```
+
 ## Public evidence
 
 https://bond-pi.vercel.app/evidence
+
+## Demo media
+
+| Asset | Path |
+| --- | --- |
+| Synced live VO cut | [`artifacts/demo/bond-live-path-a-synced-x.mp4`](../../artifacts/demo/bond-live-path-a-synced-x.mp4) |
+| Stills (home → Pending → BscScan) | [`artifacts/demo/`](../../artifacts/demo/) |
+| Brand / Q6 logos | [`docs/brand/`](../brand/) |
 
 ## Why Avalanche primary was REJECT earlier
 

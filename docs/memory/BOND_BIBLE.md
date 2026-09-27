@@ -1,5 +1,9 @@
 # BOND — SERV Edition 01 (second team)
 
+<p align="center">
+  <img src="../brand/bond-symbol-orbit-1080.png" width="96" alt="BOND" />
+</p>
+
 Source: uploaded Bible (word-for-word). Live corrections below are labeled.
 
 Henry submits **PROOF** on AgentKit. This team submits **BOND** on **RWA Vaults**. One submission wins one track. The wallet and SERV are in the demo so the overall prize can see them. They do not create a second track prize. Submit **28 Sep 2026 00:00 UTC**.
