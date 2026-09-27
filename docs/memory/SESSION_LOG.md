@@ -1,6 +1,25 @@
 # Session log
 
 
+## 2026-09-27 — Vercel production live
+
+### Shipped
+- Linked Vercel project `teamtitanlink/bond` → GitHub `henrysammarfo/bond`
+- Production env synced (25 secrets); `AGENTROUTER_USE_TOR=0` on Vercel (no SOCKS — OpenServ is primary SERV path)
+- SSO deployment protection disabled for public judging
+- **Production URL:** https://bond-pi.vercel.app (`/`, `/vaults`, `/evidence`, `/login` → 200)
+
+### Still needed for live win
+1. **Fund** platform AgentKit `0x1eFBb041E94aCc18D50C578eD34c265075d3b14e` with **≥104 USDC** (`0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E`) + **AVAX gas** (wallet currently 0/0)
+2. Register → Scan → Subscribe → capture Pending + Snowscan txs → fill WIN_CHECKLIST
+3. X post + @openservai + OpenServ form before **28 Sep 2026 00:00 UTC**
+4. **Rotate** chat-pasted secrets (Vercel token, Neon, CDP, OpenServ, AgentRouter, etc.) after submission
+
+### Notes
+- AgentRouter failover on Vercel may hit Aliyun WAF without Tor; OpenServ path must stay healthy
+- Do not commit `.env.local` / Vercel token
+
+
 ## 2026-09-27 — Preflight + evidence (beat simulated-only allocators)
 
 ### Shipped

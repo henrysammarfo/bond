@@ -6,7 +6,7 @@
 - [ ] Live deposit tx hash(es) recorded below
 - [ ] UI shows **Pending** (not earning) after requestDeposit
 - [ ] Shares shown only after live position proof
-- [ ] Public demo URL live
+- [x] Public demo URL live — https://bond-pi.vercel.app
 - [ ] X post + @openservai + form submitted before 28 Sep 2026 00:00 UTC
 - [ ] No invented TVL / balances in screenshots
 
@@ -20,5 +20,5 @@
 | RequestDeposit tx | |
 | Claim tx (if any) | |
 | Share balance source | IXS positions API / explorer |
-| Demo URL | |
+| Demo URL | https://bond-pi.vercel.app |
 | X post URL | |
