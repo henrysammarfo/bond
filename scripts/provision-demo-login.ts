@@ -6,10 +6,15 @@ import { users, orgs, memberships } from "../src/backend/db/schema.ts";
 import { hashPassword } from "../src/backend/auth/password.ts";
 import { ensureOrgAgentWallet } from "../src/backend/org/integrations.ts";
 
-const email = "demo@bond.app";
-const password = "BondLive104!";
-const displayName = "OpenServ Judge";
-const orgName = "OpenServ Demo Treasury";
+const email = process.env.DEMO_EMAIL || "demo@bond.app";
+const password = process.env.DEMO_PASSWORD || "BondLive104!";
+const displayName = process.env.DEMO_DISPLAY_NAME || "OpenServ Judge";
+const orgName = process.env.DEMO_ORG_NAME || "OpenServ Demo Treasury";
+
+if (!process.env.DEMO_PASSWORD) {
+  console.warn("DEMO_PASSWORD unset — using legacy default (rotate after demos).");
+}
+
 
 const db = getDb();
 const existing = await db.select().from(users).where(eq(users.email, email)).limit(1);
