@@ -8,3 +8,7 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+## Project architecture
+
+- Public pages use shared `SiteHeader`/`SiteFooter`; dashboard pages live under the `/dashboard` layout with local demo state, because the product is an explicitly non-transactional interactive demo.

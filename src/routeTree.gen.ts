@@ -10,33 +10,338 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AboutRouteImport } from './routes/about'
+import { Route as BlogRouteImport } from './routes/blog'
+import { Route as ComplianceRouteImport } from './routes/compliance'
+import { Route as ContactRouteImport } from './routes/contact'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as DocsRouteImport } from './routes/docs'
+import { Route as HowItWorksRouteImport } from './routes/how-it-works'
+import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as ProductRouteImport } from './routes/product'
+import { Route as RiskDisclosureRouteImport } from './routes/risk-disclosure'
+import { Route as SecurityRouteImport } from './routes/security'
+import { Route as TermsRouteImport } from './routes/terms'
+import { Route as VaultsRouteImport } from './routes/vaults'
+import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
+import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
+import { Route as DashboardActivityRouteImport } from './routes/dashboard.activity'
+import { Route as DashboardMandatesRouteImport } from './routes/dashboard.mandates'
+import { Route as DashboardSettingsRouteImport } from './routes/dashboard.settings'
+import { Route as DashboardSubscriptionsRouteImport } from './routes/dashboard.subscriptions'
+import { Route as DashboardVaultsRouteImport } from './routes/dashboard.vaults'
+import { Route as DashboardWalletRouteImport } from './routes/dashboard.wallet'
+import { Route as DashboardSubscriptionsSubscriptionIdRouteImport } from './routes/dashboard.subscriptions.$subscriptionId'
+import { Route as DashboardVaultsVaultIdRouteImport } from './routes/dashboard.vaults.$vaultId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogRoute = BlogRouteImport.update({
+  id: '/blog',
+  path: '/blog',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ComplianceRoute = ComplianceRouteImport.update({
+  id: '/compliance',
+  path: '/compliance',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocsRoute = DocsRouteImport.update({
+  id: '/docs',
+  path: '/docs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HowItWorksRoute = HowItWorksRouteImport.update({
+  id: '/how-it-works',
+  path: '/how-it-works',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProductRoute = ProductRouteImport.update({
+  id: '/product',
+  path: '/product',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RiskDisclosureRoute = RiskDisclosureRouteImport.update({
+  id: '/risk-disclosure',
+  path: '/risk-disclosure',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SecurityRoute = SecurityRouteImport.update({
+  id: '/security',
+  path: '/security',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VaultsRoute = VaultsRouteImport.update({
+  id: '/vaults',
+  path: '/vaults',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogSlugRoute = BlogSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => BlogRoute,
+} as any)
+const DashboardIndexRoute = DashboardIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardActivityRoute = DashboardActivityRouteImport.update({
+  id: '/activity',
+  path: '/activity',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardMandatesRoute = DashboardMandatesRouteImport.update({
+  id: '/mandates',
+  path: '/mandates',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardSettingsRoute = DashboardSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardSubscriptionsRoute = DashboardSubscriptionsRouteImport.update({
+  id: '/subscriptions',
+  path: '/subscriptions',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardVaultsRoute = DashboardVaultsRouteImport.update({
+  id: '/vaults',
+  path: '/vaults',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardWalletRoute = DashboardWalletRouteImport.update({
+  id: '/wallet',
+  path: '/wallet',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardSubscriptionsSubscriptionIdRoute =
+  DashboardSubscriptionsSubscriptionIdRouteImport.update({
+    id: '/$subscriptionId',
+    path: '/$subscriptionId',
+    getParentRoute: () => DashboardSubscriptionsRoute,
+  } as any)
+const DashboardVaultsVaultIdRoute = DashboardVaultsVaultIdRouteImport.update({
+  id: '/$vaultId',
+  path: '/$vaultId',
+  getParentRoute: () => DashboardVaultsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/blog': typeof BlogRouteWithChildren
+  '/compliance': typeof ComplianceRoute
+  '/contact': typeof ContactRoute
+  '/dashboard': typeof DashboardRouteWithChildren
+  '/docs': typeof DocsRoute
+  '/how-it-works': typeof HowItWorksRoute
+  '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
+  '/product': typeof ProductRoute
+  '/risk-disclosure': typeof RiskDisclosureRoute
+  '/security': typeof SecurityRoute
+  '/terms': typeof TermsRoute
+  '/vaults': typeof VaultsRoute
+  '/blog/$slug': typeof BlogSlugRoute
+  '/dashboard/activity': typeof DashboardActivityRoute
+  '/dashboard/mandates': typeof DashboardMandatesRoute
+  '/dashboard/settings': typeof DashboardSettingsRoute
+  '/dashboard/subscriptions': typeof DashboardSubscriptionsRouteWithChildren
+  '/dashboard/vaults': typeof DashboardVaultsRouteWithChildren
+  '/dashboard/wallet': typeof DashboardWalletRoute
+  '/dashboard/': typeof DashboardIndexRoute
+  '/dashboard/subscriptions/$subscriptionId': typeof DashboardSubscriptionsSubscriptionIdRoute
+  '/dashboard/vaults/$vaultId': typeof DashboardVaultsVaultIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/blog': typeof BlogRouteWithChildren
+  '/compliance': typeof ComplianceRoute
+  '/contact': typeof ContactRoute
+  '/docs': typeof DocsRoute
+  '/how-it-works': typeof HowItWorksRoute
+  '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
+  '/product': typeof ProductRoute
+  '/risk-disclosure': typeof RiskDisclosureRoute
+  '/security': typeof SecurityRoute
+  '/terms': typeof TermsRoute
+  '/vaults': typeof VaultsRoute
+  '/blog/$slug': typeof BlogSlugRoute
+  '/dashboard/activity': typeof DashboardActivityRoute
+  '/dashboard/mandates': typeof DashboardMandatesRoute
+  '/dashboard/settings': typeof DashboardSettingsRoute
+  '/dashboard/subscriptions': typeof DashboardSubscriptionsRouteWithChildren
+  '/dashboard/vaults': typeof DashboardVaultsRouteWithChildren
+  '/dashboard/wallet': typeof DashboardWalletRoute
+  '/dashboard': typeof DashboardIndexRoute
+  '/dashboard/subscriptions/$subscriptionId': typeof DashboardSubscriptionsSubscriptionIdRoute
+  '/dashboard/vaults/$vaultId': typeof DashboardVaultsVaultIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/blog': typeof BlogRouteWithChildren
+  '/compliance': typeof ComplianceRoute
+  '/contact': typeof ContactRoute
+  '/dashboard': typeof DashboardRouteWithChildren
+  '/docs': typeof DocsRoute
+  '/how-it-works': typeof HowItWorksRoute
+  '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
+  '/product': typeof ProductRoute
+  '/risk-disclosure': typeof RiskDisclosureRoute
+  '/security': typeof SecurityRoute
+  '/terms': typeof TermsRoute
+  '/vaults': typeof VaultsRoute
+  '/blog/$slug': typeof BlogSlugRoute
+  '/dashboard/activity': typeof DashboardActivityRoute
+  '/dashboard/mandates': typeof DashboardMandatesRoute
+  '/dashboard/settings': typeof DashboardSettingsRoute
+  '/dashboard/subscriptions': typeof DashboardSubscriptionsRouteWithChildren
+  '/dashboard/vaults': typeof DashboardVaultsRouteWithChildren
+  '/dashboard/wallet': typeof DashboardWalletRoute
+  '/dashboard/': typeof DashboardIndexRoute
+  '/dashboard/subscriptions/$subscriptionId': typeof DashboardSubscriptionsSubscriptionIdRoute
+  '/dashboard/vaults/$vaultId': typeof DashboardVaultsVaultIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/about'
+    | '/blog'
+    | '/compliance'
+    | '/contact'
+    | '/dashboard'
+    | '/docs'
+    | '/how-it-works'
+    | '/pricing'
+    | '/privacy'
+    | '/product'
+    | '/risk-disclosure'
+    | '/security'
+    | '/terms'
+    | '/vaults'
+    | '/blog/$slug'
+    | '/dashboard/activity'
+    | '/dashboard/mandates'
+    | '/dashboard/settings'
+    | '/dashboard/subscriptions'
+    | '/dashboard/vaults'
+    | '/dashboard/wallet'
+    | '/dashboard/'
+    | '/dashboard/subscriptions/$subscriptionId'
+    | '/dashboard/vaults/$vaultId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/about'
+    | '/blog'
+    | '/compliance'
+    | '/contact'
+    | '/docs'
+    | '/how-it-works'
+    | '/pricing'
+    | '/privacy'
+    | '/product'
+    | '/risk-disclosure'
+    | '/security'
+    | '/terms'
+    | '/vaults'
+    | '/blog/$slug'
+    | '/dashboard/activity'
+    | '/dashboard/mandates'
+    | '/dashboard/settings'
+    | '/dashboard/subscriptions'
+    | '/dashboard/vaults'
+    | '/dashboard/wallet'
+    | '/dashboard'
+    | '/dashboard/subscriptions/$subscriptionId'
+    | '/dashboard/vaults/$vaultId'
+  id:
+    | '__root__'
+    | '/'
+    | '/about'
+    | '/blog'
+    | '/compliance'
+    | '/contact'
+    | '/dashboard'
+    | '/docs'
+    | '/how-it-works'
+    | '/pricing'
+    | '/privacy'
+    | '/product'
+    | '/risk-disclosure'
+    | '/security'
+    | '/terms'
+    | '/vaults'
+    | '/blog/$slug'
+    | '/dashboard/activity'
+    | '/dashboard/mandates'
+    | '/dashboard/settings'
+    | '/dashboard/subscriptions'
+    | '/dashboard/vaults'
+    | '/dashboard/wallet'
+    | '/dashboard/'
+    | '/dashboard/subscriptions/$subscriptionId'
+    | '/dashboard/vaults/$vaultId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AboutRoute: typeof AboutRoute
+  BlogRoute: typeof BlogRouteWithChildren
+  ComplianceRoute: typeof ComplianceRoute
+  ContactRoute: typeof ContactRoute
+  DashboardRoute: typeof DashboardRouteWithChildren
+  DocsRoute: typeof DocsRoute
+  HowItWorksRoute: typeof HowItWorksRoute
+  PricingRoute: typeof PricingRoute
+  PrivacyRoute: typeof PrivacyRoute
+  ProductRoute: typeof ProductRoute
+  RiskDisclosureRoute: typeof RiskDisclosureRoute
+  SecurityRoute: typeof SecurityRoute
+  TermsRoute: typeof TermsRoute
+  VaultsRoute: typeof VaultsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +353,254 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog': {
+      id: '/blog'
+      path: '/blog'
+      fullPath: '/blog'
+      preLoaderRoute: typeof BlogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/compliance': {
+      id: '/compliance'
+      path: '/compliance'
+      fullPath: '/compliance'
+      preLoaderRoute: typeof ComplianceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/docs': {
+      id: '/docs'
+      path: '/docs'
+      fullPath: '/docs'
+      preLoaderRoute: typeof DocsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/how-it-works': {
+      id: '/how-it-works'
+      path: '/how-it-works'
+      fullPath: '/how-it-works'
+      preLoaderRoute: typeof HowItWorksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/product': {
+      id: '/product'
+      path: '/product'
+      fullPath: '/product'
+      preLoaderRoute: typeof ProductRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/risk-disclosure': {
+      id: '/risk-disclosure'
+      path: '/risk-disclosure'
+      fullPath: '/risk-disclosure'
+      preLoaderRoute: typeof RiskDisclosureRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/security': {
+      id: '/security'
+      path: '/security'
+      fullPath: '/security'
+      preLoaderRoute: typeof SecurityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/vaults': {
+      id: '/vaults'
+      path: '/vaults'
+      fullPath: '/vaults'
+      preLoaderRoute: typeof VaultsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog/$slug': {
+      id: '/blog/$slug'
+      path: '/$slug'
+      fullPath: '/blog/$slug'
+      preLoaderRoute: typeof BlogSlugRouteImport
+      parentRoute: typeof BlogRoute
+    }
+    '/dashboard/': {
+      id: '/dashboard/'
+      path: '/'
+      fullPath: '/dashboard/'
+      preLoaderRoute: typeof DashboardIndexRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/activity': {
+      id: '/dashboard/activity'
+      path: '/activity'
+      fullPath: '/dashboard/activity'
+      preLoaderRoute: typeof DashboardActivityRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/mandates': {
+      id: '/dashboard/mandates'
+      path: '/mandates'
+      fullPath: '/dashboard/mandates'
+      preLoaderRoute: typeof DashboardMandatesRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/settings': {
+      id: '/dashboard/settings'
+      path: '/settings'
+      fullPath: '/dashboard/settings'
+      preLoaderRoute: typeof DashboardSettingsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/subscriptions': {
+      id: '/dashboard/subscriptions'
+      path: '/subscriptions'
+      fullPath: '/dashboard/subscriptions'
+      preLoaderRoute: typeof DashboardSubscriptionsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/vaults': {
+      id: '/dashboard/vaults'
+      path: '/vaults'
+      fullPath: '/dashboard/vaults'
+      preLoaderRoute: typeof DashboardVaultsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/wallet': {
+      id: '/dashboard/wallet'
+      path: '/wallet'
+      fullPath: '/dashboard/wallet'
+      preLoaderRoute: typeof DashboardWalletRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/subscriptions/$subscriptionId': {
+      id: '/dashboard/subscriptions/$subscriptionId'
+      path: '/$subscriptionId'
+      fullPath: '/dashboard/subscriptions/$subscriptionId'
+      preLoaderRoute: typeof DashboardSubscriptionsSubscriptionIdRouteImport
+      parentRoute: typeof DashboardSubscriptionsRoute
+    }
+    '/dashboard/vaults/$vaultId': {
+      id: '/dashboard/vaults/$vaultId'
+      path: '/$vaultId'
+      fullPath: '/dashboard/vaults/$vaultId'
+      preLoaderRoute: typeof DashboardVaultsVaultIdRouteImport
+      parentRoute: typeof DashboardVaultsRoute
+    }
   }
 }
 
+interface BlogRouteChildren {
+  BlogSlugRoute: typeof BlogSlugRoute
+}
+
+const BlogRouteChildren: BlogRouteChildren = {
+  BlogSlugRoute: BlogSlugRoute,
+}
+
+const BlogRouteWithChildren = BlogRoute._addFileChildren(BlogRouteChildren)
+
+interface DashboardSubscriptionsRouteChildren {
+  DashboardSubscriptionsSubscriptionIdRoute: typeof DashboardSubscriptionsSubscriptionIdRoute
+}
+
+const DashboardSubscriptionsRouteChildren: DashboardSubscriptionsRouteChildren =
+  {
+    DashboardSubscriptionsSubscriptionIdRoute:
+      DashboardSubscriptionsSubscriptionIdRoute,
+  }
+
+const DashboardSubscriptionsRouteWithChildren =
+  DashboardSubscriptionsRoute._addFileChildren(
+    DashboardSubscriptionsRouteChildren,
+  )
+
+interface DashboardVaultsRouteChildren {
+  DashboardVaultsVaultIdRoute: typeof DashboardVaultsVaultIdRoute
+}
+
+const DashboardVaultsRouteChildren: DashboardVaultsRouteChildren = {
+  DashboardVaultsVaultIdRoute: DashboardVaultsVaultIdRoute,
+}
+
+const DashboardVaultsRouteWithChildren = DashboardVaultsRoute._addFileChildren(
+  DashboardVaultsRouteChildren,
+)
+
+interface DashboardRouteChildren {
+  DashboardActivityRoute: typeof DashboardActivityRoute
+  DashboardMandatesRoute: typeof DashboardMandatesRoute
+  DashboardSettingsRoute: typeof DashboardSettingsRoute
+  DashboardSubscriptionsRoute: typeof DashboardSubscriptionsRouteWithChildren
+  DashboardVaultsRoute: typeof DashboardVaultsRouteWithChildren
+  DashboardWalletRoute: typeof DashboardWalletRoute
+  DashboardIndexRoute: typeof DashboardIndexRoute
+}
+
+const DashboardRouteChildren: DashboardRouteChildren = {
+  DashboardActivityRoute: DashboardActivityRoute,
+  DashboardMandatesRoute: DashboardMandatesRoute,
+  DashboardSettingsRoute: DashboardSettingsRoute,
+  DashboardSubscriptionsRoute: DashboardSubscriptionsRouteWithChildren,
+  DashboardVaultsRoute: DashboardVaultsRouteWithChildren,
+  DashboardWalletRoute: DashboardWalletRoute,
+  DashboardIndexRoute: DashboardIndexRoute,
+}
+
+const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
+  DashboardRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AboutRoute: AboutRoute,
+  BlogRoute: BlogRouteWithChildren,
+  ComplianceRoute: ComplianceRoute,
+  ContactRoute: ContactRoute,
+  DashboardRoute: DashboardRouteWithChildren,
+  DocsRoute: DocsRoute,
+  HowItWorksRoute: HowItWorksRoute,
+  PricingRoute: PricingRoute,
+  PrivacyRoute: PrivacyRoute,
+  ProductRoute: ProductRoute,
+  RiskDisclosureRoute: RiskDisclosureRoute,
+  SecurityRoute: SecurityRoute,
+  TermsRoute: TermsRoute,
+  VaultsRoute: VaultsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -1,0 +1,2 @@
+import { createFileRoute } from "@tanstack/react-router"; import { HowItWorksPage } from "@/components/PublicContent";
+export const Route=createFileRoute("/how-it-works")({head:()=>({meta:[{title:"How it works — BOND"},{name:"description",content:"Follow a vault subscription from mandate to finalized shares."},{property:"og:title",content:"How BOND works"},{property:"og:description",content:"Follow a vault subscription from mandate to finalized shares."},{property:"og:type",content:"website"},{name:"twitter:card",content:"summary_large_image"}]}),component:HowItWorksPage});
