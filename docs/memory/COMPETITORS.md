@@ -35,6 +35,18 @@ Do **not** copy Judr’s arbitration UX. Do match their bar on **live on-chain p
 - They already have a **live Avalanche 100 USDC** vault request and a polished SERV narrative.
 - Judges scanning “RWA + IXS + AgentKit” may conflate tracks. BOND submission copy must say **RWA Vaults track** and show mandate → Pending → shares, not dispute resolution.
 
+### BOND win posture (beat Judr on this track)
+
+| Judr | BOND must show |
+| --- | --- |
+| Standing 100 USDC for escrow yield | **Per-org** `requestDeposit` after SERV mandate allow |
+| Arbitration graph polish | Mandate **deny** + allow + Snowscan links on subscription |
+| “awaiting IXS finalisation” | Same honesty — **Pending not earning**, owned $ = 0 until shares |
+| Public demo zero-install | Public demo URL + Login → Mandate → Deposit → Pending path |
+| Live tx hashes in README/X | Fill `WIN_CHECKLIST.md` + X/@openservai before deadline |
+
+Do not claim “only project on IXS Avalanche.” Claim **treasury mandate product** with Pending honesty and multitenant ledger.
+
 ## Other (Bible)
 
 AllowLatch / VaultOS / Unbribable / Hatrey / Ledgerly = spend-gate pile. Do not join.

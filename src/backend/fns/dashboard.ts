@@ -127,6 +127,16 @@ export const getSubscriptionFn = createServerFn({ method: "GET" })
       claimTxHash: sub.claimTxHash,
       requestId: sub.requestId,
       settlement: sub.settlement,
+      serv: (() => {
+        const meta = (sub.metadata ?? {}) as { serv?: { allow?: boolean; reason?: string; source?: string } };
+        return meta.serv
+          ? {
+              allow: Boolean(meta.serv.allow),
+              reason: meta.serv.reason ?? "",
+              source: meta.serv.source ?? "unknown",
+            }
+          : null;
+      })(),
       events: events.map((e) => ({
         event: e.event,
         detail: e.detail,
@@ -270,6 +280,7 @@ export const subscribeVaultFn = createServerFn({ method: "POST" })
       status: "Pending" as const,
       approveTxHash,
       requestTxHash,
+      serv: decision,
       message:
         "Deposit submitted. Status is Pending — not owned and not earning until shares exist.",
     };

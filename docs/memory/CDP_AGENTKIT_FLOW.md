@@ -50,9 +50,15 @@ The downloaded `cdp_api_key.json` only has `id` + `privateKey`. **Wallet Secret 
 CDP_WALLET_SECRET=<wallet secret>
 ```
 
-Without this, `bun run cdp:export` fails with: `Wallet Secret not configured`.
+## Step 3b — Export scope on the Secret API key
 
-Docs: [Server Wallet quickstart](https://docs.cdp.coinbase.com/server-wallets/v2/introduction/quickstart) · [CDP CLI agents](https://docs.cdp.coinbase.com/get-started/build-with-ai/cdp-for-agents)
+`bun run cdp:export` needs **accounts#export**. If you see `Missing required scope: accounts#export`:
+
+1. CDP Portal → API Keys → edit/recreate Secret key  
+2. Enable **Export (export private key)**  
+3. Or keep a local `AGENT_PRIVATE_KEY` and run `bun run cdp:export` to **import** it as `bond-avalanche-funded` (create + import work without Export)
+
+BOND currently signs with `AGENT_PRIVATE_KEY` via viem — CDP import is for portal/AgentKit alignment.
 
 ### Interim (if Wallet Secret is delayed)
 

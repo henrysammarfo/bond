@@ -35,6 +35,16 @@ function errMessage(e: unknown): string {
   return e instanceof Error ? e.message : "Request failed";
 }
 
+function snowscanTx(hash: string | null | undefined) {
+  if (!hash) return null;
+  return `https://snowscan.xyz/tx/${hash}`;
+}
+
+function snowscanAddress(address: string | null | undefined) {
+  if (!address) return null;
+  return `https://snowscan.xyz/address/${address}`;
+}
+
 export function DashboardOverview() {
   const q = useQuery({ queryKey: ["overview"], queryFn: () => getDashboardOverviewFn() });
   if (q.isLoading) return <Panel>Loading live overview…</Panel>;
@@ -208,7 +218,8 @@ export function MandatesPage() {
             </div>
             <h2 className="mt-7 text-xl font-semibold">{m.name}</h2>
             <p className="mt-2 text-sm text-dashboard-muted">
-              Allows {m.asset} on {m.network} up to ${m.monthlyLimit} monthly.
+              Allows {m.asset} on {m.network} up to ${m.monthlyLimit} monthly. SERV denies deposits
+              under $100, wrong network, inactive mandates, or over remaining limit.
             </p>
             <div className="mt-6 h-2 overflow-hidden rounded-full bg-dashboard-accent">
               <div
@@ -426,18 +437,28 @@ export function VaultDetailPage({ vaultId }: { vaultId: string }) {
                   <span>{vault.network}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-dashboard-muted">SERV + mandate</span>
-                  <span className="text-success">Will evaluate live</span>
+                  <span className="text-dashboard-muted">SERV mandate gate</span>
+                  <span className="text-success">Live allow/deny before sign</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-dashboard-muted">Initial status</span>
-                  <span className="text-warning">Pending</span>
+                  <span className="text-warning">Pending — not earning</span>
                 </div>
               </div>
               <div className="mt-6 rounded-md border border-warning/40 bg-warning/10 p-4 text-xs leading-5 text-warning">
-                This submits a real Avalanche mainnet deposit via AgentKit. Until shares exist,
-                status stays Pending — not earning.
+                Real Avalanche mainnet deposit via AgentKit. SERV evaluates the mandate first. Until
+                IXS shares exist, status stays Pending — not owned, not earning.
               </div>
+              {Number(amount) < 100 && (
+                <p className="mt-3 text-xs text-danger">
+                  SERV will deny: minimum deposit is $100 USDC.
+                </p>
+              )}
+              {!activeMandate && (
+                <p className="mt-3 text-xs text-danger">
+                  SERV will deny: create an active Avalanche mandate first.
+                </p>
+              )}
               {subscribe.error && (
                 <p className="mt-3 text-xs text-danger">{errMessage(subscribe.error)}</p>
               )}
@@ -553,13 +574,28 @@ export function SubscriptionDetailPage({ id }: { id: string }) {
   return (
     <>
       <PageTitle eyebrow={s.id} title="Subscription detail" action={<Status value={status} />} />
+      {(status === "Pending" || status === "Claimable") && (
+        <Panel className="mb-6 border border-warning/40 bg-warning/10">
+          <p className="text-sm font-semibold text-warning">Pending — not owned, not earning</p>
+          <p className="mt-2 text-xs leading-5 text-dashboard-muted">
+            Deposit is on Avalanche. Owned balance and yield stay blank until IXS finalizes shares.
+            Same honesty bar as a live ERC-7540 vault — not a spinner.
+          </p>
+        </Panel>
+      )}
       <div className="grid gap-6 xl:grid-cols-[1fr_.7fr]">
         <Panel>
           <h2 className="font-semibold">Lifecycle</h2>
           <div className="mt-6 space-y-0">
             {(
               [
-                ["Mandate approved", "Amount and destination allowed via SERV", true],
+                [
+                  "Mandate approved",
+                  s.serv
+                    ? `${s.serv.source}: ${s.serv.reason || "allowed"}`
+                    : "Amount and destination allowed via SERV",
+                  true,
+                ],
                 [
                   "Deposit submitted",
                   s.requestTxHash ?? "Wallet instruction recorded",
@@ -586,20 +622,67 @@ export function SubscriptionDetailPage({ id }: { id: string }) {
                   </span>
                   {i < 3 && <span className="h-14 w-px bg-dashboard-border" />}
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-sm font-medium">{t}</p>
-                  <p className="mt-1 text-xs text-dashboard-muted">{d}</p>
+                  <p className="mt-1 break-all text-xs text-dashboard-muted">{d}</p>
                 </div>
               </div>
             ))}
           </div>
         </Panel>
         <Panel>
-          <h2 className="font-semibold">Position accounting</h2>
+          <h2 className="font-semibold">On-chain proof</h2>
           <dl className="mt-6 space-y-4 text-sm">
-            <div className="flex justify-between">
-              <dt className="text-dashboard-muted">Deposit</dt>
-              <dd>{s.amount}</dd>
+            <div className="flex justify-between gap-3">
+              <dt className="text-dashboard-muted">Owner</dt>
+              <dd className="min-w-0 text-right">
+                {snowscanAddress(s.ownerAddress) ? (
+                  <a
+                    className="break-all text-primary hover:underline"
+                    href={snowscanAddress(s.ownerAddress)!}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {s.ownerAddress}
+                  </a>
+                ) : (
+                  "—"
+                )}
+              </dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt className="text-dashboard-muted">Approve tx</dt>
+              <dd className="min-w-0 text-right">
+                {snowscanTx(s.approveTxHash) ? (
+                  <a
+                    className="inline-flex items-center gap-1 break-all text-primary hover:underline"
+                    href={snowscanTx(s.approveTxHash)!}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {s.approveTxHash!.slice(0, 10)}… <ExternalLink size={12} />
+                  </a>
+                ) : (
+                  "—"
+                )}
+              </dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt className="text-dashboard-muted">requestDeposit tx</dt>
+              <dd className="min-w-0 text-right">
+                {snowscanTx(s.requestTxHash) ? (
+                  <a
+                    className="inline-flex items-center gap-1 break-all text-primary hover:underline"
+                    href={snowscanTx(s.requestTxHash)!}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {s.requestTxHash!.slice(0, 10)}… <ExternalLink size={12} />
+                  </a>
+                ) : (
+                  "—"
+                )}
+              </dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-dashboard-muted">Owned value</dt>
@@ -609,7 +692,17 @@ export function SubscriptionDetailPage({ id }: { id: string }) {
               <dt className="text-dashboard-muted">Shares</dt>
               <dd>{s.shares}</dd>
             </div>
+            <div className="flex justify-between">
+              <dt className="text-dashboard-muted">Deposit</dt>
+              <dd>{s.amount}</dd>
+            </div>
           </dl>
+          {s.serv && (
+            <div className="mt-6 rounded-md bg-dashboard p-4 text-xs leading-5">
+              <p className="font-semibold">SERV gate · {s.serv.source}</p>
+              <p className="mt-2 text-dashboard-muted">{s.serv.reason || "Allowed"}</p>
+            </div>
+          )}
           {(status === "Pending" || status === "Claimable") && (
             <div className="mt-6 rounded-md bg-warning/10 p-4 text-xs leading-5 text-warning">
               Pending value is excluded from positions and yield until shares are proven on IXS.
@@ -675,9 +768,11 @@ export function ActivityPage() {
 
 export function WalletPage() {
   const q = useQuery({ queryKey: ["wallet"], queryFn: () => getWalletFn() });
+  const funded =
+    q.data && Number(q.data.usdc) >= 100 && Number(q.data.avax) > 0;
   return (
     <>
-      <PageTitle eyebrow="AgentKit" title="Wallet" />
+      <PageTitle eyebrow="AgentKit · Avalanche" title="Wallet" />
       {q.isLoading && <Panel>Loading AgentKit wallet…</Panel>}
       {q.error && <Panel className="text-danger">{errMessage(q.error)}</Panel>}
       {q.data && (
@@ -686,6 +781,14 @@ export function WalletPage() {
             <WalletCards size={24} className="text-primary" />
             <h2 className="mt-6 break-all text-lg font-semibold">{q.data.address}</h2>
             <p className="mt-1 text-sm text-dashboard-muted">{q.data.network}</p>
+            <a
+              className="mt-3 inline-flex items-center gap-1 text-xs text-primary hover:underline"
+              href={snowscanAddress(q.data.address)!}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Open on Snowscan <ExternalLink size={12} />
+            </a>
             <div className="mt-7 grid grid-cols-2 gap-4">
               <div className="rounded-md bg-dashboard p-4">
                 <p className="text-xs text-dashboard-muted">USDC</p>
@@ -696,12 +799,17 @@ export function WalletPage() {
                 <p className="mt-2 text-xl font-semibold">{q.data.avax}</p>
               </div>
             </div>
+            {!funded && (
+              <p className="mt-5 text-xs leading-5 text-warning">
+                Fund this address with ≥100 Avalanche USDC + AVAX gas before Confirm live deposit.
+              </p>
+            )}
           </Panel>
           <Panel>
             <h2 className="font-semibold">Network</h2>
             <p className="mt-4 text-sm text-dashboard-muted">
-              Deposits are pinned to Avalanche C-Chain (43114). Wrong-network simulation is removed
-              — live reads only.
+              Live AgentKit signer on Avalanche C-Chain (43114). Balances are read from RPC — never
+              simulated.
             </p>
             <div className="mt-5 rounded-md border border-dashboard-border p-4 text-sm">
               Avalanche · chainId {q.data.chainId}
