@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080" role="img" aria-label="BOND">
+  <rect width="1080" height="1080" fill="#0B1F17"/>
+  <text x="540" y="575" text-anchor="middle" font-family="Arial Black, Helvetica Neue, Helvetica, Arial, sans-serif" font-size="220" font-weight="900" letter-spacing="-10" fill="#F4F7F5">BOND</text>
+  <circle cx="540" cy="720" r="8" fill="#15B042"/>
+</svg>
