@@ -275,7 +275,7 @@ export const subscribeVaultFn = createServerFn({ method: "POST" })
       amountUsd: data.amountDollars,
       live: true,
     });
-    recordEvidence({
+    await recordEvidence({
       kind: "preflight",
       label: `Live subscribe preflight · ${vault.name}`,
       chainId: vault.chainId,
@@ -299,7 +299,7 @@ export const subscribeVaultFn = createServerFn({ method: "POST" })
     if (!decision.allow) {
       throw new Error(`SERV mandate denied: ${decision.reason}`);
     }
-    recordEvidence({
+    await recordEvidence({
       kind: "serv",
       label: `Mandate gate · ${decision.source}`,
       request: { amount: data.amountDollars, network: networkForGate, vaultId: data.vaultId },

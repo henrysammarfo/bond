@@ -31,6 +31,10 @@ bun run relay:agentrouter      # Tor HTTPS relay on :8787
 bun run smoke:llm:relay        # expect smoke_llm_relay_ok (needs RELAY_URL)
 ```
 
+## Neon?
+
+**No.** Neon is the Postgres database for sessions/orgs/evidence. It cannot run Tor or an HTTP relay. Put the relay on Cloud Run / a VM / Cloudflare Tunnel in front of `bun run relay:agentrouter`.
+
 ## Vercel path (required for production)
 
 1. Run the relay where Tor works (`bun run relay:agentrouter`, or `Dockerfile.relay` on Cloud Run).

@@ -181,7 +181,7 @@ export async function runAllocationScan(params: {
   });
 
   for (const pre of catalog.results) {
-    recordEvidence({
+    await recordEvidence({
       kind: "preflight",
       label: `${pre.name} · ${pre.network} · ${pre.verdict}`,
       chainId: pre.chainId,
@@ -257,7 +257,7 @@ export async function runAllocationScan(params: {
           preflight: pre,
         };
       });
-      recordEvidence({
+      await recordEvidence({
         kind: "serv",
         label: "SERV multi-vault verdicts",
         request: servInput,
@@ -266,7 +266,7 @@ export async function runAllocationScan(params: {
       });
     }
   } catch (err) {
-    recordEvidence({
+    await recordEvidence({
       kind: "serv",
       label: "SERV allocate error — policy fallback",
       request: servInput,
@@ -298,7 +298,7 @@ export async function runAllocationScan(params: {
         );
         source = "agentrouter";
         servOutput = JSON.parse(text);
-        recordEvidence({
+        await recordEvidence({
           kind: "serv",
           label: "AgentRouter multi-vault verdicts",
           request: servInput,
@@ -339,6 +339,6 @@ export async function runAllocationScan(params: {
     verdicts: merged,
     memo,
   };
-  setLastScanEvidence(scan);
+  await setLastScanEvidence(scan);
   return scan;
 }
