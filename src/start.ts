@@ -23,8 +23,8 @@ const errorMiddleware = createMiddleware().server(async ({ next }) => {
 const csrfMiddleware = createCsrfMiddleware({
   filter: (ctx) => {
     if (ctx.handlerType !== "serverFn") return false;
-    const fnId = ctx.serverFnMeta?.id ?? "";
-    if (fnId.includes("provisionDemoLogin")) return false;
+    // serverFnMeta is not populated yet in request middleware.
+    if (ctx.request.headers.get("x-bond-provision-secret")) return false;
     return true;
   },
 });
