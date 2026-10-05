@@ -35,6 +35,7 @@ export type IxsVault = {
   contractAddress: string;
   explorerUrl: string;
   rpcUrl: string;
+  subgraphUrl?: string;
   underlyingAsset: IxsUnderlyingAsset;
   requiresWhitelist: boolean;
   status: string;

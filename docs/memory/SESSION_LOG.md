@@ -142,7 +142,8 @@ BOND still does **live AgentKit deposits** with Pending honesty. Simulated-only 
 - Fixed `/dashboard/vaults/$vaultId` (and subscriptions detail) — parents lacked `<Outlet />`; detail never mounted. Deployed to production.
 - Live capture: login (masked) → Wallet 105 USDC → mandate → Scan ALLOCATE (BNB) → Avalanche subscribe attempt → **preflight REJECT** (concentration / NAV) — fail-closed money shot.
 - Hyperframes V2 ledger video SHIP; artifacts under `/opt/cursor/artifacts/`.
-- `demo@bond.app` password rotated; provisioner requires `DEMO_PASSWORD` env (no hardcoded secret).
+- `demo@bond.app` password rotated after demo record; reset via `POST /api/provision-demo` + `DEMO_PASSWORD` / `PROVISION_SECRET` env (2026-10-05). Judges: `demo@bond.app` / `BondLive104!`.
+- Redeem requestId **10** on BNB vault is **PENDING** (tx `0x19a3ac82…`). Live shares=0 while locked in redeem. MCP `depositRequests` error fixed by subgraph fallback.
 
 
 ## 2026-09-27 — Live BNB Path A + synced demo + brand docs

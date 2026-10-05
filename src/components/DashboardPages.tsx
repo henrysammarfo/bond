@@ -713,7 +713,14 @@ export function SubscriptionDetailPage({ id }: { id: string }) {
           </p>
           <p className="mt-2 text-xs leading-5 text-dashboard-muted">
             Instant maxRedeem stays 0 until IXS settles (often ~1–2 days on this vault; not a calendar
-            guarantee). After settlement, claim if needed, then send USDC to your address.
+            guarantee). Live share balance drops to 0 while shares are locked in the redeem request —
+            that is expected. After settlement, claim if needed, then send USDC to your address.
+            {s.live?.redeemStatus && (
+              <>
+                {" "}
+                Subgraph: request #{s.live.redeemRequestId ?? "—"} · {s.live.redeemStatus}.
+              </>
+            )}
           </p>
         </Panel>
       )}
@@ -892,6 +899,18 @@ export function SubscriptionDetailPage({ id }: { id: string }) {
                   <dt className="text-dashboard-muted">AgentKit USDC</dt>
                   <dd className="tabular-nums">{s.live.walletUsdc ?? "—"}</dd>
                 </div>
+                {(s.live.redeemRequestId || s.live.redeemStatus) && (
+                  <>
+                    <div className="flex justify-between gap-3">
+                      <dt className="text-dashboard-muted">Redeem request</dt>
+                      <dd className="tabular-nums">#{s.live.redeemRequestId ?? "—"}</dd>
+                    </div>
+                    <div className="flex justify-between gap-3">
+                      <dt className="text-dashboard-muted">Redeem status</dt>
+                      <dd className="tabular-nums">{s.live.redeemStatus ?? "—"}</dd>
+                    </div>
+                  </>
+                )}
               </>
             )}
           </dl>

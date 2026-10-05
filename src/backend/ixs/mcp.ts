@@ -136,7 +136,20 @@ export async function requestStatus(params: {
   vaultId: string;
   ownerAddress: string;
 }): Promise<Record<string, unknown>> {
-  return (await mcpToolCall("vault_request_status", params)) as Record<string, unknown>;
+  // Prefer vault subgraph — MCP vault_request_status still queries depositRequests on
+  // BSC managed vaults that only expose redeemRequests (GraphQL field missing).
+  try {
+    const { requestStatusFromSubgraph } = await import("./subgraph");
+    return await requestStatusFromSubgraph(params);
+  } catch (subgraphErr) {
+    try {
+      return (await mcpToolCall("vault_request_status", params)) as Record<string, unknown>;
+    } catch (mcpErr) {
+      const a = subgraphErr instanceof Error ? subgraphErr.message : String(subgraphErr);
+      const b = mcpErr instanceof Error ? mcpErr.message : String(mcpErr);
+      throw new Error(`IXS request status unavailable (${a}; MCP: ${b})`);
+    }
+  }
 }
 
 export async function buildClaimDeposit(params: {

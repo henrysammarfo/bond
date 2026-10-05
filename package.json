@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "test": "bun test src/lib/status.test.ts src/backend/ixs/client.test.ts src/backend/ixs/client.position.test.ts src/backend/ixs/preflight.test.ts src/backend/org/integrations.test.ts",
+    "test": "bun test src/lib/status.test.ts src/backend/ixs/client.test.ts src/backend/ixs/client.position.test.ts src/backend/ixs/preflight.test.ts src/backend/org/integrations.test.ts src/backend/ixs/subgraph.test.ts",
     "test:all": "bun test src/lib/status.test.ts src/backend/ixs/client.test.ts src/backend/ixs/preflight.test.ts src/backend/org/integrations.test.ts && bun run smoke:llm",
     "db:push": "bun run scripts/db-push.ts",
     "db:generate": "drizzle-kit generate",
