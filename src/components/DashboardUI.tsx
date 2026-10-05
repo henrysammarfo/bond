@@ -49,10 +49,13 @@ export function Status({ value }: { value: string }) {
     v === "allocate" ||
     v === "primary" ||
     v === "bnb lane" ||
-    v === "subscribe open"
+    v === "subscribe open" ||
+    v === "withdrawn"
       ? "bg-[#CAFACE] text-[#0E7A2F]"
       : v === "pending" ||
           v === "claimable" ||
+          v === "redeempending" ||
+          v === "redeemclaimable" ||
           v === "defer" ||
           v === "draft" ||
           v === "whitelist"

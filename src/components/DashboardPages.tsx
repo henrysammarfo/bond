@@ -26,6 +26,9 @@ import {
   subscribeVaultFn,
   refreshSubscriptionFn,
   claimSubscriptionFn,
+  requestRedeemFn,
+  claimRedeemFn,
+  withdrawUsdcFn,
 } from "@/backend/fns/dashboard";
 import {
   getIntegrationsFn,
@@ -74,6 +77,18 @@ function snowscanTx(hash: string | null | undefined) {
 function snowscanAddress(address: string | null | undefined) {
   if (!address) return null;
   return `https://snowscan.xyz/address/${address}`;
+}
+
+function explorerTx(network: string | null | undefined, hash: string | null | undefined) {
+  if (!hash) return null;
+  const bnb = /bnb|bsc/i.test(network ?? "");
+  return bnb ? `https://bscscan.com/tx/${hash}` : `https://snowscan.xyz/tx/${hash}`;
+}
+
+function explorerAddress(network: string | null | undefined, address: string | null | undefined) {
+  if (!address) return null;
+  const bnb = /bnb|bsc/i.test(network ?? "");
+  return bnb ? `https://bscscan.com/address/${address}` : `https://snowscan.xyz/address/${address}`;
 }
 
 export function DashboardOverview() {
@@ -632,13 +647,19 @@ export function SubscriptionsPage() {
 
 export function SubscriptionDetailPage({ id }: { id: string }) {
   const qc = useQueryClient();
+  const [withdrawTo, setWithdrawTo] = useState("");
   const q = useQuery({
     queryKey: ["subscription", id],
     queryFn: () => getSubscriptionFn({ data: { subscriptionId: id } }),
-    refetchInterval: (query) =>
-      query.state.data?.status === "Pending" || query.state.data?.status === "Claimable"
+    refetchInterval: (query) => {
+      const st = query.state.data?.status;
+      return st === "Pending" ||
+        st === "Claimable" ||
+        st === "RedeemPending" ||
+        st === "RedeemClaimable"
         ? 15_000
-        : false,
+        : false;
+    },
   });
   const refresh = useMutation({
     mutationFn: () => refreshSubscriptionFn({ data: { subscriptionId: id } }),
@@ -648,11 +669,28 @@ export function SubscriptionDetailPage({ id }: { id: string }) {
     mutationFn: () => claimSubscriptionFn({ data: { subscriptionId: id } }),
     onSuccess: () => void qc.invalidateQueries({ queryKey: ["subscription", id] }),
   });
+  const redeem = useMutation({
+    mutationFn: () => requestRedeemFn({ data: { subscriptionId: id } }),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["subscription", id] }),
+  });
+  const claimRedeem = useMutation({
+    mutationFn: () => claimRedeemFn({ data: { subscriptionId: id } }),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["subscription", id] }),
+  });
+  const withdraw = useMutation({
+    mutationFn: () =>
+      withdrawUsdcFn({
+        data: { subscriptionId: id, toAddress: withdrawTo.trim() },
+      }),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["subscription", id] }),
+  });
 
   if (q.isLoading) return <Panel>Loading subscription…</Panel>;
   if (q.error) return <Panel className="text-danger">{errMessage(q.error)}</Panel>;
   const s = q.data!;
   const status = s.status;
+  const actionError =
+    refresh.error || claim.error || redeem.error || claimRedeem.error || withdraw.error;
 
   return (
     <>
@@ -663,6 +701,19 @@ export function SubscriptionDetailPage({ id }: { id: string }) {
           <p className="mt-2 text-xs leading-5 text-dashboard-muted">
             Deposit is on Avalanche or BNB Chain. Owned balance and yield stay blank until IXS finalizes shares.
             Same honesty bar as a live ERC-7540 vault — not a spinner.
+          </p>
+        </Panel>
+      )}
+      {(status === "RedeemPending" || status === "RedeemClaimable") && (
+        <Panel className="mb-6 border border-warning/40 bg-warning/10">
+          <p className="text-sm font-semibold text-warning">
+            {status === "RedeemPending"
+              ? "Redeem queued — waiting on IXS cycle"
+              : "Redeem ready — claim USDC then withdraw"}
+          </p>
+          <p className="mt-2 text-xs leading-5 text-dashboard-muted">
+            Instant maxRedeem stays 0 until IXS settles (often ~1–2 days on this vault; not a calendar
+            guarantee). After settlement, claim if needed, then send USDC to your address.
           </p>
         </Panel>
       )}
@@ -685,14 +736,28 @@ export function SubscriptionDetailPage({ id }: { id: string }) {
                   Boolean(s.requestTxHash),
                 ],
                 [
-                  "Vault processing",
-                  "Awaiting IXS finalization — Pending not earning",
-                  status !== "Pending",
+                  "Shares confirmed",
+                  status === "Finalized" ||
+                  status === "RedeemPending" ||
+                  status === "RedeemClaimable" ||
+                  status === "Withdrawn"
+                    ? `${s.shares} shares`
+                    : "No share balance yet",
+                  status === "Finalized" ||
+                    status === "RedeemPending" ||
+                    status === "RedeemClaimable" ||
+                    status === "Withdrawn",
                 ],
                 [
-                  "Shares confirmed",
-                  status === "Finalized" ? `${s.shares} shares issued` : "No share balance yet",
-                  status === "Finalized",
+                  "Redeem / withdraw",
+                  status === "Withdrawn"
+                    ? s.redeem?.withdrawTxHash ?? "USDC sent"
+                    : status === "RedeemPending" || status === "RedeemClaimable"
+                      ? s.redeem?.requestTxHash ?? "Redeem queued"
+                      : "Request redeem when ready to exit",
+                  status === "Withdrawn" ||
+                    status === "RedeemPending" ||
+                    status === "RedeemClaimable",
                 ],
               ] as const
             ).map(([t, d, done], i) => (
@@ -719,10 +784,10 @@ export function SubscriptionDetailPage({ id }: { id: string }) {
             <div className="flex justify-between gap-3">
               <dt className="text-dashboard-muted">Owner</dt>
               <dd className="min-w-0 text-right">
-                {snowscanAddress(s.ownerAddress) ? (
+                {explorerAddress(s.network, s.ownerAddress) ? (
                   <a
                     className="break-all text-primary hover:underline"
-                    href={snowscanAddress(s.ownerAddress)!}
+                    href={explorerAddress(s.network, s.ownerAddress)!}
                     target="_blank"
                     rel="noreferrer"
                   >
@@ -736,10 +801,10 @@ export function SubscriptionDetailPage({ id }: { id: string }) {
             <div className="flex justify-between gap-3">
               <dt className="text-dashboard-muted">Approve tx</dt>
               <dd className="min-w-0 text-right">
-                {snowscanTx(s.approveTxHash) ? (
+                {explorerTx(s.network, s.approveTxHash) ? (
                   <a
                     className="inline-flex items-center gap-1 break-all text-primary hover:underline"
-                    href={snowscanTx(s.approveTxHash)!}
+                    href={explorerTx(s.network, s.approveTxHash)!}
                     target="_blank"
                     rel="noreferrer"
                   >
@@ -753,10 +818,10 @@ export function SubscriptionDetailPage({ id }: { id: string }) {
             <div className="flex justify-between gap-3">
               <dt className="text-dashboard-muted">requestDeposit tx</dt>
               <dd className="min-w-0 text-right">
-                {snowscanTx(s.requestTxHash) ? (
+                {explorerTx(s.network, s.requestTxHash) ? (
                   <a
                     className="inline-flex items-center gap-1 break-all text-primary hover:underline"
-                    href={snowscanTx(s.requestTxHash)!}
+                    href={explorerTx(s.network, s.requestTxHash)!}
                     target="_blank"
                     rel="noreferrer"
                   >
@@ -767,6 +832,36 @@ export function SubscriptionDetailPage({ id }: { id: string }) {
                 )}
               </dd>
             </div>
+            {s.redeem?.requestTxHash && (
+              <div className="flex justify-between gap-3">
+                <dt className="text-dashboard-muted">requestRedeem tx</dt>
+                <dd className="min-w-0 text-right">
+                  <a
+                    className="inline-flex items-center gap-1 break-all text-primary hover:underline"
+                    href={explorerTx(s.network, s.redeem.requestTxHash)!}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {s.redeem.requestTxHash.slice(0, 10)}… <ExternalLink size={12} />
+                  </a>
+                </dd>
+              </div>
+            )}
+            {s.redeem?.withdrawTxHash && (
+              <div className="flex justify-between gap-3">
+                <dt className="text-dashboard-muted">Withdraw tx</dt>
+                <dd className="min-w-0 text-right">
+                  <a
+                    className="inline-flex items-center gap-1 break-all text-primary hover:underline"
+                    href={explorerTx(s.network, s.redeem.withdrawTxHash)!}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {s.redeem.withdrawTxHash.slice(0, 10)}… <ExternalLink size={12} />
+                  </a>
+                </dd>
+              </div>
+            )}
             <div className="flex justify-between">
               <dt className="text-dashboard-muted">Owned value</dt>
               <dd>{s.ownedValue}</dd>
@@ -779,6 +874,26 @@ export function SubscriptionDetailPage({ id }: { id: string }) {
               <dt className="text-dashboard-muted">Deposit</dt>
               <dd>{s.amount}</dd>
             </div>
+            {s.live && (
+              <>
+                <div className="flex justify-between gap-3">
+                  <dt className="text-dashboard-muted">Live shares</dt>
+                  <dd className="tabular-nums">{s.live.shareBalance}</dd>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <dt className="text-dashboard-muted">Live share value</dt>
+                  <dd className="tabular-nums">{s.live.shareValue ?? "—"}</dd>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <dt className="text-dashboard-muted">maxRedeem</dt>
+                  <dd className="tabular-nums">{s.live.maxRedeem}</dd>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <dt className="text-dashboard-muted">AgentKit USDC</dt>
+                  <dd className="tabular-nums">{s.live.walletUsdc ?? "—"}</dd>
+                </div>
+              </>
+            )}
           </dl>
           {s.serv && (
             <div className="mt-6 rounded-md bg-dashboard p-4 text-xs leading-5">
@@ -791,8 +906,15 @@ export function SubscriptionDetailPage({ id }: { id: string }) {
               Pending value is excluded from positions and yield until shares are proven on IXS.
             </div>
           )}
-          {(refresh.error || claim.error) && (
-            <p className="mt-3 text-xs text-danger">{errMessage(refresh.error || claim.error)}</p>
+          {actionError && (
+            <p className="mt-3 text-xs text-danger">{errMessage(actionError)}</p>
+          )}
+          {(withdraw.data || redeem.data || claimRedeem.data) && (
+            <p className="mt-3 text-xs text-success">
+              {(withdraw.data as { message?: string } | undefined)?.message ||
+                (claimRedeem.data as { message?: string } | undefined)?.message ||
+                (redeem.data as { message?: string } | undefined)?.message}
+            </p>
           )}
           {status === "Pending" && (
             <Button
@@ -811,6 +933,83 @@ export function SubscriptionDetailPage({ id }: { id: string }) {
             >
               {claim.isPending ? "Claiming…" : "Claim shares"}
             </Button>
+          )}
+          {(status === "Finalized" ||
+            ((status === "Pending" || status === "Claimable") &&
+              s.live &&
+              s.live.shareBalance !== "0")) && (
+            <div className="mt-5 space-y-3">
+              <Button
+                className="w-full"
+                disabled={redeem.isPending}
+                onClick={() => redeem.mutate()}
+              >
+                {redeem.isPending ? "Requesting redeem…" : "Request redeem (full shares)"}
+              </Button>
+              <p className="text-[11px] leading-4 text-dashboard-muted">
+                Signs requestRedeem with your AgentKit key. USDC does not return instantly — IXS must
+                settle the async cycle. If status is still Pending but live shares show above, redeem
+                is allowed from proven shares.
+              </p>
+            </div>
+          )}
+          {(status === "RedeemPending" || status === "RedeemClaimable") && (
+            <div className="mt-5 space-y-3">
+              <Button
+                className="w-full"
+                disabled={refresh.isPending}
+                onClick={() => refresh.mutate()}
+              >
+                {refresh.isPending ? "Checking IXS…" : "Refresh redeem status"}
+              </Button>
+              <Button
+                className="w-full"
+                disabled={claimRedeem.isPending}
+                onClick={() => claimRedeem.mutate()}
+              >
+                {claimRedeem.isPending ? "Claiming redeem…" : "Claim redeem USDC"}
+              </Button>
+              <label className="block text-[11px] font-medium text-dashboard-muted">
+                Withdraw to (BNB / Avalanche EVM address)
+                <input
+                  className="mt-1.5 w-full rounded-md border border-dashboard-border bg-white px-3 py-2 font-mono text-xs text-dashboard-foreground outline-none focus:border-primary"
+                  placeholder="0x…"
+                  value={withdrawTo}
+                  onChange={(e) => setWithdrawTo(e.target.value)}
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+              </label>
+              <Button
+                className="w-full"
+                disabled={withdraw.isPending || !/^0x[a-fA-F0-9]{40}$/.test(withdrawTo.trim())}
+                onClick={() => withdraw.mutate()}
+              >
+                {withdraw.isPending ? "Sending USDC…" : "Withdraw USDC to address"}
+              </Button>
+            </div>
+          )}
+          {(status === "Finalized" || status === "Pending" || status === "Claimable") && (
+            <div className="mt-4 space-y-3 border-t border-dashboard-border pt-4">
+              <label className="block text-[11px] font-medium text-dashboard-muted">
+                Or withdraw liquid AgentKit USDC now (dust / already settled)
+                <input
+                  className="mt-1.5 w-full rounded-md border border-dashboard-border bg-white px-3 py-2 font-mono text-xs text-dashboard-foreground outline-none focus:border-primary"
+                  placeholder="0x…"
+                  value={withdrawTo}
+                  onChange={(e) => setWithdrawTo(e.target.value)}
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+              </label>
+              <Button
+                className="w-full"
+                disabled={withdraw.isPending || !/^0x[a-fA-F0-9]{40}$/.test(withdrawTo.trim())}
+                onClick={() => withdraw.mutate()}
+              >
+                {withdraw.isPending ? "Sending USDC…" : "Withdraw liquid USDC"}
+              </Button>
+            </div>
           )}
         </Panel>
       </div>

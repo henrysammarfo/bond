@@ -67,12 +67,19 @@ export async function mcpToolCall(name: string, args: Record<string, unknown>): 
   const result = await mcpCall<{
     content?: Array<{ type: string; text?: string }>;
     structuredContent?: unknown;
+    isError?: boolean;
   }>({
     jsonrpc: "2.0",
     id: Date.now(),
     method: "tools/call",
     params: { name, arguments: args },
   });
+  if (result && typeof result === "object" && result.isError) {
+    const text = Array.isArray(result.content)
+      ? result.content.map((c) => c.text ?? "").join("\n")
+      : "IXS MCP tool error";
+    throw new Error(text || `IXS MCP ${name} failed.`);
+  }
   if (
     result &&
     typeof result === "object" &&
@@ -141,6 +148,32 @@ export async function buildClaimDeposit(params: {
   const steps = (raw.steps ?? raw.transactions ?? raw.txs ?? []) as TxStep[];
   if (!Array.isArray(steps) || steps.length === 0) {
     throw new Error("IXS vault_build_claim_deposit returned no transaction steps.");
+  }
+  return { ...raw, steps };
+}
+
+export async function buildRequestRedeem(params: {
+  vaultId: string;
+  ownerAddress: string;
+  shareAmount: string;
+}): Promise<{ steps: TxStep[]; settlement?: string; [key: string]: unknown }> {
+  const raw = (await mcpToolCall("vault_build_request_redeem", params)) as Record<string, unknown>;
+  const steps = (raw.steps ?? raw.transactions ?? raw.txs ?? []) as TxStep[];
+  if (!Array.isArray(steps) || steps.length === 0) {
+    throw new Error("IXS vault_build_request_redeem returned no transaction steps.");
+  }
+  return { ...raw, steps, settlement: String(raw.settlement ?? "") };
+}
+
+export async function buildClaimRedeem(params: {
+  vaultId: string;
+  ownerAddress: string;
+  requestId: string;
+}): Promise<{ steps: TxStep[]; [key: string]: unknown }> {
+  const raw = (await mcpToolCall("vault_build_claim_redeem", params)) as Record<string, unknown>;
+  const steps = (raw.steps ?? raw.transactions ?? raw.txs ?? []) as TxStep[];
+  if (!Array.isArray(steps) || steps.length === 0) {
+    throw new Error("IXS vault_build_claim_redeem returned no transaction steps.");
   }
   return { ...raw, steps };
 }

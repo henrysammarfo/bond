@@ -1,7 +1,17 @@
 # Session log
 
 
-## 2026-09-27 — Evidence on Neon (Tor stays off Neon)
+## 2026-10-05 — Redeem + withdraw in BOND
+
+### Shipped
+- IXS MCP `vault_build_request_redeem` / `vault_build_claim_redeem` wired
+- Server fns: `requestRedeemFn`, `claimRedeemFn`, `withdrawUsdcFn` (AgentKit signs; Zod address; org session)
+- Subscription detail UI: Request redeem → Refresh → Claim redeem → Withdraw to EVM address
+- Live position normalize (`shares`/`maxRedeem` nested IXS payloads); statuses `RedeemPending` / `RedeemClaimable` / `Withdrawn`
+- Note: BNB IXHYB `maxRedeem=0` until async cycle; historical settles often ~1–2 days after request
+
+### Operator
+Log into production → open the BNB subscription → Request redeem. After IXS settles, claim if needed, paste destination, Withdraw.
 
 ### Shipped
 - `evidence_entries` + `evidence_meta` tables; store writes/reads via Drizzle

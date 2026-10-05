@@ -6,7 +6,14 @@ import { auditEvents, mandates, orgs, subscriptions } from "../db/schema";
 import { requireAuth } from "../auth/session";
 import { getMandateForOrg, getSubscriptionForOrg } from "../tenancy";
 import { getVault, getPosition, primaryVaultId, depositableVaultIds } from "../ixs/client";
-import { buildClaimDeposit, buildRequestDeposit, requestStatus, vaultGetMcp } from "../ixs/mcp";
+import {
+  buildClaimDeposit,
+  buildClaimRedeem,
+  buildRequestDeposit,
+  buildRequestRedeem,
+  requestStatus,
+  vaultGetMcp,
+} from "../ixs/mcp";
 import { evaluateMandate } from "../serv/mandate";
 import {
   executeTxSteps,
@@ -14,6 +21,7 @@ import {
   getWalletBalances,
   assertDepositFunding,
   chainFromVaultChainId,
+  transferUsdc,
 } from "../agentkit/wallet";
 import { ensureOrgAgentWallet } from "../org/integrations";
 import {
@@ -40,7 +48,13 @@ export const getDashboardOverviewFn = createServerFn({ method: "GET" }).handler(
     .where(eq(subscriptions.orgId, auth.orgId))
     .orderBy(desc(subscriptions.createdAt));
   const pendingCents = subs
-    .filter((s) => s.status === "Pending" || s.status === "Claimable")
+    .filter(
+      (s) =>
+        s.status === "Pending" ||
+        s.status === "Claimable" ||
+        s.status === "RedeemPending" ||
+        s.status === "RedeemClaimable",
+    )
     .reduce((a, s) => a + s.amountCents, 0);
   const ownedCents = subs
     .filter((s) => s.status === "Finalized")
@@ -93,7 +107,18 @@ export const listSubscriptionsFn = createServerFn({ method: "GET" })
   .validator(
     z
       .object({
-        status: z.enum(["All", "Pending", "Finalized", "Rejected", "Claimable"]).optional(),
+        status: z
+          .enum([
+            "All",
+            "Pending",
+            "Finalized",
+            "Rejected",
+            "Claimable",
+            "RedeemPending",
+            "RedeemClaimable",
+            "Withdrawn",
+          ])
+          .optional(),
       })
       .optional(),
   )
@@ -130,6 +155,43 @@ export const getSubscriptionFn = createServerFn({ method: "GET" })
       .from(auditEvents)
       .where(and(eq(auditEvents.orgId, auth.orgId), eq(auditEvents.subscriptionId, sub.id)))
       .orderBy(desc(auditEvents.createdAt));
+
+    const meta = (sub.metadata ?? {}) as {
+      serv?: { allow?: boolean; reason?: string; source?: string };
+      redeem?: {
+        requestId?: string;
+        requestTxHash?: string;
+        claimTxHash?: string;
+        withdrawTxHash?: string;
+        toAddress?: string;
+        settlement?: string;
+      };
+    };
+
+    let live: {
+      shareBalance: string;
+      shareValue: string | null;
+      maxRedeem: string;
+      maxWithdraw: string;
+      walletUsdc: string | null;
+    } | null = null;
+    try {
+      const position = await getPosition(sub.vaultId, sub.ownerAddress);
+      const vaultMeta = await getVault(sub.vaultId);
+      const chain = chainFromVaultChainId(vaultMeta.chainId);
+      const bal = await getWalletBalances(sub.ownerAddress as `0x${string}`, chain);
+      live = {
+        shareBalance: String(position.shareBalance ?? "0"),
+        shareValue:
+          position["shareValueInAssets"] != null ? String(position["shareValueInAssets"]) : null,
+        maxRedeem: String(position.maxRedeem ?? "0"),
+        maxWithdraw: String(position.maxWithdraw ?? "0"),
+        walletUsdc: bal.usdc,
+      };
+    } catch {
+      live = null;
+    }
+
     return {
       id: sub.id,
       vaultId: sub.vaultId,
@@ -145,16 +207,15 @@ export const getSubscriptionFn = createServerFn({ method: "GET" })
       claimTxHash: sub.claimTxHash,
       requestId: sub.requestId,
       settlement: sub.settlement,
-      serv: (() => {
-        const meta = (sub.metadata ?? {}) as { serv?: { allow?: boolean; reason?: string; source?: string } };
-        return meta.serv
-          ? {
-              allow: Boolean(meta.serv.allow),
-              reason: meta.serv.reason ?? "",
-              source: meta.serv.source ?? "unknown",
-            }
-          : null;
-      })(),
+      redeem: meta.redeem ?? null,
+      live,
+      serv: meta.serv
+        ? {
+            allow: Boolean(meta.serv.allow),
+            reason: meta.serv.reason ?? "",
+            source: meta.serv.source ?? "unknown",
+          }
+        : null,
       events: events.map((e) => ({
         event: e.event,
         detail: e.detail,
@@ -372,12 +433,95 @@ export const subscribeVaultFn = createServerFn({ method: "POST" })
     };
   });
 
+function positiveUnits(raw: string | null | undefined): boolean {
+  if (raw == null || raw === "" || raw === "0" || raw === "0.0") return false;
+  try {
+    const whole = String(raw).split(".")[0] ?? "0";
+    return BigInt(whole) > 0n;
+  } catch {
+    const n = Number(raw);
+    return Number.isFinite(n) && n > 0;
+  }
+}
+
+type RedeemMeta = {
+  requestId?: string;
+  requestTxHash?: string;
+  claimTxHash?: string;
+  withdrawTxHash?: string;
+  toAddress?: string;
+  settlement?: string;
+};
+
+function readRedeemMeta(sub: { metadata: Record<string, unknown> | null }): RedeemMeta {
+  const meta = (sub.metadata ?? {}) as { redeem?: RedeemMeta };
+  return meta.redeem ?? {};
+}
+
+function withRedeemMeta(
+  sub: { metadata: Record<string, unknown> | null },
+  patch: RedeemMeta,
+): Record<string, unknown> {
+  const meta = { ...(sub.metadata ?? {}) } as Record<string, unknown>;
+  meta["redeem"] = { ...readRedeemMeta(sub), ...patch };
+  return meta;
+}
+
+function extractRedeemRequest(statusPayload: Record<string, unknown>, preferId?: string) {
+  const bags: unknown[] = [];
+  for (const key of [
+    "redeemRequests",
+    "redeems",
+    "requests",
+    "items",
+    "depositRequests",
+    "data",
+  ]) {
+    const v = statusPayload[key];
+    if (Array.isArray(v)) bags.push(...v);
+  }
+  if (Array.isArray(statusPayload)) bags.push(...statusPayload);
+
+  const rows = bags.filter((x) => x && typeof x === "object") as Array<Record<string, unknown>>;
+  const redeemish = rows.filter((r) => {
+    const kind = String(
+      r["type"] ?? r["kind"] ?? r["requestType"] ?? r["action"] ?? "",
+    ).toLowerCase();
+    if (!kind) return true;
+    return kind.includes("redeem") || kind.includes("withdraw");
+  });
+  const pool = redeemish.length ? redeemish : rows;
+  const hit =
+    (preferId
+      ? pool.find(
+          (r) => String(r["requestId"] ?? r["request_id"] ?? r["id"] ?? "") === preferId,
+        )
+      : undefined) ??
+    pool.find((r) => {
+      const st = String(r["status"] ?? "").toLowerCase();
+      return st.includes("claim") || st === "pending" || st === "queued" || st === "finalized";
+    }) ??
+    pool[0];
+  if (!hit) return null;
+  const status = String(hit["status"] ?? "");
+  const claimable =
+    Boolean(hit["claimable"]) ||
+    Boolean(hit["isClaimable"]) ||
+    /claimable|claim|finalized|fulfilled|processed|settled/i.test(status);
+  return {
+    requestId: String(hit["requestId"] ?? hit["request_id"] ?? hit["id"] ?? ""),
+    status,
+    claimable,
+    raw: hit,
+  };
+}
+
 export const refreshSubscriptionFn = createServerFn({ method: "POST" })
   .validator(z.object({ subscriptionId: z.string().uuid() }))
   .handler(async ({ data }) => {
     const auth = await requireAuth();
     const sub = await getSubscriptionForOrg(auth, data.subscriptionId);
-    if (sub.status === "Finalized" || sub.status === "Rejected") {
+    if (sub.status === "Rejected" || sub.status === "Withdrawn") {
       return { status: sub.status, shares: sub.shares };
     }
 
@@ -386,9 +530,76 @@ export const refreshSubscriptionFn = createServerFn({ method: "POST" })
       ownerAddress: sub.ownerAddress,
     });
     const position = await getPosition(sub.vaultId, sub.ownerAddress);
-    const shareBalance = String(
-      position.shareBalance ?? position.shares ?? position.share_balance ?? "0",
-    );
+    const shareBalance = String(position.shareBalance ?? "0");
+    const redeemMeta = readRedeemMeta(sub);
+    const redeemInfo = extractRedeemRequest(statusPayload, redeemMeta.requestId);
+    const db = getDb();
+
+    // Redeem lifecycle first when already exiting.
+    if (
+      sub.status === "RedeemPending" ||
+      sub.status === "RedeemClaimable" ||
+      redeemMeta.requestTxHash
+    ) {
+      if (redeemInfo?.claimable) {
+        await db
+          .update(subscriptions)
+          .set({
+            status: "RedeemClaimable",
+            metadata: withRedeemMeta(sub, {
+              requestId: redeemInfo.requestId || redeemMeta.requestId,
+            }),
+            updatedAt: new Date(),
+          })
+          .where(eq(subscriptions.id, sub.id));
+        return {
+          status: "RedeemClaimable" as const,
+          shares: shareBalance,
+          redeemRequestId: redeemInfo.requestId || redeemMeta.requestId,
+        };
+      }
+
+      // Some IXS vaults settle redeem without a separate claim — USDC lands in wallet.
+      try {
+        const vaultMeta = await getVault(sub.vaultId);
+        const chain = chainFromVaultChainId(vaultMeta.chainId);
+        const bal = await getWalletBalances(sub.ownerAddress as `0x${string}`, chain);
+        if (!positiveUnits(shareBalance) && Number(bal.usdc) > 0.5) {
+          await db
+            .update(subscriptions)
+            .set({
+              status: "RedeemClaimable",
+              shares: shareBalance,
+              metadata: withRedeemMeta(sub, {
+                requestId: redeemInfo?.requestId || redeemMeta.requestId,
+                settlement: "queued-no-claim",
+              }),
+              updatedAt: new Date(),
+            })
+            .where(eq(subscriptions.id, sub.id));
+          return {
+            status: "RedeemClaimable" as const,
+            shares: shareBalance,
+            walletUsdc: bal.usdc,
+            note: "Redeem appears settled into AgentKit USDC — withdraw to your address.",
+          };
+        }
+      } catch {
+        // keep RedeemPending
+      }
+
+      await db
+        .update(subscriptions)
+        .set({ status: "RedeemPending", updatedAt: new Date() })
+        .where(eq(subscriptions.id, sub.id));
+      return {
+        status: "RedeemPending" as const,
+        shares: shareBalance,
+        redeemRequestId: redeemInfo?.requestId || redeemMeta.requestId || null,
+        requestStatus: statusPayload,
+      };
+    }
+
     const claimable =
       Boolean(statusPayload.claimable) ||
       Boolean(statusPayload.isClaimable) ||
@@ -397,8 +608,7 @@ export const refreshSubscriptionFn = createServerFn({ method: "POST" })
       statusPayload.requestId ?? statusPayload.request_id ?? sub.requestId ?? "",
     );
 
-    const db = getDb();
-    if (claimable && shareBalance === "0") {
+    if (claimable && !positiveUnits(shareBalance)) {
       await db
         .update(subscriptions)
         .set({ status: "Claimable", requestId: requestId || sub.requestId, updatedAt: new Date() })
@@ -406,18 +616,25 @@ export const refreshSubscriptionFn = createServerFn({ method: "POST" })
       return { status: "Claimable" as const, shares: null, requestId };
     }
 
-    if (shareBalance !== "0" && Number(shareBalance) > 0) {
-      await db
-        .update(subscriptions)
-        .set({ status: "Finalized", shares: shareBalance, updatedAt: new Date() })
-        .where(eq(subscriptions.id, sub.id));
-      await db.insert(auditEvents).values({
-        orgId: auth.orgId,
-        subscriptionId: sub.id,
-        event: "Shares finalized",
-        detail: `${shareBalance} vault shares proven via IXS position`,
-        tone: "good",
-      });
+    if (positiveUnits(shareBalance)) {
+      if (sub.status !== "Finalized") {
+        await db
+          .update(subscriptions)
+          .set({ status: "Finalized", shares: shareBalance, updatedAt: new Date() })
+          .where(eq(subscriptions.id, sub.id));
+        await db.insert(auditEvents).values({
+          orgId: auth.orgId,
+          subscriptionId: sub.id,
+          event: "Shares finalized",
+          detail: `${shareBalance} vault shares proven via IXS position`,
+          tone: "good",
+        });
+      } else if (sub.shares !== shareBalance) {
+        await db
+          .update(subscriptions)
+          .set({ shares: shareBalance, updatedAt: new Date() })
+          .where(eq(subscriptions.id, sub.id));
+      }
       return { status: "Finalized" as const, shares: shareBalance };
     }
 
@@ -453,10 +670,8 @@ export const claimSubscriptionFn = createServerFn({ method: "POST" })
     );
     const claimTxHash = hashes[hashes.length - 1] ?? null;
     const position = await getPosition(sub.vaultId, sub.ownerAddress);
-    const shareBalance = String(
-      position.shareBalance ?? position.shares ?? position.share_balance ?? "0",
-    );
-    if (shareBalance === "0" || Number(shareBalance) <= 0) {
+    const shareBalance = String(position.shareBalance ?? "0");
+    if (!positiveUnits(shareBalance)) {
       throw new Error(
         "Claim submitted but IXS position still shows zero shares. Not marking Finalized.",
       );
@@ -481,4 +696,233 @@ export const claimSubscriptionFn = createServerFn({ method: "POST" })
       tone: "good",
     });
     return { status: "Finalized" as const, shares: shareBalance, claimTxHash };
+  });
+
+const ethAddress = z
+  .string()
+  .regex(/^0x[a-fA-F0-9]{40}$/, "Enter a valid 0x EVM address");
+
+/** Queue IXS ERC-7540 redeem for live vault shares (AgentKit signs). */
+export const requestRedeemFn = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      subscriptionId: z.string().uuid(),
+      /** Optional; default = full live share balance. */
+      shareAmount: z.string().optional(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    const auth = await requireAuth();
+    const sub = await getSubscriptionForOrg(auth, data.subscriptionId);
+    if (sub.status === "Withdrawn") throw new Error("Already withdrawn.");
+    if (sub.status === "RedeemPending" || sub.status === "RedeemClaimable") {
+      throw new Error("Redeem already queued. Use Refresh, then Claim redeem / Withdraw.");
+    }
+
+    const position = await getPosition(sub.vaultId, sub.ownerAddress);
+    const liveShares = String(position.shareBalance ?? sub.shares ?? "0");
+    const shareAmount = data.shareAmount?.trim() || liveShares;
+    if (!positiveUnits(shareAmount)) {
+      if (sub.status === "Pending" || sub.status === "Claimable") {
+        throw new Error("Deposit still Pending/Claimable and IXS shows no shares yet.");
+      }
+      throw new Error("No live vault shares to redeem on IXS.");
+    }
+
+    const built = await buildRequestRedeem({
+      vaultId: sub.vaultId,
+      ownerAddress: sub.ownerAddress,
+      shareAmount,
+    });
+    const vaultMeta = await getVault(sub.vaultId);
+    const chain = chainFromVaultChainId(vaultMeta.chainId);
+    const hashes = await executeTxSteps(built.steps, auth.orgId, chain);
+    const requestTxHash = hashes[hashes.length - 1] ?? null;
+
+    let redeemRequestId = "";
+    try {
+      const statusPayload = await requestStatus({
+        vaultId: sub.vaultId,
+        ownerAddress: sub.ownerAddress,
+      });
+      redeemRequestId = extractRedeemRequest(statusPayload)?.requestId ?? "";
+    } catch {
+      // subgraph lag is ok — refresh later
+    }
+
+    const db = getDb();
+    await db
+      .update(subscriptions)
+      .set({
+        status: "RedeemPending",
+        shares: liveShares,
+        metadata: withRedeemMeta(sub, {
+          requestId: redeemRequestId || undefined,
+          requestTxHash: requestTxHash ?? undefined,
+          settlement: String(built.settlement ?? "queued"),
+        }),
+        updatedAt: new Date(),
+      })
+      .where(eq(subscriptions.id, sub.id));
+    await db.insert(auditEvents).values({
+      orgId: auth.orgId,
+      subscriptionId: sub.id,
+      event: "Redeem requested",
+      detail: `${shareAmount} shares queued · tx ${requestTxHash ?? "n/a"} · not USDC yet`,
+      tone: "warn",
+    });
+
+    return {
+      status: "RedeemPending" as const,
+      requestTxHash,
+      redeemRequestId: redeemRequestId || null,
+      settlement: String(built.settlement ?? "queued"),
+      message:
+        "Redeem queued on IXS. Instant maxRedeem stays 0 until their cycle settles (often ~1–2 days on this vault). Refresh, then claim/withdraw.",
+    };
+  });
+
+/** Claim redeem assets when IXS marks the redeem request claimable. */
+export const claimRedeemFn = createServerFn({ method: "POST" })
+  .validator(z.object({ subscriptionId: z.string().uuid() }))
+  .handler(async ({ data }) => {
+    const auth = await requireAuth();
+    const sub = await getSubscriptionForOrg(auth, data.subscriptionId);
+    if (sub.status !== "RedeemPending" && sub.status !== "RedeemClaimable") {
+      throw new Error("Subscription is not in a redeem claim state.");
+    }
+
+    const redeemMeta = readRedeemMeta(sub);
+    const statusPayload = await requestStatus({
+      vaultId: sub.vaultId,
+      ownerAddress: sub.ownerAddress,
+    });
+    const redeemInfo = extractRedeemRequest(statusPayload, redeemMeta.requestId);
+    const requestId = redeemInfo?.requestId || redeemMeta.requestId || "";
+    if (!requestId) {
+      throw new Error(
+        "No redeem requestId yet. Wait for IXS subgraph indexing, then Refresh. Some vaults settle without a claim step — check AgentKit USDC and Withdraw.",
+      );
+    }
+
+    const vaultMeta = await getVault(sub.vaultId);
+    const chain = chainFromVaultChainId(vaultMeta.chainId);
+    let claimTxHash: string | null = null;
+    try {
+      const built = await buildClaimRedeem({
+        vaultId: sub.vaultId,
+        ownerAddress: sub.ownerAddress,
+        requestId,
+      });
+      const hashes = await executeTxSteps(built.steps, auth.orgId, chain);
+      claimTxHash = hashes[hashes.length - 1] ?? null;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      // Vaults with no separate claim step surface this — treat wallet USDC as ready.
+      if (!/no claim|sync vault|no separate claim|claim step/i.test(msg)) {
+        throw err;
+      }
+    }
+
+    const bal = await getWalletBalances(sub.ownerAddress as `0x${string}`, chain);
+    const db = getDb();
+    await db
+      .update(subscriptions)
+      .set({
+        status: "RedeemClaimable",
+        metadata: withRedeemMeta(sub, {
+          requestId,
+          claimTxHash: claimTxHash ?? undefined,
+        }),
+        updatedAt: new Date(),
+      })
+      .where(eq(subscriptions.id, sub.id));
+    await db.insert(auditEvents).values({
+      orgId: auth.orgId,
+      subscriptionId: sub.id,
+      event: claimTxHash ? "Redeem claimed" : "Redeem ready for withdraw",
+      detail: claimTxHash
+        ? `claim ${claimTxHash} · AgentKit USDC ${bal.usdc}`
+        : `No separate claim step · AgentKit USDC ${bal.usdc}`,
+      tone: "good",
+    });
+
+    return {
+      status: "RedeemClaimable" as const,
+      claimTxHash,
+      walletUsdc: bal.usdc,
+      message: "USDC should be in the AgentKit wallet. Enter your address and Withdraw.",
+    };
+  });
+
+/** Send AgentKit USDC on the subscription's chain to an external EVM address. */
+export const withdrawUsdcFn = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      subscriptionId: z.string().uuid(),
+      toAddress: ethAddress,
+      /** Human USDC amount; omit to send full liquid balance. */
+      amountUsdc: z.number().positive().optional(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    const auth = await requireAuth();
+    const sub = await getSubscriptionForOrg(auth, data.subscriptionId);
+    if (sub.status === "Withdrawn") throw new Error("Already marked withdrawn.");
+
+    const vaultMeta = await getVault(sub.vaultId);
+    const chain = chainFromVaultChainId(vaultMeta.chainId);
+    const bal = await getWalletBalances(sub.ownerAddress as `0x${string}`, chain);
+    const amountBase =
+      data.amountUsdc != null
+        ? usdcToBaseUnits(data.amountUsdc, bal.usdcDecimals)
+        : bal.usdcRaw;
+    if (amountBase <= 0n) {
+      throw new Error(
+        `No liquid USDC on ${bal.network} in AgentKit ${sub.ownerAddress}. If redeem is still queued, wait for IXS then Claim redeem.`,
+      );
+    }
+
+    const sent = await transferUsdc({
+      orgId: auth.orgId,
+      chainId: chain,
+      to: data.toAddress as `0x${string}`,
+      amountBaseUnits: amountBase,
+    });
+
+    const position = await getPosition(sub.vaultId, sub.ownerAddress);
+    const remainingShares = String(position.shareBalance ?? "0");
+    const fullyOut = !positiveUnits(remainingShares);
+
+    const db = getDb();
+    await db
+      .update(subscriptions)
+      .set({
+        status: fullyOut ? "Withdrawn" : sub.status,
+        shares: remainingShares,
+        metadata: withRedeemMeta(sub, {
+          withdrawTxHash: sent.txHash,
+          toAddress: data.toAddress,
+        }),
+        updatedAt: new Date(),
+      })
+      .where(eq(subscriptions.id, sub.id));
+    await db.insert(auditEvents).values({
+      orgId: auth.orgId,
+      subscriptionId: sub.id,
+      event: "USDC withdrawn",
+      detail: `${sent.amount} USDC → ${data.toAddress} · ${sent.txHash}`,
+      tone: "good",
+    });
+
+    return {
+      status: fullyOut ? ("Withdrawn" as const) : (sub.status as SubscriptionStatus),
+      txHash: sent.txHash,
+      amount: sent.amount,
+      to: data.toAddress,
+      remainingShares,
+      message: fullyOut
+        ? "Withdrawn. Shares cleared and USDC sent."
+        : "USDC sent. Vault still shows remaining shares — redeem the rest when ready.",
+    };
   });

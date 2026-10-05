@@ -1,19 +1,35 @@
-export type SubscriptionStatus = "Pending" | "Claimable" | "Finalized" | "Rejected";
+export type SubscriptionStatus =
+  | "Pending"
+  | "Claimable"
+  | "Finalized"
+  | "RedeemPending"
+  | "RedeemClaimable"
+  | "Withdrawn"
+  | "Rejected";
 
 export function isOwnedStatus(status: SubscriptionStatus): boolean {
-  return status === "Finalized";
+  return status === "Finalized" || status === "RedeemPending" || status === "RedeemClaimable";
 }
 
 export function displayShares(
   status: SubscriptionStatus,
   shares: string | null | undefined,
 ): string {
-  if (status === "Finalized" && shares && shares !== "0") return shares;
+  if (
+    (status === "Finalized" ||
+      status === "RedeemPending" ||
+      status === "RedeemClaimable") &&
+    shares &&
+    shares !== "0"
+  ) {
+    return shares;
+  }
+  if (status === "RedeemPending") return "queued";
   return "—";
 }
 
 export function ownedValueCents(status: SubscriptionStatus, amountCents: number): number {
-  return status === "Finalized" ? amountCents : 0;
+  return isOwnedStatus(status) ? amountCents : 0;
 }
 
 export function assertNotEarningLabel(status: SubscriptionStatus): string {
@@ -21,6 +37,9 @@ export function assertNotEarningLabel(status: SubscriptionStatus): string {
     return "Pending — not owned, not earning";
   }
   if (status === "Finalized") return "Finalized — shares proven";
+  if (status === "RedeemPending") return "Redeem queued — waiting on IXS cycle";
+  if (status === "RedeemClaimable") return "Redeem claimable — claim USDC then withdraw";
+  if (status === "Withdrawn") return "Withdrawn — USDC sent out";
   return "Rejected";
 }
 
