@@ -174,12 +174,40 @@ export const getSubscriptionFn = createServerFn({ method: "GET" })
       maxRedeem: string;
       maxWithdraw: string;
       walletUsdc: string | null;
+      redeemRequestId: string | null;
+      redeemStatus: string | null;
     } | null = null;
     try {
       const position = await getPosition(sub.vaultId, sub.ownerAddress);
       const vaultMeta = await getVault(sub.vaultId);
       const chain = chainFromVaultChainId(vaultMeta.chainId);
       const bal = await getWalletBalances(sub.ownerAddress as `0x${string}`, chain);
+      let redeemRequestId = meta.redeem?.requestId ?? null;
+      let redeemStatus: string | null = null;
+      if (
+        sub.status === "RedeemPending" ||
+        sub.status === "RedeemClaimable" ||
+        meta.redeem?.requestTxHash
+      ) {
+        try {
+          const { requestStatus } = await import("../ixs/mcp");
+          const statusPayload = await requestStatus({
+            vaultId: sub.vaultId,
+            ownerAddress: sub.ownerAddress,
+          });
+          const rows = (statusPayload.redeemRequests as Array<Record<string, unknown>> | undefined) ?? [];
+          const hit =
+            (redeemRequestId
+              ? rows.find((r) => String(r.requestId ?? "") === redeemRequestId)
+              : undefined) ?? rows[0];
+          if (hit) {
+            redeemRequestId = String(hit.requestId ?? redeemRequestId ?? "");
+            redeemStatus = String(hit.status ?? "");
+          }
+        } catch {
+          // keep metadata-only redeem ids
+        }
+      }
       live = {
         shareBalance: String(position.shareBalance ?? "0"),
         shareValue:
@@ -187,6 +215,8 @@ export const getSubscriptionFn = createServerFn({ method: "GET" })
         maxRedeem: String(position.maxRedeem ?? "0"),
         maxWithdraw: String(position.maxWithdraw ?? "0"),
         walletUsdc: bal.usdc,
+        redeemRequestId,
+        redeemStatus,
       };
     } catch {
       live = null;
@@ -590,13 +620,25 @@ export const refreshSubscriptionFn = createServerFn({ method: "POST" })
 
       await db
         .update(subscriptions)
-        .set({ status: "RedeemPending", updatedAt: new Date() })
+        .set({
+          status: "RedeemPending",
+          metadata: withRedeemMeta(sub, {
+            requestId: redeemInfo?.requestId || redeemMeta.requestId,
+            requestTxHash: redeemMeta.requestTxHash,
+          }),
+          updatedAt: new Date(),
+        })
         .where(eq(subscriptions.id, sub.id));
       return {
         status: "RedeemPending" as const,
         shares: shareBalance,
         redeemRequestId: redeemInfo?.requestId || redeemMeta.requestId || null,
+        redeemStatus: redeemInfo?.status || null,
         requestStatus: statusPayload,
+        note:
+          redeemInfo?.status === "PENDING"
+            ? "IXS redeem request is PENDING on the vault subgraph — wait for their settlement cycle, then Refresh again."
+            : "Redeem still queued. Instant maxRedeem stays 0 until IXS finalizes.",
       };
     }
 
