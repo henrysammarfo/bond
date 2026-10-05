@@ -217,3 +217,62 @@ export async function executeTxSteps(
   }
   return hashes;
 }
+
+const ERC20_TRANSFER = [
+  {
+    type: "function",
+    name: "transfer",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "to", type: "address" },
+      { name: "amount", type: "uint256" },
+    ],
+    outputs: [{ name: "", type: "bool" }],
+  },
+] as const;
+
+/** Send USDC from the org AgentKit wallet. amountBaseUnits optional = full balance. */
+export async function transferUsdc(params: {
+  orgId: string;
+  chainId: DepositChain;
+  to: `0x${string}`;
+  amountBaseUnits?: bigint;
+}): Promise<{ txHash: string; amount: string; to: string }> {
+  const signer = await resolveSigner(params.orgId);
+  const account = privateKeyToAccount(signer.privateKey);
+  if (params.to.toLowerCase() === account.address.toLowerCase()) {
+    throw new Error("Destination cannot be the AgentKit wallet itself.");
+  }
+  const bal = await getWalletBalances(account.address, params.chainId);
+  const amount = params.amountBaseUnits ?? bal.usdcRaw;
+  if (amount <= 0n) {
+    throw new Error(`No USDC to send on ${bal.network}.`);
+  }
+  if (amount > bal.usdcRaw) {
+    throw new Error(
+      `Insufficient USDC on ${bal.network}: have ${bal.usdc}, requested ${formatUnits(amount, bal.usdcDecimals)}.`,
+    );
+  }
+  if (bal.nativeWei === 0n) {
+    const gasName = params.chainId === "bsc" ? "BNB" : "AVAX";
+    throw new Error(`Insufficient ${gasName} for gas on ${bal.network}.`);
+  }
+  const wallet = createWalletClient({
+    account,
+    chain: chainFor(params.chainId),
+    transport: http(rpcFor(params.chainId)),
+  });
+  const public_ = publicClient(params.chainId);
+  const hash = await wallet.writeContract({
+    address: usdcFor(params.chainId),
+    abi: ERC20_TRANSFER,
+    functionName: "transfer",
+    args: [params.to, amount],
+  });
+  await public_.waitForTransactionReceipt({ hash });
+  return {
+    txHash: hash,
+    amount: formatUnits(amount, bal.usdcDecimals),
+    to: params.to,
+  };
+}

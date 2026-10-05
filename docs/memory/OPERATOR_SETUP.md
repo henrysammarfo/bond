@@ -16,6 +16,16 @@ BOND is a **multitenant all-around RWA treasury app** for the OpenServ track:
 
 Platform keys cover the fair demo path; BYO keys let judges and treasuries run on their own credentials. See [`SECURITY.md`](./SECURITY.md) · [`TECHNICAL_DEEP_DIVE.md`](./TECHNICAL_DEEP_DIVE.md).
 
+### Exit path (redeem → withdraw)
+
+1. Open the subscription that holds live shares (BNB Path A: `a974083b-…` or any Finalized row).
+2. **Request redeem** — AgentKit signs IXS `requestRedeem` (async; `maxRedeem` stays 0 until the cycle settles).
+3. **Refresh** until RedeemClaimable / AgentKit USDC rises (often ~1–2 days on this vault; not guaranteed).
+4. **Claim redeem** if IXS requires a claim step (some vaults settle without it).
+5. Paste your EVM receive address → **Withdraw USDC**.
+
+Do not invent share balances. Live reads come from IXS REST + on-chain.
+
 ---
 
 ## 1. Accounts & links (open these)

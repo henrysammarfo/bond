@@ -74,7 +74,67 @@ export async function getVault(vaultId: string): Promise<IxsVault> {
 }
 
 export async function getPosition(vaultId: string, wallet: string): Promise<IxsPosition> {
-  return ixsFetch<IxsPosition>(`/vaults/${vaultId}/positions/${wallet}`);
+  const raw = await ixsFetch<IxsPosition | { position: Record<string, unknown> }>(
+    `/vaults/${vaultId}/positions/${wallet}`,
+  );
+  return normalizePosition(raw);
+}
+
+/** Flatten IXS position payloads (nested `position.balances.*` or flat fields). */
+export function normalizePosition(raw: unknown): IxsPosition {
+  const root = (raw ?? {}) as Record<string, unknown>;
+  const pos = (root.position && typeof root.position === "object"
+    ? (root.position as Record<string, unknown>)
+    : root) as Record<string, unknown>;
+  const balances = (pos.balances && typeof pos.balances === "object"
+    ? (pos.balances as Record<string, unknown>)
+    : {}) as Record<string, unknown>;
+  const limits = (pos.limits && typeof pos.limits === "object"
+    ? (pos.limits as Record<string, unknown>)
+    : {}) as Record<string, unknown>;
+
+  const pickUnits = (node: unknown): string | undefined => {
+    if (node == null) return undefined;
+    if (typeof node === "string" || typeof node === "number") return String(node);
+    if (typeof node === "object") {
+      const o = node as Record<string, unknown>;
+      if (o.baseUnits != null) return String(o.baseUnits);
+      if (o.display != null) {
+        const d = String(o.display).split(/\s+/)[0];
+        return d || undefined;
+      }
+    }
+    return undefined;
+  };
+
+  const shareBalance =
+    pickUnits(balances.shares) ??
+    pickUnits(pos.shareBalance) ??
+    pickUnits(pos.shares) ??
+    pickUnits(pos.share_balance) ??
+    "0";
+  const assetBalance =
+    pickUnits(balances.asset) ?? pickUnits(pos.assetBalance) ?? pickUnits(pos.assets) ?? "0";
+  const maxRedeem =
+    pickUnits(limits.maxRedeem) ?? pickUnits(pos.maxRedeem) ?? pickUnits(pos.max_redeem) ?? "0";
+  const maxWithdraw =
+    pickUnits(limits.maxWithdraw) ??
+    pickUnits(pos.maxWithdraw) ??
+    pickUnits(pos.max_withdraw) ??
+    "0";
+  const shareValue =
+    pickUnits((balances as { shareValueInAssets?: unknown }).shareValueInAssets) ??
+    pickUnits(pos.shareValueInAssets) ??
+    undefined;
+
+  return {
+    ...pos,
+    shareBalance,
+    assetBalance,
+    maxRedeem,
+    maxWithdraw,
+    shareValueInAssets: shareValue,
+  };
 }
 
 export function vaultRole(v: IxsVault): "primary" | "secondary" | "whitelist" | "other" {

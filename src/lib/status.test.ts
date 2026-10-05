@@ -22,6 +22,16 @@ describe("status machine", () => {
     expect(displayShares("Finalized", "99.14")).toBe("99.14");
   });
 
+  test("RedeemPending stays owned until withdrawn", () => {
+    expect(ownedValueCents("RedeemPending", 10400)).toBe(10400);
+    expect(assertNotEarningLabel("RedeemPending")).toContain("queued");
+  });
+
+  test("Withdrawn is not owned", () => {
+    expect(ownedValueCents("Withdrawn", 10400)).toBe(0);
+    expect(displayShares("Withdrawn", "99")).toBe("—");
+  });
+
   test("USDC base units use 6 decimals by default", () => {
     expect(usdcToBaseUnits(100)).toBe(100_000_000n);
     expect(dollarsToCents(100)).toBe(10000);
