@@ -26,6 +26,7 @@ import { Route as RiskDisclosureRouteImport } from './routes/risk-disclosure'
 import { Route as SecurityRouteImport } from './routes/security'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as VaultsRouteImport } from './routes/vaults'
+import { Route as ApiProvisionDemoRouteImport } from './routes/api/provision-demo'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
 import { Route as DashboardActivityRouteImport } from './routes/dashboard.activity'
@@ -125,6 +126,11 @@ const VaultsRoute = VaultsRouteImport.update({
   path: '/vaults',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiProvisionDemoRoute = ApiProvisionDemoRouteImport.update({
+  id: '/api/provision-demo',
+  path: '/api/provision-demo',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BlogSlugRoute = BlogSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
@@ -211,6 +217,7 @@ export interface FileRoutesByFullPath {
   '/security': typeof SecurityRoute
   '/terms': typeof TermsRoute
   '/vaults': typeof VaultsRoute
+  '/api/provision-demo': typeof ApiProvisionDemoRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/dashboard/activity': typeof DashboardActivityRoute
   '/dashboard/mandates': typeof DashboardMandatesRoute
@@ -242,6 +249,7 @@ export interface FileRoutesByTo {
   '/security': typeof SecurityRoute
   '/terms': typeof TermsRoute
   '/vaults': typeof VaultsRoute
+  '/api/provision-demo': typeof ApiProvisionDemoRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/dashboard/activity': typeof DashboardActivityRoute
   '/dashboard/mandates': typeof DashboardMandatesRoute
@@ -273,6 +281,7 @@ export interface FileRoutesById {
   '/security': typeof SecurityRoute
   '/terms': typeof TermsRoute
   '/vaults': typeof VaultsRoute
+  '/api/provision-demo': typeof ApiProvisionDemoRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/dashboard/activity': typeof DashboardActivityRoute
   '/dashboard/mandates': typeof DashboardMandatesRoute
@@ -307,6 +316,7 @@ export interface FileRouteTypes {
     | '/security'
     | '/terms'
     | '/vaults'
+    | '/api/provision-demo'
     | '/blog/$slug'
     | '/dashboard/activity'
     | '/dashboard/mandates'
@@ -338,6 +348,7 @@ export interface FileRouteTypes {
     | '/security'
     | '/terms'
     | '/vaults'
+    | '/api/provision-demo'
     | '/blog/$slug'
     | '/dashboard/activity'
     | '/dashboard/mandates'
@@ -368,6 +379,7 @@ export interface FileRouteTypes {
     | '/security'
     | '/terms'
     | '/vaults'
+    | '/api/provision-demo'
     | '/blog/$slug'
     | '/dashboard/activity'
     | '/dashboard/mandates'
@@ -401,6 +413,7 @@ export interface RootRouteChildren {
   SecurityRoute: typeof SecurityRoute
   TermsRoute: typeof TermsRoute
   VaultsRoute: typeof VaultsRoute
+  ApiProvisionDemoRoute: typeof ApiProvisionDemoRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -522,6 +535,13 @@ declare module '@tanstack/react-router' {
       path: '/vaults'
       fullPath: '/vaults'
       preLoaderRoute: typeof VaultsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/provision-demo': {
+      id: '/api/provision-demo'
+      path: '/api/provision-demo'
+      fullPath: '/api/provision-demo'
+      preLoaderRoute: typeof ApiProvisionDemoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/blog/$slug': {
@@ -703,6 +723,7 @@ const rootRouteChildren: RootRouteChildren = {
   SecurityRoute: SecurityRoute,
   TermsRoute: TermsRoute,
   VaultsRoute: VaultsRoute,
+  ApiProvisionDemoRoute: ApiProvisionDemoRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

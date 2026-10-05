@@ -5,10 +5,10 @@ import { getDb } from "../src/backend/db/client.ts";
 import { users, orgs, memberships } from "../src/backend/db/schema.ts";
 import { hashPassword } from "../src/backend/auth/password.ts";
 import { ensureOrgAgentWallet } from "../src/backend/org/integrations.ts";
+import { provisionDemoLogin } from "../src/backend/demo/provision-login.ts";
 
-const email = process.env.DEMO_EMAIL || "demo@bond.app";
+const email = (process.env.DEMO_EMAIL || "demo@bond.app").toLowerCase();
 const password = process.env.DEMO_PASSWORD;
-const displayName = process.env.DEMO_DISPLAY_NAME || "OpenServ Judge";
 const orgName = process.env.DEMO_ORG_NAME || "OpenServ Demo Treasury";
 
 if (!password || password.length < 10) {
@@ -16,19 +16,13 @@ if (!password || password.length < 10) {
   process.exit(1);
 }
 
-
 const db = getDb();
 const existing = await db.select().from(users).where(eq(users.email, email)).limit(1);
 if (existing[0]) {
-  await db
-    .update(users)
-    .set({ passwordHash: hashPassword(password), displayName })
-    .where(eq(users.email, email));
-  const mem = await db.select().from(memberships).where(eq(memberships.userId, existing[0].id)).limit(1);
-  let agent = null;
-  if (mem[0]) agent = await ensureOrgAgentWallet(mem[0].orgId);
-  console.log(JSON.stringify({ ok: true, mode: "reset", email, password, orgId: mem[0]?.orgId, agent }, null, 2));
+  const result = await provisionDemoLogin();
+  console.log(JSON.stringify({ ...result, password }, null, 2));
 } else {
+  const displayName = process.env.DEMO_DISPLAY_NAME || "OpenServ Judge";
   const slug = `openserv-demo-${Date.now().toString(36)}`;
   const [org] = await db.insert(orgs).values({ name: orgName, slug }).returning();
   const [user] = await db
