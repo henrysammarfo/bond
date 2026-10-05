@@ -5,6 +5,8 @@ import { getDb } from "../db/client";
 import { users, orgs, memberships } from "../db/schema";
 import { hashPassword, verifyPassword } from "../auth/password";
 import { createSession, destroySession, getAuthContext, requireAuth } from "../auth/session";
+import { provisionDemoLogin } from "../demo/provision-login";
+import { timingSafeEqual } from "node:crypto";
 
 const credentialsSchema = z.object({
   email: z.string().email(),
@@ -103,3 +105,21 @@ export const logoutFn = createServerFn({ method: "POST" }).handler(async () => {
 export const requireSessionFn = createServerFn({ method: "GET" }).handler(async () => {
   return requireAuth();
 });
+
+const provisionSecretSchema = z.object({
+  secret: z.string().min(8),
+});
+
+/** Operator-only: reset demo@bond.app password from DEMO_PASSWORD env (no password in request). */
+export const provisionDemoLoginFn = createServerFn({ method: "POST" })
+  .validator(provisionSecretSchema)
+  .handler(async ({ data }) => {
+    const expected = process.env.PROVISION_SECRET;
+    if (!expected) throw new Error("Provision endpoint is not configured.");
+    const got = Buffer.from(data.secret);
+    const want = Buffer.from(expected);
+    if (got.length !== want.length || !timingSafeEqual(got, want)) {
+      throw new Error("Forbidden.");
+    }
+    return provisionDemoLogin();
+  });
