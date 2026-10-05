@@ -21,12 +21,7 @@ const errorMiddleware = createMiddleware().server(async ({ next }) => {
 // file opts out, so re-add it explicitly to keep server functions protected
 // from cross-site requests.
 const csrfMiddleware = createCsrfMiddleware({
-  filter: (ctx) => {
-    if (ctx.handlerType !== "serverFn") return false;
-    // serverFnMeta is not populated yet in request middleware.
-    if (ctx.request.headers.get("x-bond-provision-secret")) return false;
-    return true;
-  },
+  filter: (ctx) => ctx.handlerType === "serverFn",
 });
 
 export const startInstance = createStart(() => ({
